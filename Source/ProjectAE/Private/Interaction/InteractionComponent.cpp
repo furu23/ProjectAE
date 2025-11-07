@@ -95,7 +95,7 @@ AActor* UInteractionComponent::PerformTrace(const FVector& TraceStart, const FVe
 	{
 		if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
 		{
-			if (IInteractable::Execute_CanInteract(HitActor))
+			if (IInteractable::Execute_CanFocus(HitActor))
 			{
 				return HitActor;
 			}

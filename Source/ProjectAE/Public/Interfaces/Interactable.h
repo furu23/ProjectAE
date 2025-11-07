@@ -24,10 +24,14 @@ class PROJECTAE_API IInteractable
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interact")
 	void OnInteract(AActor* Caller);
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interact")
-	bool CanInteract() const;
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interact")
 	void OnFocusChanged(AActor* Caller, bool bIsFocused);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interact")
+	bool CanInteract() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interact")
+	bool CanFocus() const;
+	
 };
