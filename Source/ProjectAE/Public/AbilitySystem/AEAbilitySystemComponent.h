@@ -14,5 +14,5 @@ class PROJECTAE_API UAEAbilitySystemComponent : public UAbilitySystemComponent
 {
 	GENERATED_BODY()
 	
-	// TODO: GrantAbilitySet ÇïÆÛ ÇÔ¼ö ÀÛ¼º
+	// TODO: GrantAbilitySet í—¬í¼ í•¨ìˆ˜ ì‘ì„±
 };
