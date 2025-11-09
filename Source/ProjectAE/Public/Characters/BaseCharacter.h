@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -25,5 +25,37 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual void PossessedBy(AController* NewController) override;
+
+protected:
+
+	// *** 어빌리티 시스템 관련 기능 ***
+	// 추후, 하위 클래스 작성 시 옮기거나 확장할 수 있습니다.
+
+	// 어빌리티 시스템 초기화
+	void InitAbiltySystem();
+
+	// 클라이언트에서 플레이어 상태가 복제될 때 호출되는 함수 (어빌리티 시스템 초기화에 사용)
+	void OnRep_PlayerState() override;
+
+	// 어빌리티 시스템 컴포넌트 캐시
+	UPROPERTY()
+	TWeakObjectPtr<class UAbilitySystemComponent> CachedASC;
+
+
+	// **** 어빌리티 시스템 인풋 바인딩 ****
+
+	// 인풋 액션이 눌렸을 때 호출되는 함수
+	void InputAbilityTagPressed(const class UInputAction* Action);
+	// 인풋 액션이 떼졌을 때 호출되는 함수
+	void InputAbilityTagReleased(const class UInputAction* Action);
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input|Ability", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UAbilityInputConfig> AbilityInputConfig;
+
+	
+
+	
 
 };
