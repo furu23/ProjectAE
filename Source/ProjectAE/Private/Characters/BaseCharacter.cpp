@@ -1,7 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Characters/BaseCharacter.h"
+#include "Data/AbilityInputConfig.h"
+#include "Characters/AEPlayerState.h"
+#include "AbilitySystem/AEAbilitySystemComponent.h"
+#include "GameplayTagContainer.h"
+#include "EnhancedInputComponent.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -32,3 +37,32 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 }
 
+void ABaseCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	// 어빌리티 시스템 초기화
+	InitAbiltySystem();
+
+	// TODO: 어빌리티 부여 등 추가 초기화 작업
+}
+
+void ABaseCharacter::InitAbiltySystem()
+{
+	APlayerState* PS = GetPlayerState();
+	if (PS)
+	{
+		UAbilitySystemComponent* FoundASC = Cast<AAEPlayerState>(PS)->GetAbilitySystemComponent();
+		if (FoundASC)
+		{
+			CachedASC = FoundASC;
+		}
+	}
+}
+
+void ABaseCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	InitAbiltySystem();
+}
