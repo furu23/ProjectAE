@@ -26,6 +26,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void OnFocusChanged(AActor* NewFocusedActor);
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
@@ -34,6 +37,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<class UCameraComponent> Camera;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
+	TObjectPtr<class UInteractionComponent> InteractionComponent;
 
 	// **** 어빌리티 시스템 인풋 바인딩 ****
 
