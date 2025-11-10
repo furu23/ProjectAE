@@ -42,20 +42,4 @@ protected:
 	// 어빌리티 시스템 컴포넌트 캐시
 	UPROPERTY()
 	TWeakObjectPtr<class UAbilitySystemComponent> CachedASC;
-
-
-	// **** 어빌리티 시스템 인풋 바인딩 ****
-
-	// 인풋 액션이 눌렸을 때 호출되는 함수
-	void InputAbilityTagPressed(const class UInputAction* Action);
-	// 인풋 액션이 떼졌을 때 호출되는 함수
-	void InputAbilityTagReleased(const class UInputAction* Action);
-
-	UPROPERTY(EditDefaultsOnly, Category = "Input|Ability", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UAbilityInputConfig> AbilityInputConfig;
-
-	
-
-	
-
 };

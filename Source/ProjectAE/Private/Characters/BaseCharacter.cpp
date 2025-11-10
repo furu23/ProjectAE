@@ -35,25 +35,6 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent);
-
-	// **** 어빌리티 시스템 인풋 바인딩 ****
-	if (EnhancedInput && AbilityInputConfig)
-	{
-		for (const TPair<TObjectPtr<UInputAction>, FGameplayTag>& Pair : AbilityInputConfig->AbilityInputActions)
-		{
-			const UInputAction* InputAction = Pair.Key;
-			const FGameplayTag BindingTag = Pair.Value;
-			if (InputAction)
-			{
-				// 눌림 이벤트 바인딩
-				EnhancedInput->BindAction(InputAction, ETriggerEvent::Started, this, &ABaseCharacter::InputAbilityTagPressed, InputAction);
-				// 떼짐 이벤트 바인딩
-				EnhancedInput->BindAction(InputAction, ETriggerEvent::Completed, this, &ABaseCharacter::InputAbilityTagReleased, InputAction);
-			}
-		}
-	}
-
 }
 
 void ABaseCharacter::PossessedBy(AController* NewController)
@@ -85,34 +66,3 @@ void ABaseCharacter::OnRep_PlayerState()
 
 	InitAbiltySystem();
 }
-
-void ABaseCharacter::InputAbilityTagPressed(const class UInputAction* Action)
-{
-	UAEAbilitySystemComponent* ASC = Cast<UAEAbilitySystemComponent>(CachedASC.Get());
-	if (!Action || !ASC)
-	{
-		return;
-	}
-
-	const FGameplayTag* FoundTag = AbilityInputConfig->AbilityInputActions.Find(Action);
-	if (FoundTag && FoundTag->IsValid())
-	{
-		ASC->AbilityInputTagPressed(*FoundTag);
-	}
-}
-
-void ABaseCharacter::InputAbilityTagReleased(const class UInputAction* Action)
-{
-	UAEAbilitySystemComponent* ASC = Cast<UAEAbilitySystemComponent>(CachedASC.Get());
-	if (!Action || !ASC)
-	{
-		return;
-	}
-	const FGameplayTag* FoundTag = AbilityInputConfig->AbilityInputActions.Find(Action);
-	if (FoundTag && FoundTag->IsValid())
-	{
-		ASC->AbilityInputTagReleased(*FoundTag);
-	}
-
-}
-
