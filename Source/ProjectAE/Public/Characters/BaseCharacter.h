@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "BaseCharacter.generated.h"
 
+class UAbilitySystemComponent;
+
 UCLASS()
 class PROJECTAE_API ABaseCharacter : public ACharacter
 {
@@ -27,6 +29,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void PossessedBy(AController* NewController) override;
+
+	TWeakObjectPtr<UAbilitySystemComponent> GetASC();
 
 protected:
 

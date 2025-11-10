@@ -47,6 +47,11 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	// TODO: 어빌리티 부여 등 추가 초기화 작업
 }
 
+TWeakObjectPtr<UAbilitySystemComponent> ABaseCharacter::GetASC()
+{
+	return CachedASC;
+}
+
 void ABaseCharacter::InitAbiltySystem()
 {
 	APlayerState* PS = GetPlayerState();
