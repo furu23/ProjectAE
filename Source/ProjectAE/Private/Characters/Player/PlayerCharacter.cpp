@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
+#include "Interaction/InteractionComponent.h"
 
 
 APlayerCharacter::APlayerCharacter()
@@ -20,11 +21,17 @@ APlayerCharacter::APlayerCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 
+	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>("InteractionComponent");
+
 	SpringArm->TargetArmLength = 1000.f;
 	SpringArm->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
 	
 	SpringArm->bDoCollisionTest = false;
 	SpringArm->bEnableCameraLag = true;
+
+	// InteractionComponent의 포커스 변경 시 호출될 콜백 함수 등록
+	InteractionComponent->OnFocusChanged.AddDynamic(this, &APlayerCharacter::OnFocusChanged);
+	
 }
 
 void APlayerCharacter::BeginPlay()
@@ -65,6 +72,18 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 		}
 	}
 
+}
+
+void APlayerCharacter::OnFocusChanged(AActor* NewFocusedActor)
+{
+	if (NewFocusedActor)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("APlayerChar : NewFocusedActor %s"), *NewFocusedActor->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("APlayerChar : NewFocusedActor NULL"));
+	}
 }
 
 void APlayerCharacter::InputAbilityTagPressed(const class UInputAction* Action)
