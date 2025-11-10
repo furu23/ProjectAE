@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Characters/Player/PlayerCharacter.h"
@@ -45,10 +45,10 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 
 	/*
-	* ±âÅ¸ ·ÎÁ÷
+	* ê¸°íƒ€ ë¡œì§
 	*/
 
-	// **** ¾îºô¸®Æ¼ ½Ã½ºÅÛ ÀÎÇ² ¹ÙÀÎµù ****
+	// **** ì–´ë¹Œë¦¬í‹° ì‹œìŠ¤í…œ ì¸í’‹ ë°”ì¸ë”© ****
 	if (EnhancedInput && AbilityInputConfig)
 	{
 		for (const TPair<TObjectPtr<UInputAction>, FGameplayTag>& Pair : AbilityInputConfig->AbilityInputActions)
@@ -57,9 +57,9 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 			const FGameplayTag BindingTag = Pair.Value;
 			if (InputAction)
 			{
-				// ´­¸² ÀÌº¥Æ® ¹ÙÀÎµù
+				// ëˆŒë¦¼ ì´ë²¤íŠ¸ ë°”ì¸ë”©
 				EnhancedInput->BindAction(InputAction, ETriggerEvent::Started, this, &APlayerCharacter::InputAbilityTagPressed, InputAction);
-				// ¶¼Áü ÀÌº¥Æ® ¹ÙÀÎµù
+				// ë–¼ì§ ì´ë²¤íŠ¸ ë°”ì¸ë”©
 				EnhancedInput->BindAction(InputAction, ETriggerEvent::Completed, this, &APlayerCharacter::InputAbilityTagReleased, InputAction);
 			}
 		}

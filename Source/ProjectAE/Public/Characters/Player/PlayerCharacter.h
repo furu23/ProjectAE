@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -35,11 +35,11 @@ protected:
 	TObjectPtr<class UCameraComponent> Camera;
 
 
-	// **** ¾îºô¸®Æ¼ ½Ã½ºÅÛ ÀÎÇ² ¹ÙÀÎµù ****
+	// **** ì–´ë¹Œë¦¬í‹° ì‹œìŠ¤í…œ ì¸í’‹ ë°”ì¸ë”© ****
 
-	// ÀÎÇ² ¾×¼ÇÀÌ ´­·ÈÀ» ¶§ È£ÃâµÇ´Â ÇÔ¼ö
+	// ì¸í’‹ ì•¡ì…˜ì´ ëˆŒë ¸ì„ ë•Œ í˜¸ì¶œë˜ëŠ” í•¨ìˆ˜
 	void InputAbilityTagPressed(const class UInputAction* Action);
-	// ÀÎÇ² ¾×¼ÇÀÌ ¶¼Á³À» ¶§ È£ÃâµÇ´Â ÇÔ¼ö
+	// ì¸í’‹ ì•¡ì…˜ì´ ë–¼ì¡Œì„ ë•Œ í˜¸ì¶œë˜ëŠ” í•¨ìˆ˜
 	void InputAbilityTagReleased(const class UInputAction* Action);
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input|Ability", meta = (AllowPrivateAccess = "true"))
