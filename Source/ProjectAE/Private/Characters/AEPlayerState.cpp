@@ -18,4 +18,5 @@ AAEPlayerState::AAEPlayerState()
 {
 	ASC = CreateDefaultSubobject<UAEAbilitySystemComponent>("ASC");
 	AS = CreateDefaultSubobject<UAS_BaseCombat>("AttributeSet");
+	ASC->AddAttributeSetSubobject<UAS_BaseCombat>(AS);
 }

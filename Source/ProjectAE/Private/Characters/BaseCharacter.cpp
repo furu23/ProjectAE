@@ -44,6 +44,7 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	// 어빌리티 시스템 초기화
 	InitAbiltySystem();
 
+	CachedASC->InitAbilityActorInfo(GetPlayerState(), this);
 	// TODO: 어빌리티 부여 등 추가 초기화 작업
 }
 
@@ -55,10 +56,10 @@ TWeakObjectPtr<UAbilitySystemComponent> ABaseCharacter::GetASC()
 void ABaseCharacter::InitAbiltySystem()
 {
 	APlayerState* PS = GetPlayerState();
-	if (PS)
+	if (ensure(PS))
 	{
 		UAbilitySystemComponent* FoundASC = Cast<AAEPlayerState>(PS)->GetAbilitySystemComponent();
-		if (FoundASC)
+		if (ensure(FoundASC))
 		{
 			CachedASC = FoundASC;
 		}

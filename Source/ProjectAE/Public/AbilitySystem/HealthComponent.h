@@ -7,6 +7,7 @@
 #include "HealthComponent.generated.h"
 
 class UAbilitySystemComponent;
+class UAS_HealthSet;
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -26,11 +27,15 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+public:
+	// **** 공용 API 함수 ****
+
 protected:
-	virtual void GetAbilitySystemComponent() const;
+	virtual UAbilitySystemComponent* TryFindAbiltySystemComponent() const;
 
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> ASC;
 
-
+	UPROPERTY()
+	TObjectPtr<UAS_HealthSet> HealthSet;
 };

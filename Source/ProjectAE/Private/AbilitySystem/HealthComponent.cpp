@@ -35,16 +35,7 @@ void UHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	// ...
 }
 
-void UHealthComponent::GetAbilitySystemComponent() const
+UAbilitySystemComponent* UHealthComponent::TryFindAbiltySystemComponent() const
 {
-	UObject* Owner = GetOwner();
-	if (Owner)
-	{
-		ABaseCharacter* CastedCharacter = Cast<ABaseCharacter>(Owner);
-		if (CastedCharacter)
-		{
-		;
-		}
-	}
+	return nullptr;
 }
-

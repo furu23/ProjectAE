@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "GameplayAbilitySpecHandle.h"
 #include "InteractionComponent.generated.h"
-
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFocusChanged, AActor*, NewFocusedActor);
 
@@ -57,5 +57,8 @@ public:
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interact")
 	AActor* OwnerRef = nullptr;
+
+	UPROPERTY()
+	FGameplayAbilitySpecHandle GrantedAbilityHandle;
 	
 };
