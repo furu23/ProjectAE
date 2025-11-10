@@ -74,6 +74,21 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 
 }
 
+void APlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	UAbilitySystemComponent* ASC = CachedASC.Get();
+	for (TSubclassOf<UGameplayAbility> AbilityForGrant : DefaultAbilities)
+	{
+		if (AbilityForGrant)
+		{
+			const FGameplayAbilitySpec Spec(AbilityForGrant, 1, -1, this);
+			ASC->GiveAbility(Spec);
+		}
+	}
+}
+
 void APlayerCharacter::OnFocusChanged(AActor* NewFocusedActor)
 {
 	if (NewFocusedActor)
