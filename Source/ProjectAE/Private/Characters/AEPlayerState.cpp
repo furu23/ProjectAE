@@ -1,9 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Characters/AEPlayerState.h"
 #include "AbilitySystem/AEAbilitySystemComponent.h"
 #include "AbilitySystem/AS_BaseCombat.h"
+#include "AbilitySystem/AS_HealthSet.h"
 
 UAbilitySystemComponent* AAEPlayerState::GetAbilitySystemComponent() const
 {
@@ -16,7 +17,11 @@ UAbilitySystemComponent* AAEPlayerState::GetAbilitySystemComponent() const
 
 AAEPlayerState::AAEPlayerState()
 {
+	// ASC, BaseSet 
 	ASC = CreateDefaultSubobject<UAEAbilitySystemComponent>("ASC");
-	AS = CreateDefaultSubobject<UAS_BaseCombat>("AttributeSet");
-	ASC->AddAttributeSetSubobject<UAS_BaseCombat>(AS);
+	BaseSet = CreateDefaultSubobject<UAS_BaseCombat>("AttributeSet");
+
+	// AttributeSet 등록
+	ASC->AddAttributeSetSubobject<UAS_BaseCombat>(BaseSet);
+	ASC->AddAttributeSetSubobject<UAS_HealthSet>(HealthSet);
 }

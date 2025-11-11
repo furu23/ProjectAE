@@ -30,7 +30,7 @@ public:
 
 	virtual void PossessedBy(AController* NewController) override;
 
-	TWeakObjectPtr<UAbilitySystemComponent> GetASC();
+	TWeakObjectPtr<UAbilitySystemComponent> GetASC() const;
 
 protected:
 
@@ -44,6 +44,6 @@ protected:
 	void OnRep_PlayerState() override;
 
 	// 어빌리티 시스템 컴포넌트 캐시
-	UPROPERTY()
-	TWeakObjectPtr<class UAbilitySystemComponent> CachedASC;
+	UPROPERTY(Transient)
+	TWeakObjectPtr<UAbilitySystemComponent> CachedASC;
 };
