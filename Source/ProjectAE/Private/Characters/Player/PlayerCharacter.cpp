@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Interaction/InteractionComponent.h"
 
 
@@ -25,13 +26,28 @@ APlayerCharacter::APlayerCharacter()
 
 	SpringArm->TargetArmLength = 1000.f;
 	SpringArm->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
-	
+	// SpringArm->SetWorldRotation(FRotator(-60.f, 0.f, 0.f));
+
+	SpringArm->bUsePawnControlRotation = false;
 	SpringArm->bDoCollisionTest = false;
+	
 	SpringArm->bEnableCameraLag = true;
+
+	// 캐릭터랑 같이 회전 안함 (TopDown 에서는 고정 방식)
+	SpringArm->bInheritPitch = false;
+	SpringArm->bInheritRoll = false;
+	SpringArm->bInheritYaw = false;
+
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+
+	// GetCharacterMovement()->bOrientRotationToMovement = false;
 
 	// InteractionComponent의 포커스 변경 시 호출될 콜백 함수 등록
 	InteractionComponent->OnFocusChanged.AddDynamic(this, &APlayerCharacter::OnFocusChanged);
-	
+
+	TargetRotation = GetActorRotation();
 }
 
 void APlayerCharacter::BeginPlay()
@@ -42,6 +58,12 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (!TargetRotation.Equals(GetActorRotation()))
+	{
+		FRotator NewRotation = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, RotationInterpSpeed);
+		SetActorRotation(NewRotation);
+	}
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -83,6 +105,35 @@ void APlayerCharacter::OnFocusChanged(AActor* NewFocusedActor)
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("APlayerChar : NewFocusedActor NULL"));
+	}
+}
+
+void APlayerCharacter::Move(const FVector2D& MoveVector)
+{
+	if (!GetController()) return;
+
+	const FRotator NewRotation = Controller->GetControlRotation();
+	const FRotator YawRotation(0, NewRotation.Yaw, 0);
+
+	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+	AddMovementInput(ForwardDirection, MoveVector.Y);
+	AddMovementInput(RightDirection, MoveVector.X);
+}
+
+void APlayerCharacter::RotateToCursor()
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return;
+	
+	FHitResult Hit;
+	if (PC->GetHitResultUnderCursor(ECC_Visibility, false, Hit))
+	{
+		FVector Direction = Hit.ImpactPoint - GetActorLocation();
+		Direction.Z = 0.f;
+
+		TargetRotation = Direction.Rotation();
 	}
 }
 

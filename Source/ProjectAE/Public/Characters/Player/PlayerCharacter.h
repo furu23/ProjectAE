@@ -29,8 +29,21 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
 	void OnFocusChanged(AActor* NewFocusedActor);
+
+protected:
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void Move(const FVector2D& MoveVector);
+	
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void RotateToCursor();
+	
+private:
+	FRotator TargetRotation;
 	
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	float RotationInterpSpeed = 5.f;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<class USpringArmComponent> SpringArm;
 	
