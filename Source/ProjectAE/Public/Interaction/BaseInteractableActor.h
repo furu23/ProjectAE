@@ -7,6 +7,8 @@
 #include "Interfaces/Interactable.h"
 #include "BaseInteractableActor.generated.h"
 
+class UGameplayAbility;
+
 
 UCLASS()
 class PROJECTAE_API ABaseInteractableActor : public AActor, public IInteractable
@@ -41,4 +43,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
 	bool bAllowInteraction = true;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact|Ability")
+	TSubclassOf<UGameplayAbility> GrantAbility;
 };

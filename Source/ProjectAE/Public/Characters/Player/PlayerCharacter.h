@@ -7,6 +7,7 @@
 #include "PlayerCharacter.generated.h"
 
 class UAbilityInputConfig;
+class UGameplayAbility;
 
 /**
  * 
@@ -26,6 +27,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual void PossessedBy(AController* NewController) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
 	void OnFocusChanged(AActor* NewFocusedActor);
@@ -62,5 +65,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input|Ability", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAbilityInputConfig> AbilityInputConfig;
+
+	// 기본 어빌리티 목록
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
 	
 };

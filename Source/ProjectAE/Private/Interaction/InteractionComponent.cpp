@@ -4,6 +4,11 @@
 #include "Interaction/InteractionComponent.h"
 
 #include "Interfaces/Interactable.h"
+#include "Characters/BaseCharacter.h"
+#include "Interaction/BaseInteractableActor.h"
+#include "GameplayAbilitySpecHandle.h"
+#include "GameplayAbilitySpec.h"
+#include "AbilitySystemComponent.h"
 
 
 // Sets default values for this component's properties
@@ -69,6 +74,38 @@ void UInteractionComponent::UpdateTracing()
 			CurrentFocus = HitActor;
 			IInteractable::Execute_OnFocusChanged(CurrentFocus, OwnerRef, true);
 			OnFocusChanged.Broadcast(CurrentFocus);
+
+			// **** [추가] Ability Grant 관련 ****
+
+			UE_LOG(LogTemp, Log, TEXT("---Pull and Grant Ability on Actor---"));
+
+			ABaseCharacter* CastedCharacter = GetOwner<ABaseCharacter>();
+			if (CastedCharacter)
+			{
+				UAbilitySystemComponent* OwnerASC = CastedCharacter->GetASC().Get();
+				ABaseInteractableActor* TargetActor = Cast<ABaseInteractableActor>(CurrentFocus);
+				if (OwnerASC && TargetActor->Implements<UInteractable>())
+				{
+					TSubclassOf<UGameplayAbility> AbilityToGrant = TargetActor->GrantAbility;
+					if (AbilityToGrant)
+					{	
+						FGameplayAbilitySpec Spec(AbilityToGrant, 1, -1, TargetActor);
+
+						GrantedAbilityHandle = OwnerASC->GiveAbility(Spec);
+						if (GrantedAbilityHandle.IsValid())
+						{
+							UE_LOG(LogTemp, Log, TEXT("OnBeginFocus: GiveAbility SUCCESS. Handle: %s"), *GrantedAbilityHandle.ToString());
+						}
+						else
+						{
+							// 이 로그가 뜬다면 ASC 내부에서 부여가 실패한 것
+							UE_LOG(LogTemp, Error, TEXT("OnBeginFocus: GiveAbility FAILED. Returned Invalid Handle."));
+						}
+						UE_LOG(LogTemp, Log, TEXT("Granted On ABaseCharacter"));
+						UE_LOG(LogTemp, Log, TEXT("-------------------------"));
+					}
+				}
+			}
 		}
 	}
 	else
@@ -78,6 +115,16 @@ void UInteractionComponent::UpdateTracing()
 			IInteractable::Execute_OnFocusChanged(CurrentFocus, OwnerRef, false);
 			CurrentFocus = nullptr;
 			OnFocusChanged.Broadcast(CurrentFocus);
+
+			ABaseCharacter* CastedCharacter = GetOwner<ABaseCharacter>();
+			if (CastedCharacter)
+			{
+				UAbilitySystemComponent* OwnerASC = CastedCharacter->GetASC().Get();
+				if (OwnerASC && GrantedAbilityHandle.IsValid())
+				{
+					OwnerASC->SetRemoveAbilityOnEnd(GrantedAbilityHandle);
+				}
+			}
 		}
 	}
 }

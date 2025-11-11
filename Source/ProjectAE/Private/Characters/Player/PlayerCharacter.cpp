@@ -84,7 +84,7 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 		{
 			const UInputAction* InputAction = Pair.Key;
 			const FGameplayTag BindingTag = Pair.Value;
-			if (InputAction)
+			if (ensure(InputAction))
 			{
 				// 눌림 이벤트 바인딩
 				EnhancedInput->BindAction(InputAction, ETriggerEvent::Started, this, &APlayerCharacter::InputAbilityTagPressed, InputAction);
@@ -94,6 +94,21 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 		}
 	}
 
+}
+
+void APlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	UAbilitySystemComponent* ASC = CachedASC.Get();
+	for (TSubclassOf<UGameplayAbility> AbilityForGrant : DefaultAbilities)
+	{
+		if (AbilityForGrant)
+		{
+			const FGameplayAbilitySpec Spec(AbilityForGrant, 1, -1, this);
+			ASC->GiveAbility(Spec);
+		}
+	}
 }
 
 void APlayerCharacter::OnFocusChanged(AActor* NewFocusedActor)
@@ -146,7 +161,7 @@ void APlayerCharacter::InputAbilityTagPressed(const class UInputAction* Action)
 	}
 
 	const FGameplayTag* FoundTag = AbilityInputConfig->AbilityInputActions.Find(Action);
-	if (FoundTag && FoundTag->IsValid())
+	if (ensure(FoundTag && FoundTag->IsValid()))
 	{
 		ASC->AbilityInputTagPressed(*FoundTag);
 	}

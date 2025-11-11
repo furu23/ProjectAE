@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "BaseCharacter.generated.h"
 
+class UAbilitySystemComponent;
+
 UCLASS()
 class PROJECTAE_API ABaseCharacter : public ACharacter
 {
@@ -28,6 +30,8 @@ public:
 
 	virtual void PossessedBy(AController* NewController) override;
 
+	TWeakObjectPtr<UAbilitySystemComponent> GetASC() const;
+
 protected:
 
 	// *** 어빌리티 시스템 관련 기능 ***
@@ -40,6 +44,6 @@ protected:
 	void OnRep_PlayerState() override;
 
 	// 어빌리티 시스템 컴포넌트 캐시
-	UPROPERTY()
-	TWeakObjectPtr<class UAbilitySystemComponent> CachedASC;
+	UPROPERTY(Transient)
+	TWeakObjectPtr<UAbilitySystemComponent> CachedASC;
 };
