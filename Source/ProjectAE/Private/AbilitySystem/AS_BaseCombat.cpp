@@ -12,7 +12,7 @@ UAS_BaseCombat::UAS_BaseCombat()
 	InitMaxBio(20.f);
 
 	InitStamina(50.f);
-	InitStamina(50.f);
+	InitMaxStamina(50.f);
 
 	InitBaseAttack(1.f);
 	InitBaseDefense(1.f);
@@ -20,6 +20,10 @@ UAS_BaseCombat::UAS_BaseCombat()
 
 void UAS_BaseCombat::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
+	if (Attribute == GetStaminaAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxStamina());
+	}
 }
 
 void UAS_BaseCombat::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)

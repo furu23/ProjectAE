@@ -63,11 +63,11 @@ protected:
 	// 인풋 액션이 떼졌을 때 호출되는 함수
 	void InputAbilityTagReleased(const class UInputAction* Action);
 
-	UPROPERTY(EditDefaultsOnly, Category = "Input|Ability", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category = "Ability|Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAbilityInputConfig> AbilityInputConfig;
 
 	// 기본 어빌리티 목록
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
 	
 };
