@@ -17,12 +17,12 @@ void UAS_HealthSet::PreAttributeChange(const FGameplayAttribute& Attribute, floa
 {
 	if (Attribute == UAS_HealthSet::GetHealthAttribute())
 	{
-		SetHealth(FMath::Clamp(NewValue, 0.f, GetMaxHealth()));
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
 	}
 	else if (Attribute == UAS_HealthSet::GetMaxHealthAttribute())
 	{
 		// 최소 최대 체력 값을 10으로 제한합니다.
-		SetMaxHealth(FMath::Clamp(NewValue, MINIMUM_HEALTH, GetMaxHealth()));
+		NewValue = FMath::Clamp(NewValue, MINIMUM_HEALTH, GetMaxHealth());
 	}
 }
 

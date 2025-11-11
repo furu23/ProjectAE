@@ -11,6 +11,10 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Interaction/InteractionComponent.h"
 
+#if UE_BUILD_DEVELOPMENT
+#include "GameplayTagContainer.h"
+#endif
+
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -109,6 +113,9 @@ void APlayerCharacter::PossessedBy(AController* NewController)
 			ASC->GiveAbility(Spec);
 		}
 	}
+	#if UE_BUILD_DEVELOPMENT
+	ASC->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag("State.Area.InRaid"));
+	#endif
 }
 
 void APlayerCharacter::OnFocusChanged(AActor* NewFocusedActor)
