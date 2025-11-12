@@ -44,6 +44,9 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	// 어빌리티 시스템 초기화
 	InitAbiltySystem();
 
+	// Enemy 생성 시 Crash 발생
+	if (!GetPlayerState()) return;
+	
 	CachedASC->InitAbilityActorInfo(GetPlayerState(), this);
 	// TODO: 어빌리티 부여 등 추가 초기화 작업
 }
