@@ -38,7 +38,7 @@ public:
 
 	// SetByCaller로 적용할 값
     UPROPERTY(EditDefaultsOnly, Category = "Cost|Stamina")
-    float StaminaDrainPerSecond = 3.f;
+    float StaminaDrainPerSecond = 10.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Cost|Stamina", meta = (ToolTip = "지속성 스테미나 Cost GE를 배치합니다."))
 	TSubclassOf<UGameplayEffect> StaminaDrainCostGE;

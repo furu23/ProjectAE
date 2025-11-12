@@ -30,7 +30,41 @@ public:
 
 	virtual void PossessedBy(AController* NewController) override;
 
-	TWeakObjectPtr<UAbilitySystemComponent> GetASC() const;
+	UFUNCTION(BlueprintCallable, Category = "Ability")
+	UAbilitySystemComponent* GetASC() const;
+
+
+	// **** Develop Test&Debug Only ****
+
+	/**
+	* @brief 편하게 태그를 추가해주는 헬퍼 함수입니다.
+	* 
+	* @param TagRef			추가할 태그
+	* @param UserClass		이 함수를 호출하는 클래스 (ex: AddLooseTagForDevelop(Tag , this); )
+	* @param bIsForStacking	한 번만 적용할지 확인합니다.
+	* 
+	* @note 이 함수는 Development Build 에서만 작동하며, Shipping Build에서는 아무런 작동도 하지 않습니다.
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Ability",
+		meta=(DevelopmentOnly, DisplayName = "AddTag", ToolTip = "개발 빌드용 태그 추가 헬퍼 함수입니다.")
+	)
+	virtual void AddLooseTagForDevelop(FGameplayTag Tag, const UObject* UserClass, bool bIsForStacking = true);
+
+	/**
+	* @brief 편하게 태그를 제거해주는 헬퍼 함수입니다.
+	*
+	* @param TagRef			제거할 태그
+	* @param UserClass		이 함수를 호출하는 클래스 (ex: RemoveLooseTagForDevelop(Tag , this); )
+	* @param bIsRemoveAll	모든 스택 태그를 지울 지 확인합니다.
+	*
+	* @note 이 함수는 Development Build 에서만 작동하며, Shipping Build에서는 아무런 작동도 하지 않습니다.
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Ability",
+		meta=(DevelopmentOnly, DisplayName = "RemoveTag", ToolTip = "개발 빌드용 태그 제거 헬퍼 함수입니다.")
+	)
+	virtual void RemoveLooseTagForDevelop(FGameplayTag Tag, const UObject* UserClass, bool bIsRemoveAll = true);
+
+	// *********************************
 
 protected:
 
@@ -45,5 +79,5 @@ protected:
 
 	// 어빌리티 시스템 컴포넌트 캐시
 	UPROPERTY(Transient)
-	TWeakObjectPtr<UAbilitySystemComponent> CachedASC;
+	TObjectPtr<UAbilitySystemComponent> CachedASC;
 };

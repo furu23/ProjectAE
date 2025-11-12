@@ -63,11 +63,11 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!TargetRotation.Equals(GetActorRotation()))
-	{
-		FRotator NewRotation = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, RotationInterpSpeed);
-		SetActorRotation(NewRotation);
-	}
+// 	if (!TargetRotation.Equals(GetActorRotation()))
+// 	{
+// 		FRotator NewRotation = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, RotationInterpSpeed);
+// 		SetActorRotation(NewRotation);
+// 	}
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
