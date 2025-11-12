@@ -123,7 +123,7 @@ bool UInventoryComponent::MoveItem(UInventoryComponent* Target, int32 FromSlot, 
 {
 	bool bSuccess = false;
 	
-	if (!Target || IsSlotValid(FromSlot)) return bSuccess;
+	if (!Target || !IsSlotValid(FromSlot)) return bSuccess;
 	if (Target == this) return bSuccess;	// 같은 인벤토리 일 경우에는 Swap 사용
 
 	FInventorySlot& SourceSlot = InventorySlots[FromSlot];
