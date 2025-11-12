@@ -8,6 +8,9 @@
 
 UAS_BaseCombat::UAS_BaseCombat()
 {
+	// AEGameplayTag 적용 시 제거
+	StaminaRegenTag = FGameplayTag::RequestGameplayTag(TEXT("State.Stamina.Regenerating"));
+
 	InitBio(20.f);
 	InitMaxBio(20.f);
 
@@ -53,9 +56,20 @@ void UAS_BaseCombat::PostGameplayEffectExecute(const struct FGameplayEffectModCa
 	}
 	else if (Data.EvaluatedData.Attribute == GetStaminaAttribute())
 	{
-		if (GetStamina() <= 0)
+		UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+
+		if (GetStamina() < GetMaxStamina())
 		{
-			// (선택) 탈진 태그 1초 부여 GE 등, 회복 전까지 Stamina를 사용하지 못하게 함
+			if (!bIsRegenerating)
+			{
+				ASC->AddLooseGameplayTag(StaminaRegenTag);
+				bIsRegenerating = true;
+			}
+		}
+		else if (GetStamina() >= GetMaxStamina())
+		{
+			ASC->RemoveLooseGameplayTag(StaminaRegenTag);
+			bIsRegenerating = false;
 		}
 	}
 }
