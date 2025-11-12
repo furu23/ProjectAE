@@ -9,6 +9,7 @@
 
 class UAEAbilitySystemComponent;
 class UAS_BaseCombat;
+class UAS_HealthSet;
 
 /**
  * 
@@ -29,5 +30,8 @@ protected:
 	TObjectPtr<UAEAbilitySystemComponent> ASC;
 
 	UPROPERTY()
-	TObjectPtr<UAS_BaseCombat> AS;
+	TObjectPtr<UAS_BaseCombat> BaseSet;
+
+	UPROPERTY()
+	TObjectPtr<UAS_HealthSet> HealthSet;
 };

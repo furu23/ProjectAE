@@ -49,5 +49,5 @@ public:
 	// 스태미나 0일 때 자동 취소용 델리게이트 핸들
 	FDelegateHandle StaminaChangedDelegateHandle;
 
-	virtual void OnStaminaChanged(const FOnAttributeChangeData& Data);
+	void OnStaminaChanged(const FOnAttributeChangeData& Data);
 };
