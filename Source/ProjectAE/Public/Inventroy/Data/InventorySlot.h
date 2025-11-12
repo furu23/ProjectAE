@@ -6,6 +6,7 @@
 #include "Data/ItemData.h"
 #include "InventorySlot.generated.h"
 
+
 /**
  * FInventorySlot은 인벤토리의 슬롯을 나타내는 구조체로, 아이템 데이터와 수량 정보를 저장
  */

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "ItemData.generated.h"
 
+
 /**
  * @brief Represents data associated with an item, including its display information, description, icon, and stack size limit.
  *
