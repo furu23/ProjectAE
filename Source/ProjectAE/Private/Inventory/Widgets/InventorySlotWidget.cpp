@@ -18,6 +18,14 @@ void UInventorySlotWidget::NativeConstruct()
 
 FReply UInventorySlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
+	if (InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton))
+	{
+		if (InventoryComponent)
+		{
+			InventoryComponent->MoveItem(InventoryComponent, SlotIndex, -1);
+		}
+	}
+	
 	if (InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton) && !IsEmpty())
 	{
 		return UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton).NativeReply;
