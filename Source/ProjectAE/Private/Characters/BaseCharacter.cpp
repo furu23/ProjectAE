@@ -7,6 +7,7 @@
 #include "AbilitySystem/AEAbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
 #include "EnhancedInputComponent.h"
+#include "Core/AEGloabalHelper.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -44,28 +45,61 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	// 어빌리티 시스템 초기화
 	InitAbiltySystem();
 
-	// Enemy 생성 시 Crash 발생
-	if (!GetPlayerState()) return;
 	
-	CachedASC->InitAbilityActorInfo(GetPlayerState(), this);
 	// TODO: 어빌리티 부여 등 추가 초기화 작업
 }
 
-TWeakObjectPtr<UAbilitySystemComponent> ABaseCharacter::GetASC() const
+UAbilitySystemComponent* ABaseCharacter::GetASC() const
 {
 	return CachedASC;
 }
 
+// ======= Development Build Only =======
+
+void ABaseCharacter::AddLooseTagForDevelop(FGameplayTag Tag, const UObject* UserClass, bool bIsForStacking)
+{
+	if (CachedASC)
+	{
+		if (!bIsForStacking)
+		{
+			if (CachedASC->GetGameplayTagCount(Tag) < 1)
+			{
+				CachedASC->AddLooseGameplayTag(Tag);
+			}
+		}
+		else
+		{ 
+			CachedASC->AddLooseGameplayTag(Tag);
+		}
+		UE_LOG(LogTemp, Log, TEXT("Tag `%s` is Added in Object `%s`"), *Tag.GetTagName().ToString(), *UserClass->GetFName().ToString());
+	}
+}
+
+void ABaseCharacter::RemoveLooseTagForDevelop(FGameplayTag Tag, const UObject* UserClass, bool bIsRemoveAll)
+{
+	if (CachedASC)
+	{
+		if (bIsRemoveAll)
+		{
+			CachedASC->RemoveLooseGameplayTag(Tag, CachedASC->GetGameplayTagCount(Tag));
+		}
+		else
+		{
+			CachedASC->RemoveLooseGameplayTag(Tag);
+		}
+		UE_LOG(LogTemp, Log, TEXT("Tag `%s` is Removed in Object `%s`"), *Tag.GetTagName().ToString(), *UserClass->GetFName().ToString());
+	}	
+}
+
+// ======================================
+
 void ABaseCharacter::InitAbiltySystem()
 {
-	APlayerState* PS = GetPlayerState();
-	if (ensure(PS))
+	UAbilitySystemComponent* FoundASC = UAEGloabalHelper::GetAbilitySystemComponent(this);
+	if (ensure(FoundASC))
 	{
-		UAbilitySystemComponent* FoundASC = Cast<AAEPlayerState>(PS)->GetAbilitySystemComponent();
-		if (ensure(FoundASC))
-		{
-			CachedASC = FoundASC;
-		}
+		CachedASC = FoundASC;
+		CachedASC->InitAbilityActorInfo(FoundASC->GetOwner(), this);
 	}
 }
 
