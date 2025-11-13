@@ -25,7 +25,7 @@ class UAS_HealthSet;
 struct FGameplayEffectContextHandle;
 
 // 3. 서브시스템 클래스
-// class UQuestSubsystem;
+class UQuestManagerSubSystem;
 // class UWorldManagerSubsystem;
 
 /**
@@ -74,9 +74,9 @@ public:
 	// (GetGameInstance()->GetSubsystem<T>() 호출을 캡슐화합니다)
 	// ----------------------------------------------------------------------
 
-	/** UQuestSubsystem (World Subsystem)을 가져옵니다. */
-// 	UFUNCTION(BlueprintPure, Category = "ProjectAE|Subsystems", meta = (WorldContext = "WorldContextObject"))
-// 	static UQuestSubsystem* GetQuestSubsystem(const UObject* WorldContextObject);
+	/** UQuestManagerSubSystem(Local Player Subsystem)을 가져옵니다. */
+ 	UFUNCTION(BlueprintPure, Category = "ProjectAE|Subsystems", meta = (WorldContext = "WorldContextObject"))
+ 	static UQuestManagerSubSystem* GetQuestSubsystem(const UObject* WorldContextObject);
 
 // 	/** UWorldManagerSubsystem (GameInstance Subsystem)을 가져옵니다. */
 // 	UFUNCTION(BlueprintPure, Category = "MyGame|Subsystems", meta = (WorldContext = "WorldContextObject"))

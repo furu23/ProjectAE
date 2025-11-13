@@ -25,7 +25,7 @@
 #include "AbilitySystem/AS_BaseCombat.h"
 #include "AbilitySystem/AS_HealthSet.h"
 #include "Characters/AEPlayerState.h"
-// #include "Subsystems/QuestSubsystem.h"
+#include "Quest/QuestManagerSubSystem.h"
 
 
 // ----------------------------------------------------------------------
@@ -125,16 +125,15 @@ AAEPlayerController* UAEGloabalHelper::GetOwningPlayerController(UObject* Target
 // ----------------------------------------------------------------------
 
 
-/*
-UQuestSubsystem* UAEGloabalHelper::GetQuestSubsystem(const UObject* WorldContextObject)
+UQuestManagerSubSystem* UAEGloabalHelper::GetQuestSubsystem(const UObject* WorldContextObject)
 {
-	if (const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	const APlayerController* PC = GetAEPlayerController(WorldContextObject);
+	if (const ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
 	{
-		// UWorldSubsystem 예시
-		return World->GetSubsystem<UQuestSubsystem>();
+		return LocalPlayer->GetSubsystem<UQuestManagerSubSystem>();
 	}
 	return nullptr;
-}*/
+}
 
 
 // ----------------------------------------------------------------------

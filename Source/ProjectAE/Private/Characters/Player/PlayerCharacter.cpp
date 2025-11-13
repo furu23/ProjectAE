@@ -4,7 +4,7 @@
 #include "Characters/Player/PlayerCharacter.h"
 
 #include "AbilitySystem/AEAbilitySystemComponent.h"
-#include "Data/AbilityInputConfig.h"
+#include "AbilitySystem/Data/AbilityInputConfig.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
