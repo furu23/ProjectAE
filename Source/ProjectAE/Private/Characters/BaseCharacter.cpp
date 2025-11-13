@@ -7,6 +7,7 @@
 #include "AbilitySystem/AEAbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
 #include "EnhancedInputComponent.h"
+#include "Core/AEGloabalHelper.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -44,7 +45,7 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	// 어빌리티 시스템 초기화
 	InitAbiltySystem();
 
-	CachedASC->InitAbilityActorInfo(GetPlayerState(), this);
+	
 	// TODO: 어빌리티 부여 등 추가 초기화 작업
 }
 
@@ -94,14 +95,11 @@ void ABaseCharacter::RemoveLooseTagForDevelop(FGameplayTag Tag, const UObject* U
 
 void ABaseCharacter::InitAbiltySystem()
 {
-	APlayerState* PS = GetPlayerState();
-	if (ensure(PS))
+	UAbilitySystemComponent* FoundASC = UAEGloabalHelper::GetAbilitySystemComponent(this);
+	if (ensure(FoundASC))
 	{
-		UAbilitySystemComponent* FoundASC = Cast<AAEPlayerState>(PS)->GetAbilitySystemComponent();
-		if (ensure(FoundASC))
-		{
-			CachedASC = FoundASC;
-		}
+		CachedASC = FoundASC;
+		CachedASC->InitAbilityActorInfo(FoundASC->GetOwner(), this);
 	}
 }
 
