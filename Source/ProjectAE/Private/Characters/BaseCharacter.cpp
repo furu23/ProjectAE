@@ -2,7 +2,7 @@
 
 
 #include "Characters/BaseCharacter.h"
-#include "Data/AbilityInputConfig.h"
+#include "AbilitySystem/Data/AbilityInputConfig.h"
 #include "Characters/AEPlayerState.h"
 #include "AbilitySystem/AEAbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
