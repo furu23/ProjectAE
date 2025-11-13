@@ -46,7 +46,7 @@ private:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
 	float RotationInterpSpeed = 5.f;
-	
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<class USpringArmComponent> SpringArm;
 	
@@ -55,6 +55,11 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<class UInteractionComponent> InteractionComponent;
+
+	// **** 어빌리티 ****
+
+	UPROPERTY(BlueprintReadWrite, Category = "Ability", meta = (ToolTip = "조준 중인지에 관련된 bool 프로퍼티"))
+	bool bIsAiming = false;
 
 	// **** 어빌리티 시스템 인풋 바인딩 ****
 

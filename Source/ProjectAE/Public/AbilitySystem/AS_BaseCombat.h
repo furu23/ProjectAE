@@ -7,6 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "AS_BaseCombat.generated.h"
 
+
 // Attribute 관리를 위한 함수 생성용 매크로
 #define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
     GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName) \
@@ -80,4 +81,10 @@ protected:
 //     UFUNCTION() virtual void OnRep_MaxBio(const FGameplayAttributeData& OldMaxBio);
 //     UFUNCTION() virtual void OnRep_BaseAttack(const FGameplayAttributeData& OldBaseAttack);
 //     UFUNCTION() virtual void OnRep_BaseDefense(const FGameplayAttributeData& OldBaseDefense);
+
+private:
+
+    bool bIsRegenerating = false;
+
+    FGameplayTag StaminaRegenTag;
 };

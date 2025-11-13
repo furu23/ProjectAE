@@ -24,7 +24,8 @@ bool UGA_BaseStaminaAbility::CanActivateAbility(const FGameplayAbilitySpecHandle
 	const float CurrentStamina = AS->GetStamina();
 	if (StaminaChunkCostGE)
 	{
-		return StaminaChunkCost <= CurrentStamina;
+		UE_LOG(LogTemp, Log, TEXT("%f, %f"), StaminaChunkCost, CurrentStamina);
+		return StaminaChunkCost + CurrentStamina >= 0;
 	}
 
 	if (StaminaDrainCostGE)

@@ -82,7 +82,7 @@ void UInteractionComponent::UpdateTracing()
 			ABaseCharacter* CastedCharacter = GetOwner<ABaseCharacter>();
 			if (CastedCharacter)
 			{
-				UAbilitySystemComponent* OwnerASC = CastedCharacter->GetASC().Get();
+				UAbilitySystemComponent* OwnerASC = CastedCharacter->GetASC();
 				ABaseInteractableActor* TargetActor = Cast<ABaseInteractableActor>(CurrentFocus);
 				if (OwnerASC && TargetActor->Implements<UInteractable>())
 				{
@@ -119,7 +119,7 @@ void UInteractionComponent::UpdateTracing()
 			ABaseCharacter* CastedCharacter = GetOwner<ABaseCharacter>();
 			if (CastedCharacter)
 			{
-				UAbilitySystemComponent* OwnerASC = CastedCharacter->GetASC().Get();
+				UAbilitySystemComponent* OwnerASC = CastedCharacter->GetASC();
 				if (OwnerASC && GrantedAbilityHandle.IsValid())
 				{
 					OwnerASC->SetRemoveAbilityOnEnd(GrantedAbilityHandle);
