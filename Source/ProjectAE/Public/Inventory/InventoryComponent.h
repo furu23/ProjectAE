@@ -83,6 +83,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
 	int32 MaxSlots = 20;
 
+	/**
+	 * TArray 가 실제 데이터이며, SaveGame 에 저장될 대상
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Inventory")
 	TArray<struct FInventorySlot> InventorySlots;
 
