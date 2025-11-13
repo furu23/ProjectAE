@@ -6,7 +6,7 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
-#include "Data/ItemData.h"
+#include "Inventory/Data/ItemData.h"
 #include "Inventory/Data/InventoryDragDropOperation.h"
 #include "Inventory/Data/InventorySlot.h"
 

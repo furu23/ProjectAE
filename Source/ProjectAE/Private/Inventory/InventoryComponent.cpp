@@ -3,7 +3,7 @@
 
 #include "Inventory/InventoryComponent.h"
 
-#include "Data/ItemData.h"
+#include "Inventory/Data/ItemData.h"
 #include "Inventory/Data/InventorySlot.h"
 
 

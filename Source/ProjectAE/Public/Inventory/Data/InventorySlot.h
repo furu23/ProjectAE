@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Data/ItemData.h"
+#include "Inventory/Data/ItemData.h"
 #include "InventorySlot.generated.h"
 
 
