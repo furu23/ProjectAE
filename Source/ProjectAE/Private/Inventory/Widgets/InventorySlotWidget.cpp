@@ -6,6 +6,7 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Inventory/InventoryUIManager.h"
 #include "Inventory/Data/ItemData.h"
 #include "Inventory/Data/InventoryDragDropOperation.h"
 #include "Inventory/Data/InventorySlot.h"
@@ -18,11 +19,12 @@ void UInventorySlotWidget::NativeConstruct()
 
 FReply UInventorySlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	if (InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton))
+	if (InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton) && !IsEmpty())
 	{
 		if (InventoryComponent)
 		{
-			InventoryComponent->MoveItem(InventoryComponent, SlotIndex, -1);
+			GetOwningPlayer()->FindComponentByClass<UInventoryUIManager>()->QuickMoveItem(InventoryComponent, SlotIndex);
+			return FReply::Handled();
 		}
 	}
 	
