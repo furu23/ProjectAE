@@ -41,4 +41,7 @@ public:
 	// 퀘스트의 목표입니다.
 	UPROPERTY(EditDefaultsOnly, Category = "Objective", meta = (ToolTip = "퀘스트 목표의 설정에 대한 배열입니다."))
 	TArray<TObjectPtr<UQuestObjectiveConfig>> ObjectConfigs;
+
+	// Primary Asset ID를 반환합니다.
+	virtual FPrimaryAssetId GetPrimaryAssetId() const override final;
 };

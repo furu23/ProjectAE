@@ -19,8 +19,7 @@ class PROJECTAE_API UAEQuestObject : public UObject
 {
 	GENERATED_BODY()
 
-public:
-	virtual void Initialize(UDA_QuestBase* DefRef, FQuestProgressData* ProgressRef, UQuestManagerSubSystem* Manager);
+	friend class UQuestManagerSubSystem;
 
 protected:
 	// **** 초기화될 기본 프로퍼티 ****
@@ -38,7 +37,10 @@ protected:
 	TObjectPtr<UQuestManagerSubSystem> CachedQuestSys;
 
 
-	// **** 퀘스트 진행에 따른 호출 함수 관련 ****
+	// **** 주요 기능 함수들 ****
+
+	// 퀘스트 런타임 객체를 초기화합니다.
+	virtual void Initialize(UDA_QuestBase* DefRef, FQuestProgressData* ProgressRef, UQuestManagerSubSystem* Manager);
 
 	// Objective 배열을 순회하며 활성화 시킵니다. 델리게이트에 OnObjectCompleted 함수를 바인드합니다.
 	virtual void Activate(UObject* WorldContext);
