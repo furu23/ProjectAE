@@ -45,6 +45,8 @@ void UAEGameHUDWidget::ShowChestInventory(class UInventoryComponent* ChestInvent
 	if (ChestInventoryWidget && ChestInventoryComponent)
 	{
 		ChestInventoryWidget->InitializeInventory(ChestInventoryComponent);
+		
+		InteractionPromptWidget->SetVisibility(ESlateVisibility::Collapsed);
 		ChestInventoryWidget->SetVisibility(ESlateVisibility::Visible);
 	}
 }
@@ -54,6 +56,7 @@ void UAEGameHUDWidget::HideChestInventory()
 	if (!ChestInventoryWidget) return;
 	
 	ChestInventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
+	InteractionPromptWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 }
 
 void UAEGameHUDWidget::ShowInteractionPrompt()

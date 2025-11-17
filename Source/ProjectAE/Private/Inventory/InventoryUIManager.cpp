@@ -73,6 +73,7 @@ void UInventoryUIManager::OpenChestInventory(UInventoryComponent* ChestInventory
 	
 	// 이미 다른 상자 인벤토리가 열려있을 경우
 	CloseChestInventory();
+	
 	// Player Inventory 먼저 띄우기
 	OpenPlayerInventory();
 	
@@ -86,6 +87,7 @@ void UInventoryUIManager::CloseChestInventory()
 	if (!GameHUDWidget) return;
 	
 	GameHUDWidget->HideChestInventory();
+	CurrentOpenChestInventory->OnInventoryClosed.Broadcast();
 	CurrentOpenChestInventory = nullptr;
 	
 }
@@ -112,7 +114,7 @@ bool UInventoryUIManager::QuickMoveItem(UInventoryComponent* Source, int32 Sourc
 	return Source->MoveItem(Target, SourceSlotIndex, -1);
 }
 
-void UInventoryUIManager::SetGameHudWidget(class UAEGameHUDWidget* Widget)
+void UInventoryUIManager::SetGameHUDWidget(class UAEGameHUDWidget* Widget)
 {
 	if (!Widget) return;
 	GameHUDWidget = Widget;

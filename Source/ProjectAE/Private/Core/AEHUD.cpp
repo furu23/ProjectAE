@@ -23,7 +23,7 @@ void AAEHUD::BeginPlay()
 	{
 		if (UInventoryUIManager* Manager = PC->GetComponentByClass<UInventoryUIManager>())
 		{
-			Manager->SetGameHudWidget(GameHUDWidget);
+			Manager->SetGameHUDWidget(GameHUDWidget);
 		}
 	}
 	

@@ -44,7 +44,7 @@ public:
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "UI")
-	void SetGameHudWidget(class UAEGameHUDWidget* Widget);
+	void SetGameHUDWidget(class UAEGameHUDWidget* Widget);
 	
 protected:
 	UPROPERTY()
