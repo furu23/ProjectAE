@@ -86,6 +86,7 @@ void UInventoryUIManager::CloseChestInventory()
 	if (!GameHUDWidget) return;
 	
 	GameHUDWidget->HideChestInventory();
+	CurrentOpenChestInventory = nullptr;
 	
 }
 
@@ -100,6 +101,8 @@ bool UInventoryUIManager::QuickMoveItem(UInventoryComponent* Source, int32 Sourc
 	if (!Source || !Source->IsSlotValid(SourceSlotIndex)) return false;
 
 	UInventoryComponent* Target = GetCurrentChestInventory();
+	if (!Target) return false;
+	
 	if (Source == GetCurrentChestInventory())
 	{
 		Target = GetPlayerInventory();

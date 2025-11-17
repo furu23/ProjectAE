@@ -70,6 +70,6 @@ protected:
 	FTimerHandle InteractionPromptTimerHandle;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Interaction")
-	float InteractionPromptDelay = 0.3;
+	float InteractionPromptDelay = 0.03;
 	
 };

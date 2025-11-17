@@ -24,7 +24,13 @@ FReply UInventorySlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry
 	{
 		if (InventoryComponent)
 		{
-			GetOwningPlayer()->FindComponentByClass<UInventoryUIManager>()->QuickMoveItem(InventoryComponent, SlotIndex);
+			if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+			{
+				if (UInventoryUIManager* Manager = PC->FindComponentByClass<UInventoryUIManager>())
+				{
+					Manager->QuickMoveItem(InventoryComponent, SlotIndex);
+				}
+			}
 			return FReply::Handled();
 		}
 	}
