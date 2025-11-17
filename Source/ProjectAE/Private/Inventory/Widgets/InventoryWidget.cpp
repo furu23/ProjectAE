@@ -31,6 +31,11 @@ void UInventoryWidget::InitializeInventory(UInventoryComponent* InitInventoryCom
 		UE_LOG(LogTemp, Error, TEXT("InventoryWidget::InitializeInventory: Invalid parameters."));
 		return;
 	}
+	
+	if (InventoryComponent)
+	{
+		InventoryComponent->OnInventoryUpdated.RemoveDynamic(this, &UInventoryWidget::OnInventoryUpdated);
+	}
 
 	InventoryComponent = InitInventoryComponent;
 	InventoryComponent->OnInventoryUpdated.AddDynamic(this, &UInventoryWidget::OnInventoryUpdated);
