@@ -13,7 +13,7 @@ class UQuestObjectiveConfig;
  * @brief 퀘스트의 기본 속성들을 정의합니다.
  */
 UCLASS()
-class PROJECTAE_API UDA_QuestBase : public UDataAsset
+class PROJECTAE_API UDA_QuestBase : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 	
@@ -25,6 +25,11 @@ public:
 	// 선행 퀘스트들의 ID 태그를 담아둔 태그 컨테이너입니다.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (DisplayName = "PrerequisiteQuest(선행퀘스트)", ToolTip = "선행 퀘스트들의 ID를 담는 태그 컨테이너입니다."))
 	FGameplayTagContainer PrerequisiteQuests;
+
+	/** 추후 UDA_QuestDependencyCache에 옮겨 빌드 타임 맵 생성, DA 분리 후 IDetailCustomization, 혹은 CallInEditor를 통해 시각적 인사이트 제공 */
+	// 후행 퀘스트들의 ID 태그를 담아둔 태그 컨테이너입니다.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (DisplayName = "PostrequisiteQuest(선행퀘스트)", ToolTip = "후행 퀘스트들의 ID를 담는 태그 컨테이너입니다."))
+	FGameplayTagContainer PostrequisiteQuests;
 
 	// 퀘스트 이름입니다.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "인게임에 보여질 퀘스트 이름입니다."))

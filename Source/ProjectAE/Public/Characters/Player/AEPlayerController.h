@@ -27,5 +27,7 @@ public:
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<class UInventoryUIManager> InventoryUIManager;
-	
+
+	UFUNCTION(Exec)
+	void Cheat_AcceptQuest(const FString& QuestIDName);
 };

@@ -7,9 +7,10 @@
 #include "GameplayTagContainer.h"
 #include "AEQuestTypes.h"
 #include "Delegates/DelegateCombinations.h"
+#include "Logging/LogMacros.h"
 #include "QuestManagerSubSystem.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestEntryUpdated, const FQuestLogEntry&, UpdatedEntry);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestEntryUpdatedDelegate, const FQuestLogEntry&, UpdatedEntry);
 
 class UAEQuestObject;
 class UDA_QuestBase;
@@ -22,29 +23,33 @@ UCLASS()
 class PROJECTAE_API UQuestManagerSubSystem : public ULocalPlayerSubsystem
 {
 	GENERATED_BODY()
-
-	friend class UAEQuestObject;
 	
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
+	// **** 공용 API ****
+
+	// UI 초기화 시, 퀘스트 목록을 생성
     UFUNCTION(BlueprintPure, Category = "Quest")
     TArray<FQuestLogEntry> GetQuestLogEntries() const;
 
+
+	// **** 델리게이트 ****
+
+	// UI 에 사용될 Entry 단일 객체를 가져오는 델리게이트
     UPROPERTY(BlueprintAssignable, Category = "Quest|Events")
-    FOnQuestEntryUpdated OnQuestEntryUpdated;
+    FOnQuestEntryUpdatedDelegate OnQuestEntryUpdated;
+
+
+	// 테스트용, 추후 삭제
+	virtual void AcceptQuest(FGameplayTag QuestID);
 
 protected:
-
 	// **** 퀘스트 상태 추적 프로퍼티 ****
 
 	// 현재 '진행중인' 퀘스트들을 로드
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, FQuestProgressData> PlayerQuestHistory;
-	
-	// 모든 퀘스트들의 정보를 로드 (UI 사용을 위해)
- 	UPROPERTY(SaveGame)
- 	TArray<TObjectPtr<UDA_QuestBase>> LoadedAllQuests;
 
 	// 현재 활성화된 퀘스트 오브젝트들
 	UPROPERTY(Transient)
@@ -53,19 +58,17 @@ protected:
 
 	// **** 하위클래스 전용 상태 변경 알림 함수 ****
 
-	virtual void NotifyQuestUpdate(FGameplayTag QuestID);
+	virtual void NotifyQuestUpdate(const FGameplayTag& QuestID);
 
 
 	// **** 로비 레벨 관련 ****
 
-	virtual void OnPlayerLogin();
-
-	virtual void AcceptQuest(FGameplayTag QuestID);
+//	virtual void AcceptQuest(FGameplayTag QuestID);
 
 	virtual void ClaimQuestReward(FGameplayTag QuestID);
 
 
-	// **** In-Raid 레벨 관련 ****
+	// **** In-Raid 레벨 전환 관련 ****
 
 	virtual void OnRaidStart();
 
@@ -78,11 +81,15 @@ private:
 	// 퀘스트를 활성화 상태로 변경
 	virtual void LoadAndActivateQuest(FGameplayTag QuestID, FQuestProgressData* ProgressData);
 
+	void ActivateQuestObject(UDA_QuestBase* QuestDef, FQuestProgressData* ProgressData);
+
 	// 퀘스트를 비활성화 상태로 변경하고 파괴
 	virtual void DeactivateAndDestroyQuest(UAEQuestObject* QuestObject);
 
 
-	// **** 퀘스트 계층 참조 빌드 관련 ****
+	// **** 태스크 버블링 용 내부 델리게이트 바인딩 함수 ****
+
+	// void OnQuestRequestingWorldTasks(const TArray<TObjectPtr<UQuestWorldTask>> TasksToExecute);
 
 
 	// **** DTO 생성 로직 ****

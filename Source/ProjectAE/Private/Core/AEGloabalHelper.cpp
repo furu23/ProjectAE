@@ -26,6 +26,7 @@
 #include "AbilitySystem/AS_HealthSet.h"
 #include "Characters/AEPlayerState.h"
 #include "Quest/QuestManagerSubSystem.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 
 
 // ----------------------------------------------------------------------
@@ -242,6 +243,7 @@ float UAEGloabalHelper::GetMaxHealth(const AActor* Actor)
 	return 0.0f;
 }
 
+
 /*
 void UAEGloabalHelper::ApplyDamage(AActor* Instigator, AActor* Causer, AActor* Target, TSubclassOf<UGameplayEffect> DamageEffect, float DamageAmount)
 {
@@ -278,17 +280,13 @@ void UAEGloabalHelper::ApplyDamage(AActor* Instigator, AActor* Causer, AActor* T
 	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 }*/
 
-/*
-void UAEGloabalHelper::SendQuestEvent(const UObject* WorldContextObject, AActor* Instigator, FGameplayTag EventTag, FName TargetID, int32 Amount)
+
+void UAEGloabalHelper::SendQuestMessage(const UObject* WorldContextObject, AActor* Instigator, FGameplayTagContainer TargetTags, AActor* TargetActor /*= nullptr */,  int32 Amount /*= 1 */)
 {
-	// 퀘스트 서브시스템 헬퍼를 사용합니다.
-	if (UQuestSubsystem* QuestSubsystem = GetQuestSubsystem(WorldContextObject))
-	{
-		// 퀘스트 서브시스템의 내부 함수로 이벤트를 전달합니다.
-		// (AMyPlayerController* InstigatorPC = GetOwningPlayerController(Instigator); 를 찾아 전달하는 것이 더 정확할 수 있습니다)
-		QuestSubsystem->HandleQuestEvent(Instigator, EventTag, TargetID, Amount);
-	}
-}*/
+	UGameplayMessageSubsystem& GMS = UGameplayMessageSubsystem::Get(WorldContextObject);
+
+	FQuestMessage_Generic();
+}
 
 
 // ----------------------------------------------------------------------

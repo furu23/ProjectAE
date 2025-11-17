@@ -146,11 +146,9 @@ public:
 // 	UFUNCTION(BlueprintCallable, Category = "ProjectAE|Combat")
 // 	static void ApplyDamage(AActor* Instigator, AActor* Causer, AActor* Target, TSubclassOf<class UGameplayEffect> DamageEffect, float DamageAmount);
 
-	/** * 퀘스트 시스템에 이벤트를 전송합니다. (예: 적 처치, 아이템 획득)
-	 * (내부적으로 GetQuestSubsystem()->HandleEvent(...)를 호출합니다)
-	 */
-// 	UFUNCTION(BlueprintCallable, Category = "ProjectAE|Quest", meta = (WorldContext = "WorldContextObject"))
-// 	static void SendQuestEvent(const UObject* WorldContextObject, AActor* Instigator, FGameplayTag EventTag, FName TargetID, int32 Amount = 1);
+	/** GMS를 통해 퀘스트 시스템에 이벤트를 전송합니다. (예: 적 처치, 아이템 획득) */
+ 	UFUNCTION(BlueprintCallable, Category = "ProjectAE|Quest", meta = (WorldContext = "WorldContextObject"))
+ 	static void SendQuestMessage(const UObject* WorldContextObject, AActor* Instigator, FGameplayTagContainer TargetTags, AActor* TargetActor = nullptr, int32 Amount = 1);
 
 
 	// ----------------------------------------------------------------------

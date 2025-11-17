@@ -5,7 +5,7 @@
 
 FPrimaryAssetId UDA_QuestBase::GetPrimaryAssetId() const
 {
-	FName AssetType = UDA_QuestBase::StaticClass()->GetFName();
+	FName AssetType = FName("QuestData");
 	
 	FName AssetName = QuestID.GetTagName();
 	if (AssetName.IsNone())
@@ -14,5 +14,6 @@ FPrimaryAssetId UDA_QuestBase::GetPrimaryAssetId() const
 		AssetName = NAME_None;
 	}
 
+	UE_LOG(LogTemp, Log, TEXT("### Registering Asset: %s, ID: %s"), *GetName(), *FPrimaryAssetId(AssetType, AssetName).ToString());
 	return FPrimaryAssetId(AssetType, AssetName);
 }

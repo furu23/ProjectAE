@@ -5,7 +5,11 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "AEQuestTypes.h"
+#include "Delegates/DelegateCombinations.h"
 #include "AEQuestObject.generated.h"
+
+DECLARE_DELEGATE_OneParam(FOnQuestObjectChanged, const FGameplayTag&);
+// DECLARE_DELEGATE_OneParam(FOnRequestWorldTasksSignatureDelegate, const TArray<TObjectPtr<UQuestWorldTask>>&);
 
 class UDA_QuestBase;
 class UQuestManagerSubSystem;
@@ -19,7 +23,24 @@ class PROJECTAE_API UAEQuestObject : public UObject
 {
 	GENERATED_BODY()
 
-	friend class UQuestManagerSubSystem;
+public:
+	// **** 델리게이트 ****
+	
+	// 퀘스트 상태 변경을 알리기 위한 델리게이트
+	FOnQuestObjectChanged OnQuestObjectChangedDelegate;
+
+	// FOnRequestWorldTasksSignature OnRequestWorldTasksDelegate;
+
+	// **** 상위 객체 호출 함수 ****
+
+	// 퀘스트 런타임 객체를 초기화합니다.
+	virtual void Initialize(UDA_QuestBase* DefRef, FQuestProgressData* ProgressRef, UQuestManagerSubSystem* Manager);
+
+	// Objective 배열을 순회하며 활성화 시킵니다. 델리게이트에 OnObjectCompleted 함수를 바인드합니다.
+	virtual void Activate(UObject* WorldContext);
+
+	// 모든 배열을 비활성화시킵니다.
+	virtual void DeActivate();
 
 protected:
 	// **** 초기화될 기본 프로퍼티 ****
@@ -39,27 +60,14 @@ protected:
 
 	// **** 주요 기능 함수들 ****
 
-	// 퀘스트 런타임 객체를 초기화합니다.
-	virtual void Initialize(UDA_QuestBase* DefRef, FQuestProgressData* ProgressRef, UQuestManagerSubSystem* Manager);
-
-	// Objective 배열을 순회하며 활성화 시킵니다. 델리게이트에 OnObjectCompleted 함수를 바인드합니다.
-	virtual void Activate(UObject* WorldContext);
-
-	// 모든 배열을 비활성화시킵니다.
-	virtual void DeActivate();
-
 	// 하위 객체에서 퀘스트 완료 시 호출됩니다. 델리게이트를 통해 호출됩니다.
-	virtual void OnObjectCompleted(UAEQuestObjective* Objective);
+	virtual void OnObjectiveCompleted(UAEQuestObjective* Objective);
 
 	// 퀘스트가 완료되었는지 확인합니다.
-	virtual void CheckQuestCompletion();
+	virtual bool CheckQuestCompletion();
 
-private:
-	// **** 내부 진행도 추적 관련 ****
 
-	// 총 Objective의 수를 측정해둡니다.
-	int32 TotalObjectiveNumber;
+	// **** 델리게이트 바인딩 함수 ****
 
-	// 현재 완료된 Objective의 수를 측정합니다.
-	int32 CurrentObjectiveNumber = 0;
+	// void OnObjectiveRequestingTasks(const TArray<TObjectPtr<UQuestWorldTask>> TasksToExecute)
 };

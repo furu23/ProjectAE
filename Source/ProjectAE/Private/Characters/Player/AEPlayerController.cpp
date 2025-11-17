@@ -5,6 +5,8 @@
 
 #include "EnhancedInputSubsystems.h"
 #include "Inventory/InventoryUIManager.h"
+#include <Quest/QuestManagerSubSystem.h>
+#include "Quest/QuestMessageHelpers.h"
 
 
 AAEPlayerController::AAEPlayerController()
@@ -22,5 +24,18 @@ void AAEPlayerController::BeginPlay()
 		= ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
 		Subsystem->AddMappingContext(InputMappingContext, 0);
+	}
+}
+
+void AAEPlayerController::Cheat_AcceptQuest(const FString& QuestIDName)
+{
+	if (ULocalPlayer* LP = GetLocalPlayer())
+	{
+		if (UQuestManagerSubSystem* QuestManager = LP->GetSubsystem<UQuestManagerSubSystem>())
+		{
+			FGameplayTag QuestID = FGameplayTag::RequestGameplayTag(*QuestIDName);
+			QuestManager->AcceptQuest(QuestID); // [»£√‚]
+			UE_LOG(LogQuestSystem, Log, TEXT("Cheat: Quest [%s] Accepted."), *QuestIDName);
+		}
 	}
 }
