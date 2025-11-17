@@ -19,6 +19,7 @@ void UInventorySlotWidget::NativeConstruct()
 
 FReply UInventorySlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
+	// 우클릭 시 아이템 즉시 이동
 	if (InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton) && !IsEmpty())
 	{
 		if (InventoryComponent)
@@ -64,13 +65,13 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 
 	bool bSuccess = false;
 
-	// 같은 인벤토리 내 이동
+	// 같은 인벤토리 내 이동이면 Swap
 	if (DragOp->SourceInventory == InventoryComponent)
 	{
 		InventoryComponent->SwapSlots(DragOp->SourceSlotIndex, SlotIndex);
 		bSuccess = true;
 	}
-	// 다른 인벤토리로 이동
+	// 다른 인벤토리로 이동이면 Move
 	else
 	{
 		bSuccess = DragOp->SourceInventory->MoveItem(InventoryComponent, DragOp->SourceSlotIndex, SlotIndex);
