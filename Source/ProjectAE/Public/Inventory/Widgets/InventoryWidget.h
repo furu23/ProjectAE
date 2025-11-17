@@ -48,5 +48,5 @@ protected:
 	class UInventoryComponent* InventoryComponent;
 
 	UPROPERTY()
-	TArray<class UInventorySlotWidget*> SlotWidgets;	
+	TArray<class UInventorySlotWidget*> SlotWidgets;
 };

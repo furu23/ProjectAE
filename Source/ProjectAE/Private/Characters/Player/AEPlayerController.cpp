@@ -4,7 +4,13 @@
 #include "Characters/Player/AEPlayerController.h"
 
 #include "EnhancedInputSubsystems.h"
+#include "Inventory/InventoryUIManager.h"
 
+
+AAEPlayerController::AAEPlayerController()
+{
+	InventoryUIManager = CreateDefaultSubobject<UInventoryUIManager>(TEXT("InventoryUIManager"));
+}
 
 void AAEPlayerController::BeginPlay()
 {

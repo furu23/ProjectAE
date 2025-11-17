@@ -6,6 +6,7 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Inventory/InventoryUIManager.h"
 #include "Inventory/Data/ItemData.h"
 #include "Inventory/Data/InventoryDragDropOperation.h"
 #include "Inventory/Data/InventorySlot.h"
@@ -18,11 +19,19 @@ void UInventorySlotWidget::NativeConstruct()
 
 FReply UInventorySlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	if (InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton))
+	// 우클릭 시 아이템 즉시 이동
+	if (InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton) && !IsEmpty())
 	{
 		if (InventoryComponent)
 		{
-			InventoryComponent->MoveItem(InventoryComponent, SlotIndex, -1);
+			if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+			{
+				if (UInventoryUIManager* Manager = PC->FindComponentByClass<UInventoryUIManager>())
+				{
+					Manager->QuickMoveItem(InventoryComponent, SlotIndex);
+				}
+			}
+			return FReply::Handled();
 		}
 	}
 	
@@ -62,13 +71,13 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 
 	bool bSuccess = false;
 
-	// 같은 인벤토리 내 이동
+	// 같은 인벤토리 내 이동이면 Swap
 	if (DragOp->SourceInventory == InventoryComponent)
 	{
 		InventoryComponent->SwapSlots(DragOp->SourceSlotIndex, SlotIndex);
 		bSuccess = true;
 	}
-	// 다른 인벤토리로 이동
+	// 다른 인벤토리로 이동이면 Move
 	else
 	{
 		bSuccess = DragOp->SourceInventory->MoveItem(InventoryComponent, DragOp->SourceSlotIndex, SlotIndex);

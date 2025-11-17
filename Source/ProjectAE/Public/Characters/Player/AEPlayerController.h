@@ -14,10 +14,18 @@ class PROJECTAE_API AAEPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+public:
+	AAEPlayerController();
+	
 protected:
 	virtual void BeginPlay() override;
 	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	class UInputMappingContext* InputMappingContext;
+	
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
+	TObjectPtr<class UInventoryUIManager> InventoryUIManager;
+	
 };

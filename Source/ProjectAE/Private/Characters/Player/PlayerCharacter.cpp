@@ -8,8 +8,8 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Interaction/InteractionComponent.h"
+#include "Inventory/InventoryComponent.h"
 
 #if UE_BUILD_DEVELOPMENT
 #include "GameplayTagContainer.h"
@@ -27,10 +27,12 @@ APlayerCharacter::APlayerCharacter()
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>("InteractionComponent");
+	
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("InventoryComponent");
+	InventoryComponent->bIsPlayerInventory = true;
 
 	SpringArm->TargetArmLength = 1000.f;
 	SpringArm->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
-	// SpringArm->SetWorldRotation(FRotator(-60.f, 0.f, 0.f));
 
 	SpringArm->bUsePawnControlRotation = false;
 	SpringArm->bDoCollisionTest = false;

@@ -8,6 +8,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryClosed);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTAE_API UInventoryComponent : public UActorComponent
@@ -92,4 +93,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="Inventory")
 	FOnInventoryUpdated OnInventoryUpdated;
 	
+	UPROPERTY(BlueprintAssignable, Category="Inventory")
+	FOnInventoryClosed OnInventoryClosed;
 };
