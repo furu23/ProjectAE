@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/Widgets/InventoryWidget.h"
+#include "Widgets/AEGameHUDWidget.h"
 
 
 // Sets default values for this component's properties
@@ -43,72 +44,52 @@ void UInventoryUIManager::BeginPlay()
 
 void UInventoryUIManager::OpenPlayerInventory()
 {
-	if (bIsPlayerInventoryOpen || !CachedPlayerInventory) return;
+	if (bIsPlayerInventoryOpen) return;
 	
-	// 위젯 없을 시 생성
-	if (!PlayerInventoryWidget && PlayerInventoryWidgetClass)
-	{
-		PlayerInventoryWidget = CreateWidget<UInventoryWidget>(PC, PlayerInventoryWidgetClass);
-		if (PlayerInventoryWidget)
-		{
-			PlayerInventoryWidget->InitializeInventory(CachedPlayerInventory);
-		}
-	}
+	if (!GameHUDWidget || !CachedPlayerInventory) return;
 	
-	if (PlayerInventoryWidget)
-	{
-		PlayerInventoryWidget->AddToViewport();
-		bIsPlayerInventoryOpen = true;
-		
-		// TODO 마우스 커서 변경 로직 ?
-	}
+	GameHUDWidget->ShowPlayerInventory();
+	bIsPlayerInventoryOpen = true;
+	
+	// 마우스 커서 변경 ?
 }
 
 void UInventoryUIManager::ClosePlayerInventory()
 {
 	if (!bIsPlayerInventoryOpen) return;
 	
-	if (PlayerInventoryWidget)
-	{
-		PlayerInventoryWidget->RemoveFromParent();
-		bIsPlayerInventoryOpen = false;
-		
-		// 위젯 표시 때 바뀐 설정 복구
-	}
+	if (!GameHUDWidget) return;
+	
+	GameHUDWidget->HidePlayerInventory();
+	bIsPlayerInventoryOpen = false;
+	
+	// 위젯 표시 때 바뀐 설정 복구
 }
 
 void UInventoryUIManager::OpenChestInventory(UInventoryComponent* ChestInventory)
 {
 	if (!ChestInventory) return;
+	if (!GameHUDWidget) return;
 	
 	// 이미 다른 상자 인벤토리가 열려있을 경우
 	CloseChestInventory();
+	
 	// Player Inventory 먼저 띄우기
 	OpenPlayerInventory();
 	
-	// 위젯 없을 시 생성
-	if (!ChestInventoryWidget && ChestInventoryWidgetClass)
-	{
-		ChestInventoryWidget = CreateWidget<UInventoryWidget>(PC, ChestInventoryWidgetClass);
-	}
-	
-	if (ChestInventoryWidget)
-	{
-		ChestInventoryWidget->InitializeInventory(ChestInventory);
-		ChestInventoryWidget->AddToViewport();
-		CurrentOpenChestInventory = ChestInventory;
-	}
+	GameHUDWidget->ShowChestInventory(ChestInventory);
+	CurrentOpenChestInventory = ChestInventory;
 }
 
 void UInventoryUIManager::CloseChestInventory()
 {
 	if (!CurrentOpenChestInventory) return;
+	if (!GameHUDWidget) return;
 	
-	if (ChestInventoryWidget)
-	{
-		ChestInventoryWidget->RemoveFromParent();
-		CurrentOpenChestInventory = nullptr;
-	}
+	GameHUDWidget->HideChestInventory();
+	CurrentOpenChestInventory->OnInventoryClosed.Broadcast();
+	CurrentOpenChestInventory = nullptr;
+	
 }
 
 void UInventoryUIManager::CloseAllInventories()
@@ -122,6 +103,8 @@ bool UInventoryUIManager::QuickMoveItem(UInventoryComponent* Source, int32 Sourc
 	if (!Source || !Source->IsSlotValid(SourceSlotIndex)) return false;
 
 	UInventoryComponent* Target = GetCurrentChestInventory();
+	if (!Target) return false;
+	
 	if (Source == GetCurrentChestInventory())
 	{
 		Target = GetPlayerInventory();
@@ -129,6 +112,15 @@ bool UInventoryUIManager::QuickMoveItem(UInventoryComponent* Source, int32 Sourc
 	
 	UE_LOG(LogTemp, Warning, TEXT("Target: %s"), *Target->GetName());
 	return Source->MoveItem(Target, SourceSlotIndex, -1);
+}
+
+void UInventoryUIManager::SetGameHUDWidget(class UAEGameHUDWidget* Widget)
+{
+	if (!Widget) return;
+	GameHUDWidget = Widget;
+	
+	if (!CachedPlayerInventory) return;
+	GameHUDWidget->InitializePlayerInventory(CachedPlayerInventory);
 }
 
 UInventoryComponent* UInventoryUIManager::GetCurrentChestInventory() const

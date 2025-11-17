@@ -43,25 +43,21 @@ public:
 	bool QuickMoveItem(class UInventoryComponent* Source, int32 SourceSlotIndex);
 	
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory/Widget")
-	TSubclassOf<class UInventoryWidget> PlayerInventoryWidgetClass;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory/Widget")
-	TSubclassOf<class UInventoryWidget> ChestInventoryWidgetClass;
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void SetGameHUDWidget(class UAEGameHUDWidget* Widget);
 	
 protected:
-	UPROPERTY()
-	class UInventoryWidget* PlayerInventoryWidget;
-	UPROPERTY()
-	class UInventoryWidget* ChestInventoryWidget;
-	
 	UPROPERTY()
 	class UInventoryComponent* CachedPlayerInventory;
 	UPROPERTY()
 	class UInventoryComponent* CurrentOpenChestInventory;
 	
-	UPROPERTY(BlueprintReadOnly, Category = "Inventory/Widget")
+	UPROPERTY(BlueprintReadOnly, Category = "Inventory|UI")
 	bool bIsPlayerInventoryOpen = false;
 	
 	UPROPERTY()
 	TObjectPtr<class APlayerController> PC;
+	
+	UPROPERTY()
+	TObjectPtr<class UAEGameHUDWidget> GameHUDWidget;
 };

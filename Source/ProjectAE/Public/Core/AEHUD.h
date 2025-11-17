@@ -14,4 +14,10 @@ class PROJECTAE_API AAEHUD : public AHUD
 {
 	GENERATED_BODY()
 	
+protected:
+	virtual void BeginPlay() override;
+	
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UAEGameHUDWidget> GameHUDWidget;
 };
