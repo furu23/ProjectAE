@@ -1,10 +1,10 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Quest/QuestMessageHelpers.h"
-#include "Quest/AEQuestTypes.h"
+#include "QuestMessageHelpers.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameplayTagAssetInterface.h"
+#include "QuestTypes.h"
 
 void UQuestMessageHelpers::BroadcastAIKilledEvent(UObject* WorldContextObject, AActor* InstigatorActor, AActor* TargetActor)
 {
@@ -39,20 +39,22 @@ void UQuestMessageHelpers::BroadcastInteractEvent(UObject* WorldContextObject, A
 
 	if (IGameplayTagAssetInterface* TagInterface = Cast<IGameplayTagAssetInterface>(TargetActor))
 	{
+		UE_LOG(LogTemp, Log, TEXT("It is not called"));
 		TagInterface->GetOwnedGameplayTags(Message.TargetTags);
 	}
 
 	// 매세지 보내기
-	FGameplayTag Channel = FGameplayTag::RequestGameplayTag(TEXT("Event.Quest.Interact"));
+	FGameplayTag Channel = FGameplayTag::RequestGameplayTag(TEXT("Quest.Event.Interact"));
+
 	SendQuestMessage(WorldContextObject, Channel, Message);
 }
 
 
 // --- Private 내부 래퍼 ---
 
-void UQuestMessageHelpers::SendQuestMessage(UObject* WorldContextObject, FGameplayTag Channel, const FQuestMessage_Generic& Message)
+void UQuestMessageHelpers::SendQuestMessage(UObject* WorldContextObject, FGameplayTag Channel, const FQuestMessage_Generic& MessageRef)
 {
 	UGameplayMessageSubsystem& GMS = UGameplayMessageSubsystem::Get(WorldContextObject);
 
-	GMS.BroadcastMessage(Channel, Message);
+	GMS.BroadcastMessage(Channel, MessageRef);
 }

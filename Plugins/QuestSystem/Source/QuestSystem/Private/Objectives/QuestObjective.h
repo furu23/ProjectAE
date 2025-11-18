@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
-#include "Quest/AEQuestTypes.h"
-#include "AEQuestObjective.generated.h"
+#include "QuestTypes.h"
+#include "QuestObjective.generated.h"
 
 class UQuestObjectiveConfig;
 // class UQuestWorldTask
 
-DECLARE_DELEGATE_OneParam(FOnObjectiveCompleted, UAEQuestObjective* /* CompletedObjective */);
+DECLARE_DELEGATE_OneParam(FOnObjectiveCompleted, UQuestObjective* /* CompletedObjective */);
 // DECLARE_DELEGATE_OneParam(FOnRequestWorldTasksSignature, const TArray<TObjectPtr<UQuestWorldTask>> /* TasksToExecute */);
 
 /**
@@ -19,7 +19,7 @@ DECLARE_DELEGATE_OneParam(FOnObjectiveCompleted, UAEQuestObjective* /* Completed
  * @note 이 클래스는 직접적으로 GameplayMessageSubSystem을 통해 인-레이드 레벨 게임플레이와 통신해 목표 값을 갱신합니다.
  */
 UCLASS(Abstract)
-class PROJECTAE_API UAEQuestObjective : public UObject
+class QUESTSYSTEM_API UQuestObjective : public UObject
 {
 	GENERATED_BODY()
 public:
@@ -38,19 +38,19 @@ public:
 	virtual void Initialize(const UQuestObjectiveConfig* Config, FQuestProgressData* ProgressRef);
 
 	// QuestObject 에서 호출할 GMS 구독 함수
-	virtual void Activate(UObject* WorldContext) PURE_VIRTUAL(UAEQuestObjective::Activate)
+	virtual void Activate(UObject* WorldContext) PURE_VIRTUAL(UQuestObjective::Activate)
 	
 	// QuestObject 에서 호출할 비활성화 함수
-	virtual void DeActivate() PURE_VIRTUAL(UAEQuestObjective::DeActivate)
+	virtual void DeActivate() PURE_VIRTUAL(UQuestObjective::DeActivate)
 
 	// 완료 여부를 반환
-	virtual bool IsComplete() const PURE_VIRTUAL(UAEQuestObjective::IsComplete, return false;)
+	virtual bool IsComplete() const PURE_VIRTUAL(UQuestObjective::IsComplete, return false;)
 
 protected:
 	// **** GMS 관련 ****
 
 	// GMS 구독 콜백 함수
-	virtual void OnMessageReceived(FGameplayTag Channel, const FQuestMessage_Generic& Message) PURE_VIRTUAL(UAEQuestObjective::OnMessageReceived)
+	virtual void OnMessageReceived(FGameplayTag Channel, const FQuestMessage_Generic& Message) PURE_VIRTUAL(UQuestObjective::OnMessageReceived)
 
 	// GMS 구독 관리 핸들
 	FGameplayMessageListenerHandle GMSListenHandle;

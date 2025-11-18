@@ -2,10 +2,7 @@
 
 #include "UObject/Object.h"
 #include "GameplayTagContainer.h"
-#include "AEQuestTypes.generated.h"
-
-DECLARE_LOG_CATEGORY_EXTERN(LogQuestSystem, Log, All);
-
+#include "QuestTypes.generated.h"
 
 UENUM(BlueprintType)
 enum class EQuestProgress : uint8

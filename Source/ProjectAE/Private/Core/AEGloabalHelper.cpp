@@ -25,7 +25,7 @@
 #include "AbilitySystem/AS_BaseCombat.h"
 #include "AbilitySystem/AS_HealthSet.h"
 #include "Characters/AEPlayerState.h"
-#include "Quest/QuestManagerSubSystem.h"
+/*#include "Quest/QuestManagerSubSystem.h"*/
 #include "GameFramework/GameplayMessageSubsystem.h"
 
 
@@ -126,6 +126,7 @@ AAEPlayerController* UAEGloabalHelper::GetOwningPlayerController(UObject* Target
 // ----------------------------------------------------------------------
 
 
+/*
 UQuestManagerSubSystem* UAEGloabalHelper::GetQuestSubsystem(const UObject* WorldContextObject)
 {
 	const APlayerController* PC = GetAEPlayerController(WorldContextObject);
@@ -134,7 +135,7 @@ UQuestManagerSubSystem* UAEGloabalHelper::GetQuestSubsystem(const UObject* World
 		return LocalPlayer->GetSubsystem<UQuestManagerSubSystem>();
 	}
 	return nullptr;
-}
+}*/
 
 
 // ----------------------------------------------------------------------
@@ -280,13 +281,14 @@ void UAEGloabalHelper::ApplyDamage(AActor* Instigator, AActor* Causer, AActor* T
 	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 }*/
 
-
-void UAEGloabalHelper::SendQuestMessage(const UObject* WorldContextObject, AActor* Instigator, FGameplayTagContainer TargetTags, AActor* TargetActor /*= nullptr */,  int32 Amount /*= 1 */)
+/*
+void UAEGloabalHelper::SendQuestMessage(const UObject* WorldContextObject, AActor* Instigator, FGameplayTagContainer TargetTags, AActor* TargetActor / *= nullptr * /,  int32 Amount / *= 1 * /)
 {
 	UGameplayMessageSubsystem& GMS = UGameplayMessageSubsystem::Get(WorldContextObject);
 
 	FQuestMessage_Generic();
 }
+*/
 
 
 // ----------------------------------------------------------------------

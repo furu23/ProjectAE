@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Quest/Data/DA_QuestBase.h"
+#include "Data/DA_QuestBase.h"
 
 FPrimaryAssetId UDA_QuestBase::GetPrimaryAssetId() const
 {

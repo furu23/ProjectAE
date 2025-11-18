@@ -13,7 +13,7 @@ class UQuestObjectiveConfig;
  * @brief 퀘스트의 기본 속성들을 정의합니다.
  */
 UCLASS()
-class PROJECTAE_API UDA_QuestBase : public UPrimaryDataAsset
+class QUESTSYSTEM_API UDA_QuestBase : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 	
@@ -44,7 +44,7 @@ public:
 	// FRewardData RewardData;
 
 	// 퀘스트의 목표입니다.
-	UPROPERTY(EditDefaultsOnly, Category = "Objective", meta = (ToolTip = "퀘스트 목표의 설정에 대한 배열입니다."))
+	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Objective", meta = (ToolTip = "퀘스트 목표의 설정에 대한 배열입니다."))
 	TArray<TObjectPtr<UQuestObjectiveConfig>> ObjectConfigs;
 
 	// Primary Asset ID를 반환합니다.

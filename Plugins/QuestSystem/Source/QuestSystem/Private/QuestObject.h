@@ -4,22 +4,22 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "AEQuestTypes.h"
+#include "QuestTypes.h"
 #include "Delegates/DelegateCombinations.h"
-#include "AEQuestObject.generated.h"
+#include "QuestObject.generated.h"
 
 DECLARE_DELEGATE_OneParam(FOnQuestObjectChanged, const FGameplayTag&);
 // DECLARE_DELEGATE_OneParam(FOnRequestWorldTasksSignatureDelegate, const TArray<TObjectPtr<UQuestWorldTask>>&);
 
 class UDA_QuestBase;
 class UQuestManagerSubSystem;
-class UAEQuestObjective;
+class UQuestObjective;
 
 /**
  * @brief 퀘스트 진행에 대한 런타임 객체입니다. InProgresss 상태의 객체들만 이 객체를 가지며, 실제 퀘스트 목표를 관리하는 역할을 맡습니다.
  */
 UCLASS()
-class PROJECTAE_API UAEQuestObject : public UObject
+class QUESTSYSTEM_API UQuestObject : public UObject
 {
 	GENERATED_BODY()
 
@@ -52,7 +52,7 @@ protected:
 	FQuestProgressData* ProgressDataRef;
 
 	// 퀘스트의 하위 목표 객체 배열입니다.
-	TArray<TObjectPtr<UAEQuestObjective>> Objectives;
+	TArray<TObjectPtr<UQuestObjective>> Objectives;
 
 	// 퀘스트 서브시스템에 대한 캐싱입니다. 유효성 검사 필요.
 	TObjectPtr<UQuestManagerSubSystem> CachedQuestSys;
@@ -61,7 +61,7 @@ protected:
 	// **** 주요 기능 함수들 ****
 
 	// 하위 객체에서 퀘스트 완료 시 호출됩니다. 델리게이트를 통해 호출됩니다.
-	virtual void OnObjectiveCompleted(UAEQuestObjective* Objective);
+	virtual void OnObjectiveCompleted(UQuestObjective* Objective);
 
 	// 퀘스트가 완료되었는지 확인합니다.
 	virtual bool CheckQuestCompletion();

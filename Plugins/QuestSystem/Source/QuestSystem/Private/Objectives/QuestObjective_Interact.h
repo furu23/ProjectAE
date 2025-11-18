@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Quest/Objectives/AEQuestObjective.h"
+#include "QuestObjective.h"
 #include "QuestObjective_Interact.generated.h"
 
 class UObjectiveConfig_Interact;
@@ -12,7 +12,7 @@ class UObjectiveConfig_Interact;
  * 
  */
 UCLASS()
-class PROJECTAE_API UQuestObjective_Interact : public UAEQuestObjective
+class QUESTSYSTEM_API UQuestObjective_Interact : public UQuestObjective
 {
 	GENERATED_BODY()
 

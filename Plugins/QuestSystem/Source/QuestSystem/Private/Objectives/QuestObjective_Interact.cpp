@@ -1,11 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Quest/Objectives/QuestObjective_Interact.h"
-#include "Quest/Data/Objectives/ObjectiveConfig_Interact.h"
-#include "Quest/Data/Objectives/QuestObjectiveConfig.h"
+#include "Objectives/QuestObjective_Interact.h"
+#include "Objectives/Config/ObjectiveConfig_Interact.h"
+#include "Objectives/Config/QuestObjectiveConfig.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
-#include "Quest/AEQuestTypes.h"
+#include "QuestTypes.h"
+#include "QuestSystem.h"
 
 void UQuestObjective_Interact::Initialize(const UQuestObjectiveConfig* Config, FQuestProgressData* ProgressRef)
 {
@@ -17,6 +18,8 @@ void UQuestObjective_Interact::Initialize(const UQuestObjectiveConfig* Config, F
 
 void UQuestObjective_Interact::Activate(UObject* WorldContext)
 {
+	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] objective activating is started"), *this->GetFName().ToString());
+
 	if (!InteractConfig || !WorldContext) return;
 
 	// GMS¸¦ °¡Á®¿È
@@ -32,11 +35,14 @@ void UQuestObjective_Interact::Activate(UObject* WorldContext)
 		&UQuestObjective_Interact::OnMessageReceived
 	);
 
+	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] objective activating is listen [%s] now."), *this->GetFName().ToString(), *ListenTag.GetTagName().ToString());
 	// OnRequestTaskSignatureDelegate.ExecuteIfBound(InteractConfig->TaskOnActivation());
 }
 
 void UQuestObjective_Interact::DeActivate()
 {
+	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] objective deactivating is successfully called"), *this->GetFName().ToString());
+
 	GMSListenHandle.Unregister();
 }
 
@@ -54,6 +60,12 @@ bool UQuestObjective_Interact::IsComplete() const
 
 void UQuestObjective_Interact::OnMessageReceived(FGameplayTag Channel, const FQuestMessage_Generic& Message)
 {
+	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] objective is getting Message Now! \
+		\nChecking Valid on Bool Property = %d,\
+		\nChecking Valid on Reference Validating = %d,\
+		\nChecking Listen Tag is Same = %d"),
+		*this->GetFName().ToString(), bHasFiredCompletion, (!ProgressDataRef || !Message.TargetActor), (Message.TargetTags.HasAll(InteractConfig->TargetTags)));
+
 	if (bHasFiredCompletion) return;
 
 	if (!ProgressDataRef || !Message.TargetActor) return;
@@ -63,10 +75,10 @@ void UQuestObjective_Interact::OnMessageReceived(FGameplayTag Channel, const FQu
 		ProgressDataRef->ObjectProgress.FindOrAdd(InteractConfig->ObjectiveID)++;
 		if (IsComplete())
 		{
-			OnObjectiveCompleteDelegate.ExecuteIfBound(this);
+			UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] objective is completed"), *this->GetFName().ToString());
 
-			DeActivate();
 			bHasFiredCompletion = true;
+			OnObjectiveCompleteDelegate.ExecuteIfBound(this);
 		}
 	}
 }

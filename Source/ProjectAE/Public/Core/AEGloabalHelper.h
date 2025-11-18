@@ -25,7 +25,7 @@ class UAS_HealthSet;
 struct FGameplayEffectContextHandle;
 
 // 3. 서브시스템 클래스
-class UQuestManagerSubSystem;
+// class UQuestManagerSubSystem;
 // class UWorldManagerSubsystem;
 
 /**
@@ -75,8 +75,9 @@ public:
 	// ----------------------------------------------------------------------
 
 	/** UQuestManagerSubSystem(Local Player Subsystem)을 가져옵니다. */
+/*
  	UFUNCTION(BlueprintPure, Category = "ProjectAE|Subsystems", meta = (WorldContext = "WorldContextObject"))
- 	static UQuestManagerSubSystem* GetQuestSubsystem(const UObject* WorldContextObject);
+ 	static UQuestManagerSubSystem* GetQuestSubsystem(const UObject* WorldContextObject);*/
 
 // 	/** UWorldManagerSubsystem (GameInstance Subsystem)을 가져옵니다. */
 // 	UFUNCTION(BlueprintPure, Category = "MyGame|Subsystems", meta = (WorldContext = "WorldContextObject"))
@@ -147,8 +148,9 @@ public:
 // 	static void ApplyDamage(AActor* Instigator, AActor* Causer, AActor* Target, TSubclassOf<class UGameplayEffect> DamageEffect, float DamageAmount);
 
 	/** GMS를 통해 퀘스트 시스템에 이벤트를 전송합니다. (예: 적 처치, 아이템 획득) */
- 	UFUNCTION(BlueprintCallable, Category = "ProjectAE|Quest", meta = (WorldContext = "WorldContextObject"))
+ 	/*UFUNCTION(BlueprintCallable, Category = "ProjectAE|Quest", meta = (WorldContext = "WorldContextObject"))
  	static void SendQuestMessage(const UObject* WorldContextObject, AActor* Instigator, FGameplayTagContainer TargetTags, AActor* TargetActor = nullptr, int32 Amount = 1);
+*/
 
 
 	// ----------------------------------------------------------------------

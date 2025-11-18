@@ -1,12 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Characters/Player/AEPlayerController.h"
-
 #include "EnhancedInputSubsystems.h"
 #include "Inventory/InventoryUIManager.h"
-#include <Quest/QuestManagerSubSystem.h>
-#include "Quest/QuestMessageHelpers.h"
+#include "QuestManagerSubSystem.h"
+
+
 
 
 AAEPlayerController::AAEPlayerController()
@@ -27,6 +26,7 @@ void AAEPlayerController::BeginPlay()
 	}
 }
 
+
 void AAEPlayerController::Cheat_AcceptQuest(const FString& QuestIDName)
 {
 	if (ULocalPlayer* LP = GetLocalPlayer())
@@ -35,7 +35,7 @@ void AAEPlayerController::Cheat_AcceptQuest(const FString& QuestIDName)
 		{
 			FGameplayTag QuestID = FGameplayTag::RequestGameplayTag(*QuestIDName);
 			QuestManager->AcceptQuest(QuestID); // [»£√‚]
-			UE_LOG(LogQuestSystem, Log, TEXT("Cheat: Quest [%s] Accepted."), *QuestIDName);
+			UE_LOG(LogTemp, Log, TEXT("Cheat: Quest [%s] Accepted."), *QuestIDName);
 		}
 	}
 }

@@ -1,15 +1,14 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Quest/QuestManagerSubSystem.h"
-#include "Core/AEGloabalHelper.h"
-#include "Quest/AEQuestTypes.h"
+#include "QuestManagerSubSystem.h"
+#include "QuestSystem.h"
+#include "QuestTypes.h"
 #include "GameplayTagContainer.h"
 #include "Engine/AssetManager.h"
-#include "Quest/Data/DA_QuestBase.h"
-#include "Quest/AEQuestObject.h"
-
-DEFINE_LOG_CATEGORY(LogQuestSystem);
+#include "Data/DA_QuestBase.h"
+#include "QuestObject.h"
+#include "Objectives/Config/QuestObjectiveConfig.h"
 
 void UQuestManagerSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -18,6 +17,56 @@ void UQuestManagerSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 	FQuestProgressData QuestData;
 	QuestData.ProgressType = EQuestProgress::CanAccept;
 	PlayerQuestHistory.Add(FGameplayTag::RequestGameplayTag("Quest.Id.Interact.GetBox"), QuestData);
+}
+
+void UQuestManagerSubSystem::OnSystemReady()
+{
+	UAssetManager& AssetManager = UAssetManager::Get();
+	
+	// "QuestData" 타입의 모든 에셋 ID 목록을 가져옵니다.
+	TArray<FPrimaryAssetId> AssetIdList;
+	AssetManager.GetPrimaryAssetIdList(FName("QuestData"), AssetIdList);
+
+	if (AssetIdList.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No QuestData assets found to load."));
+		return; // 로드할 것이 없음
+	}
+
+	FStreamableDelegate OnLoadCompleteDelegate = FStreamableDelegate::CreateUObject(this, &UQuestManagerSubSystem::OnQuestDataLoaded); // (예시)
+	
+	TSharedPtr<FStreamableHandle> LoadHandle = AssetManager.LoadPrimaryAssets(AssetIdList, TArray<FName>(), OnLoadCompleteDelegate);
+}
+
+void UQuestManagerSubSystem::OnQuestDataLoaded()
+{
+	UE_LOG(LogTemp, Log, TEXT("All QuestData assets are now loaded. Caching..."));
+
+	// 로드 요청했던 목록을 다시 가져오거나, 멤버 변수로 저장해둔 목록을 순회합니다.
+	UAssetManager& AssetManager = UAssetManager::Get();
+	TArray<FPrimaryAssetId> AssetIdList;
+	AssetManager.GetPrimaryAssetIdList(FName("QuestData"), AssetIdList);
+
+	ActiveQuestDACaches.Empty(AssetIdList.Num());
+
+	for (const FPrimaryAssetId& AssetId : AssetIdList)
+	{
+		// 로드가 완료되었으므로, GetPrimaryAssetObject는 즉시 유효한 UObject*를 반환합니다.
+		UDA_QuestBase* QuestData = Cast<UDA_QuestBase>(AssetManager.GetPrimaryAssetObject(AssetId));
+
+		if (QuestData)
+		{
+			// FName(ID)을 키로 TMap에 캐싱합니다.
+			ActiveQuestDACaches.Add(QuestData->QuestID, QuestData);
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Caching complete. %d quests loaded."), ActiveQuestDACaches.Num());
+
+	// (선택사항) 로드 핸들 해제
+	// this->QuestLoadHandle.Reset();
+
+	// 완료 델리게이트 방송
 }
 
 TArray<FQuestLogEntry> UQuestManagerSubSystem::GetQuestLogEntries() const
@@ -69,9 +118,12 @@ void UQuestManagerSubSystem::ClaimQuestReward(FGameplayTag QuestID)
 	{
 		FQuestProgressData& ProgressData = PlayerQuestHistory[QuestID];
 		ProgressData.ProgressType = EQuestProgress::Complete_Final;
-		// 퀘스트 오브젝트 비활성화 및 제거
-		// ...
-		// DeactivateAndDestroyQuest(QuestObject);
+		// 보상 수령 로직...
+
+		// if (FRewardData = ensure(ActiveQuestDACaches[QuestID]->RewardData))
+		{
+
+		}
 	}
 }
 
@@ -93,7 +145,7 @@ void UQuestManagerSubSystem::OnRaidEnd()
 {
 	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] In-Raid Level is ended now"));
 
-	for (UAEQuestObject* QuestObject : ActiveQuests)
+	for (UQuestObject* QuestObject : ActiveQuests)
 	{
 		DeactivateAndDestroyQuest(QuestObject);
 	}
@@ -108,55 +160,8 @@ void UQuestManagerSubSystem::LoadAndActivateQuest(FGameplayTag QuestID, FQuestPr
 		return;
 	}
 
-	UAssetManager& AssetManager = UAssetManager::Get();
-	FPrimaryAssetId QuestAssetId(FName("QuestData"), QuestID.GetTagName()); // "QuestData"는 프로젝트 세팅과 동일해야 합니다.
-
-	// 1. 이미 로드되었는지 확인합니다 (가장 빠른 경로)
-	UDA_QuestBase* QuestDef = AssetManager.GetPrimaryAssetObject<UDA_QuestBase>(QuestAssetId);
-	if (QuestDef)
-	{
-		UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] LoadAndActivateQuest: [%s] was already loaded. Activating."), *QuestID.GetTagName().ToString());
-		// 이미 있으니 바로 활성화 함수 호출
-		ActivateQuestObject(QuestDef, ProgressData);
-		return;
-	}
-
-	// 2. 로드되지 않았다면 비동기 로드를 요청합니다.
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] LoadAndActivateQuest: [%s] not loaded. Requesting async load..."), *QuestID.GetTagName().ToString());
-
-	// 로드가 완료되면 실행될 람다(Lambda) 함수를 정의합니다.
-	// [this, QuestAssetId, ProgressData, QuestID] : 람다 안에서 사용할 변수들을 캡처합니다.
-	FStreamableDelegate DoneDelegate = FStreamableDelegate::CreateLambda(
-		[this, QuestAssetId, ProgressData, QuestID]()
-		{
-			// --- 이 블록은 로드가 완료된 '미래' 시점에 실행됩니다 ---
-
-			UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] Async load complete for: [%s]"), *QuestID.GetTagName().ToString());
-
-			// 로드가 완료되었으니 이제 GetPrimaryAssetObject는 성공합니다.
-			UAssetManager& AssetManagerRef = UAssetManager::Get();
-			UDA_QuestBase* LoadedQuestDef = AssetManagerRef.GetPrimaryAssetObject<UDA_QuestBase>(QuestAssetId);
-
-			if (LoadedQuestDef)
-			{
-				// 로드 성공! 활성화 함수 호출
-				ActivateQuestObject(LoadedQuestDef, ProgressData);
-			}
-			else
-			{
-				// ID는 맞았는데 로드에 실패한 경우 (에셋이 깨졌거나 경로가 잘못된 경우)
-				UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] FAILED to get quest object for [%s] even after async load! Asset may be invalid."), *QuestID.GetTagName().ToString());
-			}
-		}
-	);
-
-	// 3. 에셋 매니저에게 로드를 요청합니다.
-	AssetManager.LoadPrimaryAsset(QuestAssetId, TArray<FName>(), DoneDelegate);
-}
-
-void UQuestManagerSubSystem::ActivateQuestObject(UDA_QuestBase* QuestDef, FQuestProgressData* ProgressData)
-{
-	if (!QuestDef)
+	UDA_QuestBase* QuestDef = ActiveQuestDACaches[QuestID];
+	if (ensure(!QuestDef))
 	{
 		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] ActivateQuestObject called with NULL QuestDef."));
 		return;
@@ -169,10 +174,8 @@ void UQuestManagerSubSystem::ActivateQuestObject(UDA_QuestBase* QuestDef, FQuest
 		return;
 	}
 
-	// --- 기존 로직 시작 ---
-
 	// 새로운 UAEQuestObject를 생성하고 초기화합니다.
-	UAEQuestObject* NewQuestObject = NewObject<UAEQuestObject>(this);
+	UQuestObject* NewQuestObject = NewObject<UQuestObject>(this);
 	NewQuestObject->Initialize(QuestDef, ProgressData, this);
 
 	// 델리게이트를 바인딩합니다.
@@ -190,38 +193,7 @@ void UQuestManagerSubSystem::ActivateQuestObject(UDA_QuestBase* QuestDef, FQuest
 	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] ActivateQuestObject: [%s] Id is activated completely"), *QuestDef->GetPrimaryAssetId().PrimaryAssetName.ToString());
 }
 
-/*
-void UQuestManagerSubSystem::LoadAndActivateQuest(FGameplayTag QuestID, FQuestProgressData* ProgressData)
-{
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] LoadAndActivateQuest: [%s] Id is in Loading"), *QuestID.GetTagName().ToString());
-
-
-	// UAssetManager를 사용하여 퀘스트 정의를 로드합니다.
-	UAssetManager& AssetManager = UAssetManager::Get();
-
-	FPrimaryAssetId QuestAssetId(FName("QuestData"), QuestID.GetTagName());
-	UDA_QuestBase* QuestDef = AssetManager.Lo
-
-	// 퀘스트 정의가 유효한지 확인합니다.
-	if (QuestDef)
-	{
-		// 새로운 UAEQuestObject를 생성하고 초기화합니다.
-		UAEQuestObject* NewQuestObject = NewObject<UAEQuestObject>(this);
-		NewQuestObject->Initialize(QuestDef, ProgressData, this);
-		// 델리게이트를 바인딩합니다.
-		NewQuestObject->OnQuestObjectChangedDelegate.BindUObject(this, &UQuestManagerSubSystem::NotifyQuestUpdate);
-		// NewQuestObject->OnRequestWorldTasksDelegate.BindUObject(this, &UQuestManagerSubSystem::OnQuestRequestingWorldTasks);
-		// 퀘스트를 활성화합니다.
-		NewQuestObject->Activate(this->GetWorld());
-
-		// 활성화된 퀘스트 목록에 추가합니다.
-		ActiveQuests.Add(NewQuestObject);
-
-		UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] LoadAndActivateQuest: [%s] Id is loaded completely"), *QuestID.GetTagName().ToString());
-	}
-}*/
-
-void UQuestManagerSubSystem::DeactivateAndDestroyQuest(UAEQuestObject* QuestObject)
+void UQuestManagerSubSystem::DeactivateAndDestroyQuest(UQuestObject* QuestObject)
 {
 	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] DeactivateAndDestroyQuest: Object [%s] is deactivated"), *QuestObject->GetFName().ToString());
 
@@ -259,13 +231,33 @@ bool UQuestManagerSubSystem::BuildQuestLogEntry(const FGameplayTag& QuestID, FQu
 
 bool UQuestManagerSubSystem::BuildQuestLogEntry(const FGameplayTag& QuestID, const FQuestProgressData& ProgressData, FQuestLogEntry& OutEntry) const
 {
-	// 에셋 매니저로 UDA_QuestBase 로드
-	// DTO 필드 채우기 (Title, Description, State...)
-	// FormattedObjectives 텍스트 포맷팅
-	// ...
-	// 이 모든 로직이 '여기 한 곳'에만 존재합니다.
+	if (QuestID.IsValid()) 
+	{
+		return false;
+	}
+	UDA_QuestBase* QuestDef = ActiveQuestDACaches[QuestID];
+	if (!QuestDef)
+	{
+		OutEntry.QuestID = QuestDef->QuestID;
+		OutEntry.Title = QuestDef->QuestName;
+		OutEntry.Description = QuestDef->Description;
+		OutEntry.CurrentState = ProgressData.ProgressType;
 
-	UE_LOG(LogTemp, Log, TEXT("진행도 구조체는 현재 미구현입니다."));
+		OutEntry.FormattedObjectives.Empty(QuestDef->ObjectConfigs.Num());
 
-	return true; // (모든 로직이 성공했다고 가정)
+		for (const UQuestObjectiveConfig* ObjConfig : QuestDef->ObjectConfigs)
+		{
+			if (ObjConfig)
+			{
+				FText FormattedText = ObjConfig->GetFormattedObjectiveText(ProgressData);
+				OutEntry.FormattedObjectives.Add(FormattedText);
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] BuildQuestLogEntry: QuestID [%s] DA is not found!"), *QuestID.GetTagName().ToString());
+		return false; // 실패
+	}
+	return true;
 }

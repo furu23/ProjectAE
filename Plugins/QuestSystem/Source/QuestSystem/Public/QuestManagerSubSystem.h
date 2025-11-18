@@ -5,14 +5,14 @@
 #include "CoreMinimal.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "GameplayTagContainer.h"
-#include "AEQuestTypes.h"
+#include "QuestTypes.h"
 #include "Delegates/DelegateCombinations.h"
 #include "Logging/LogMacros.h"
 #include "QuestManagerSubSystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestEntryUpdatedDelegate, const FQuestLogEntry&, UpdatedEntry);
 
-class UAEQuestObject;
+class UQuestObject;
 class UDA_QuestBase;
 
 /**
@@ -20,12 +20,17 @@ class UDA_QuestBase;
  * @note 데이터와 이벤트 주도의 방식으로 설계되었으며. 코드의 수정보다는 실제 Quest 행동에 대한 로직은 Gameplay Ability에서, 데이터는 DA에서 변경을 시도해주시길 바랍니다.
  */
 UCLASS()
-class PROJECTAE_API UQuestManagerSubSystem : public ULocalPlayerSubsystem
+class QUESTSYSTEM_API UQuestManagerSubSystem : public ULocalPlayerSubsystem
 {
 	GENERATED_BODY()
 	
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
+	// PC의 BeginPlay 타임에 초기화 작업을 시작합니다. 이 함수가 완료된 이후 QuestSystem이 동작합니다.
+	virtual void OnSystemReady();
+
+	virtual void OnQuestDataLoaded();
 
 	// **** 공용 API ****
 
@@ -51,9 +56,12 @@ protected:
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, FQuestProgressData> PlayerQuestHistory;
 
+	UPROPERTY(Transient)
+	TMap<FGameplayTag, TObjectPtr<UDA_QuestBase>> ActiveQuestDACaches;
+
 	// 현재 활성화된 퀘스트 오브젝트들
 	UPROPERTY(Transient)
-	TArray<TObjectPtr<UAEQuestObject>> ActiveQuests;
+	TArray<TObjectPtr<UQuestObject>> ActiveQuests;
 
 
 	// **** 하위클래스 전용 상태 변경 알림 함수 ****
@@ -84,7 +92,7 @@ private:
 	void ActivateQuestObject(UDA_QuestBase* QuestDef, FQuestProgressData* ProgressData);
 
 	// 퀘스트를 비활성화 상태로 변경하고 파괴
-	virtual void DeactivateAndDestroyQuest(UAEQuestObject* QuestObject);
+	virtual void DeactivateAndDestroyQuest(UQuestObject* QuestObject);
 
 
 	// **** 태스크 버블링 용 내부 델리게이트 바인딩 함수 ****
@@ -105,5 +113,10 @@ private:
 
 	// (필요시) ProgressData를 직접 받는 오버로딩
 	bool BuildQuestLogEntry(const FGameplayTag& QuestID, const FQuestProgressData& ProgressData, FQuestLogEntry& OutEntry) const;
+
+
+	// **** 내부 헬퍼 함수 ****
+
+	void LoadQuestBaseAsset();
 
 };
