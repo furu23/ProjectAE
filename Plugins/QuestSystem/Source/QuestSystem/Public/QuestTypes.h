@@ -7,6 +7,7 @@
 UENUM(BlueprintType)
 enum class EQuestProgress : uint8
 {
+	None						UMETA(Hidden),
 	NotStarted					UMETA(ToolTip = "아직 수령하지 않은 상태입니다."),
 	CanAccept					UMETA(ToolTip = "수령할 수 있는 상태입니다."),
 	InProgress					UMETA(ToolTip = "진행 중인 상태입니다."),
@@ -50,7 +51,7 @@ struct FQuestLogEntry
     // 4. 퀘스트 상태 (FQuestProgressData에서 가져옴)
     // UI가 이 상태를 보고 "In-Progress", "Complete", "Turn-In" 배지를 표시합니다.
     UPROPERTY(BlueprintReadOnly, Category = "Quest")
-    EQuestProgress CurrentState;
+    EQuestProgress CurrentState = EQuestProgress::None;
 
     // 5. 가공된 목표 텍스트
     // Manager가 ObjectiveConfig와 ProgressData를 조합해 만들어줍니다.

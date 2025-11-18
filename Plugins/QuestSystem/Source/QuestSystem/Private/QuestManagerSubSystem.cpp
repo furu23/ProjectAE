@@ -8,7 +8,7 @@
 #include "Engine/AssetManager.h"
 #include "Data/DA_QuestBase.h"
 #include "QuestObject.h"
-#include "Objectives/Config/QuestObjectiveConfig.h"
+#include "Objectives/QuestObjectiveConfig.h"
 
 void UQuestManagerSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -17,6 +17,8 @@ void UQuestManagerSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 	FQuestProgressData QuestData;
 	QuestData.ProgressType = EQuestProgress::CanAccept;
 	PlayerQuestHistory.Add(FGameplayTag::RequestGameplayTag("Quest.Id.Interact.GetBox"), QuestData);
+
+	OnSystemReady();
 }
 
 void UQuestManagerSubSystem::OnSystemReady()
@@ -160,8 +162,8 @@ void UQuestManagerSubSystem::LoadAndActivateQuest(FGameplayTag QuestID, FQuestPr
 		return;
 	}
 
-	UDA_QuestBase* QuestDef = ActiveQuestDACaches[QuestID];
-	if (ensure(!QuestDef))
+	UDA_QuestBase* QuestDef = ActiveQuestDACaches.FindRef(QuestID);
+	if (!QuestDef)
 	{
 		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] ActivateQuestObject called with NULL QuestDef."));
 		return;
@@ -235,7 +237,7 @@ bool UQuestManagerSubSystem::BuildQuestLogEntry(const FGameplayTag& QuestID, con
 	{
 		return false;
 	}
-	UDA_QuestBase* QuestDef = ActiveQuestDACaches[QuestID];
+	UDA_QuestBase* QuestDef = *ActiveQuestDACaches.Find(QuestID);
 	if (!QuestDef)
 	{
 		OutEntry.QuestID = QuestDef->QuestID;

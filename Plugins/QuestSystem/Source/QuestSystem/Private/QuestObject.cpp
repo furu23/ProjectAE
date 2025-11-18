@@ -3,7 +3,7 @@
 
 #include "QuestObject.h"
 #include "Data/DA_QuestBase.h"
-#include "Objectives/Config/QuestObjectiveConfig.h"
+#include "Objectives/QuestObjectiveConfig.h"
 #include "Objectives/QuestObjective.h"
 #include "QuestSystem.h"
 

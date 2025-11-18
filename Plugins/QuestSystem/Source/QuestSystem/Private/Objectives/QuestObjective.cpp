@@ -2,7 +2,7 @@
 
 
 #include "Objectives/QuestObjective.h"
-#include "Objectives/Config/QuestObjectiveConfig.h"
+#include "Objectives/QuestObjectiveConfig.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 
 void UQuestObjective::Initialize(const UQuestObjectiveConfig* Config, FQuestProgressData* ProgressRef)

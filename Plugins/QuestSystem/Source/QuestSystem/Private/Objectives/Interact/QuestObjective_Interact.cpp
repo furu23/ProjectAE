@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Objectives/QuestObjective_Interact.h"
-#include "Objectives/Config/ObjectiveConfig_Interact.h"
-#include "Objectives/Config/QuestObjectiveConfig.h"
+#include "Objectives/Interact/QuestObjective_Interact.h"
+#include "Objectives/Interact/ObjectiveConfig_Interact.h"
+#include "Objectives/QuestObjectiveConfig.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "QuestTypes.h"
 #include "QuestSystem.h"

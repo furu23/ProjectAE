@@ -12,7 +12,6 @@ struct FQuestMessage_Generic;
 
 /**
  * GMS를 통해 퀘스트 시스템에 메시지를 '방송'하는 정적 헬퍼 클래스입니다.
- * 퀘스트 시스템 외부의 모든 액터(AI, 아이템 등)는 이 클래스만 사용해야 합니다.
  */
 UCLASS()
 class QUESTSYSTEM_API UQuestMessageHelpers : public UBlueprintFunctionLibrary

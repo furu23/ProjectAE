@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "QuestObjectiveConfig.h"
+#include "Objectives/QuestObjectiveConfig.h"
 #include "ObjectiveConfig_Interact.generated.h"
 
 /**

@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Objectives/Config/QuestObjectiveConfig.h"
+#include "Objectives/QuestObjectiveConfig.h"
 
 TSubclassOf<UQuestObjective> UQuestObjectiveConfig::GetQuestObjectiveClass() const
 {
