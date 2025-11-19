@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -17,7 +17,7 @@ class UQuestObjective_Location : public UQuestObjective
 	GENERATED_BODY()
 
 public:
-	// **** ±âº» °ø¿ë ÇÔ¼ö ¿À¹ö¶óÀÌµå ****
+	// **** ê¸°ë³¸ ê³µìš© í•¨ìˆ˜ ì˜¤ë²„ë¼ì´ë“œ ****
 
 	virtual void Initialize(const UQuestObjectiveConfig* Config, UQuestManagerSubSystem* QuestSys, FGameplayTag ObjectQuestID) override;
 
@@ -28,16 +28,12 @@ public:
 	virtual bool IsComplete() const override;
 
 protected:
-	// **** GMS¿¡ ¹ÙÀÎµùµÉ ÇÔ¼ö ¿À¹ö¶óÀÌµå ****
+	// **** GMSì— ë°”ì¸ë”©ë  í•¨ìˆ˜ ì˜¤ë²„ë¼ì´ë“œ ****
 
 	virtual void OnMessageReceived(FGameplayTag Channel, const FQuestMessage_Generic& Message) override;
 
 
-	// **** ÆíÀÇ¿ë Config °´Ã¼ º¯È¯ ****
+	// **** í¸ì˜ìš© Config ê°ì²´ ë³€í™˜ ****
 
 	const UObjectiveConfig_Location* InteractConfig;
-
-private:
-
-	bool bHasFiredCompletion = false;
 };

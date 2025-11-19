@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Objectives/Location/QuestObjective_Location.h"
@@ -14,7 +14,7 @@ void UQuestObjective_Location::Initialize(const UQuestObjectiveConfig* Config, U
 	Super::Initialize(Config, QuestSys, ObjectQuestID);
 
 	InteractConfig = Cast<const UObjectiveConfig_Location>(Config);
-	checkf(InteractConfig != nullptr, TEXT("ObjectiveConfig°¡ InteractConfig Å¸ÀÔÀÌ ¾Æ´Õ´Ï´Ù!"));
+	checkf(InteractConfig != nullptr, TEXT("ObjectiveConfigê°€ InteractConfig íƒ€ì…ì´ ì•„ë‹™ë‹ˆë‹¤!"));
 }
 
 void UQuestObjective_Location::Activate(UObject* WorldContext)
@@ -23,13 +23,13 @@ void UQuestObjective_Location::Activate(UObject* WorldContext)
 
 	if (!InteractConfig || !WorldContext) return;
 
-	// GMS¸¦ °¡Á®¿È
+	// GMSë¥¼ ê°€ì ¸ì˜´
 	UGameplayMessageSubsystem& GMS = UGameplayMessageSubsystem::Get(WorldContext);
 
-	// ±¸µ¶ÇÒ Ã¤³Î °¡Á®¿È
+	// êµ¬ë…í•  ì±„ë„ ê°€ì ¸ì˜´
 	FGameplayTag ListenTag = InteractConfig->ListenTag;
 
-	// ±¸µ¶ÇÏ°í ¹İÈ¯ÇÏ´Â ÇÚµé ÀúÀå
+	// êµ¬ë…í•˜ê³  ë°˜í™˜í•˜ëŠ” í•¸ë“¤ ì €ì¥
 	GMSListenHandle = GMS.RegisterListener<FQuestMessage_Generic, UQuestObjective_Location>(
 		ListenTag,
 		this,
