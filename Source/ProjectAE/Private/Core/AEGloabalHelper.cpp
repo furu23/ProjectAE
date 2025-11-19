@@ -25,8 +25,8 @@
 #include "AbilitySystem/AS_BaseCombat.h"
 #include "AbilitySystem/AS_HealthSet.h"
 #include "Characters/AEPlayerState.h"
-/*#include "Quest/QuestManagerSubSystem.h"*/
 #include "GameFramework/GameplayMessageSubsystem.h"
+#include "QuestManagerSubSystem.h"
 
 
 // ----------------------------------------------------------------------
@@ -125,8 +125,6 @@ AAEPlayerController* UAEGloabalHelper::GetOwningPlayerController(UObject* Target
 // 2. 서브시스템 접근 헬퍼 (Subsystem Accessors)
 // ----------------------------------------------------------------------
 
-
-/*
 UQuestManagerSubSystem* UAEGloabalHelper::GetQuestSubsystem(const UObject* WorldContextObject)
 {
 	const APlayerController* PC = GetAEPlayerController(WorldContextObject);
@@ -135,7 +133,7 @@ UQuestManagerSubSystem* UAEGloabalHelper::GetQuestSubsystem(const UObject* World
 		return LocalPlayer->GetSubsystem<UQuestManagerSubSystem>();
 	}
 	return nullptr;
-}*/
+}
 
 
 // ----------------------------------------------------------------------
