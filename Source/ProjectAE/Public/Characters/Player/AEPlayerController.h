@@ -21,6 +21,9 @@ protected:
 	virtual void BeginPlay() override;
 	
 public:
+	void OnInteractionFocusChanged(AActor* NewFocusedActor);
+	
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	class UInputMappingContext* InputMappingContext;
 	

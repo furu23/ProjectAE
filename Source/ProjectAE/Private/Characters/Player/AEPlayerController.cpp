@@ -5,6 +5,7 @@
 #include "Inventory/InventoryUIManager.h"
 #include "QuestManagerSubSystem.h"
 #include "Core/AEHUD.h"
+#include "Widgets/AEGameHUDWidget.h"
 
 
 AAEPlayerController::AAEPlayerController()
@@ -34,6 +35,19 @@ void AAEPlayerController::BeginPlay()
 	}
 }
 
+void AAEPlayerController::OnInteractionFocusChanged(AActor* NewFocusedActor)
+{
+	if (!AEGameHUDWidget) return;
+	
+	if (NewFocusedActor)
+	{
+		AEGameHUDWidget->ShowInteractionPrompt();
+	}
+	else
+	{
+		AEGameHUDWidget->HideInteractionPrompt();
+	}
+}
 
 void AAEPlayerController::Cheat_AcceptQuest(const FString& QuestIDName)
 {

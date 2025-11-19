@@ -11,7 +11,6 @@
 #include "Characters/Player/AEPlayerController.h"
 #include "Interaction/InteractionComponent.h"
 #include "Inventory/InventoryComponent.h"
-#include "Widgets/AEGameHUDWidget.h"
 
 #if UE_BUILD_DEVELOPMENT
 #include "GameplayTagContainer.h"
@@ -67,11 +66,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-// 	if (!TargetRotation.Equals(GetActorRotation()))
-// 	{
-// 		FRotator NewRotation = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, RotationInterpSpeed);
-// 		SetActorRotation(NewRotation);
-// 	}
+
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -130,16 +125,9 @@ void APlayerCharacter::PossessedBy(AController* NewController)
 
 void APlayerCharacter::OnFocusChanged(AActor* NewFocusedActor)
 {
-	if (NewFocusedActor)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("APlayerChar : NewFocusedActor %s"), *NewFocusedActor->GetName());
-		AEPlayerController->AEGameHUDWidget->ShowInteractionPrompt();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("APlayerChar : NewFocusedActor NULL"));
-		AEPlayerController->AEGameHUDWidget->HideInteractionPrompt();
-	}
+	if (!AEPlayerController) return;
+	
+	AEPlayerController->OnInteractionFocusChanged(NewFocusedActor);
 }
 
 void APlayerCharacter::Move(const FVector2D& MoveVector)
