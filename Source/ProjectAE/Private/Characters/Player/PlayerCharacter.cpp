@@ -8,8 +8,10 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
+#include "Characters/Player/AEPlayerController.h"
 #include "Interaction/InteractionComponent.h"
 #include "Inventory/InventoryComponent.h"
+#include "Widgets/AEGameHUDWidget.h"
 
 #if UE_BUILD_DEVELOPMENT
 #include "GameplayTagContainer.h"
@@ -106,6 +108,12 @@ void APlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
+	AAEPlayerController* PC = Cast<AAEPlayerController>(NewController);
+	if (PC)
+	{
+		AEPlayerController = PC;
+	}
+	
 	UAbilitySystemComponent* ASC = CachedASC.Get();
 	for (TSubclassOf<UGameplayAbility> AbilityForGrant : DefaultAbilities)
 	{
@@ -125,10 +133,12 @@ void APlayerCharacter::OnFocusChanged(AActor* NewFocusedActor)
 	if (NewFocusedActor)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("APlayerChar : NewFocusedActor %s"), *NewFocusedActor->GetName());
+		AEPlayerController->AEGameHUDWidget->ShowInteractionPrompt();
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("APlayerChar : NewFocusedActor NULL"));
+		AEPlayerController->AEGameHUDWidget->HideInteractionPrompt();
 	}
 }
 

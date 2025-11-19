@@ -4,8 +4,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Inventory/InventoryUIManager.h"
 #include "QuestManagerSubSystem.h"
-
-
+#include "Core/AEHUD.h"
 
 
 AAEPlayerController::AAEPlayerController()
@@ -24,6 +23,15 @@ void AAEPlayerController::BeginPlay()
 	{
 		Subsystem->AddMappingContext(InputMappingContext, 0);
 	}
+	
+	if ((AEHUD = GetHUD<AAEHUD>()))
+	{
+		AEGameHUDWidget = AEHUD->GameHUDWidget;
+		if (!AEGameHUDWidget)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Not Set AEGameHUDWidget !!"));
+		}
+	}
 }
 
 
@@ -34,7 +42,7 @@ void AAEPlayerController::Cheat_AcceptQuest(const FString& QuestIDName)
 		if (UQuestManagerSubSystem* QuestManager = LP->GetSubsystem<UQuestManagerSubSystem>())
 		{
 			FGameplayTag QuestID = FGameplayTag::RequestGameplayTag(*QuestIDName);
-			QuestManager->AcceptQuest(QuestID); // [È£Ãâ]
+			QuestManager->AcceptQuest(QuestID); // [È£ï¿½ï¿½]
 			UE_LOG(LogTemp, Log, TEXT("Cheat: Quest [%s] Accepted."), *QuestIDName);
 		}
 	}
