@@ -19,7 +19,7 @@ class QUESTSYSTEM_API UQuestObjective_Interact : public UQuestObjective
 public:
 	// **** 기본 공용 함수 오버라이드 ****
 
-	virtual void Initialize(const UQuestObjectiveConfig* Config, FQuestProgressData* ProgressRef) override;
+	virtual void Initialize(const UQuestObjectiveConfig* Config, UQuestManagerSubSystem* QuestSys, FGameplayTag QuestID) override;
 
 	virtual void Activate(UObject* WorldContext) override;
 
@@ -36,8 +36,4 @@ protected:
 	// **** 편의용 Config 객체 변환 ****
 
 	const UObjectiveConfig_Interact* InteractConfig;
-
-private:
-
-	bool bHasFiredCompletion = false;
 };

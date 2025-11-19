@@ -77,7 +77,7 @@ TArray<FQuestLogEntry> UQuestManagerSubSystem::GetQuestLogEntries() const
 	for (const TPair<FGameplayTag, FQuestProgressData>& Pair : PlayerQuestHistory)
 	{
 		FQuestLogEntry Entry;
-		if (BuildQuestLogEntry(Pair.Key, Pair.Value, Entry))
+		if (BuildQuestLogEntry(Pair.Key, Entry))
 		{
 			LogEntries.Add(Entry);
 		}
@@ -112,6 +112,16 @@ void UQuestManagerSubSystem::AcceptQuest(FGameplayTag QuestID)
 	OnRaidStart();
 }
 
+FQuestProgressData* UQuestManagerSubSystem::QueryProgressDataForQuestId(const FGameplayTag& QuestId)
+{
+	if (!QuestId.IsValid())
+	{
+		return nullptr;
+	}
+
+	return PlayerQuestHistory.Find(QuestId);
+}
+
 void UQuestManagerSubSystem::ClaimQuestReward(FGameplayTag QuestID)
 {
 	// 완료된 퀘스트의 보상을 청구합니다.
@@ -138,7 +148,7 @@ void UQuestManagerSubSystem::OnRaidStart()
 		FQuestProgressData& ProgressData = QuestPair.Value;
 		if (ProgressData.ProgressType == EQuestProgress::InProgress)
 		{
-			LoadAndActivateQuest(QuestPair.Key, &ProgressData);
+			LoadAndActivateQuest(QuestPair.Key);
 		}
 	}
 }
@@ -154,7 +164,7 @@ void UQuestManagerSubSystem::OnRaidEnd()
 	ActiveQuests.Empty();
 }
 
-void UQuestManagerSubSystem::LoadAndActivateQuest(FGameplayTag QuestID, FQuestProgressData* ProgressData)
+void UQuestManagerSubSystem::LoadAndActivateQuest(FGameplayTag QuestID)
 {
 	if (!QuestID.IsValid())
 	{
@@ -178,7 +188,7 @@ void UQuestManagerSubSystem::LoadAndActivateQuest(FGameplayTag QuestID, FQuestPr
 
 	// 새로운 UAEQuestObject를 생성하고 초기화합니다.
 	UQuestObject* NewQuestObject = NewObject<UQuestObject>(this);
-	NewQuestObject->Initialize(QuestDef, ProgressData, this);
+	NewQuestObject->Initialize(QuestDef, this);
 
 	// 델리게이트를 바인딩합니다.
 	NewQuestObject->OnQuestObjectChangedDelegate.BindUObject(this, &UQuestManagerSubSystem::NotifyQuestUpdate);
@@ -222,18 +232,9 @@ void UQuestManagerSubSystem::OnQuestRequestingWorldTasks(const TArray<TObjectPtr
 
 bool UQuestManagerSubSystem::BuildQuestLogEntry(const FGameplayTag& QuestID, FQuestLogEntry& OutEntry) const
 {
-	const FQuestProgressData* ProgressData = PlayerQuestHistory.Find(QuestID);
-	if (ProgressData == nullptr)
-	{
-		return false; // 진행도 데이터 없음
-	}
+	const FQuestProgressData ProgressData = PlayerQuestHistory.FindRef(QuestID);
 
-	return BuildQuestLogEntry(QuestID, *ProgressData, OutEntry);
-}
-
-bool UQuestManagerSubSystem::BuildQuestLogEntry(const FGameplayTag& QuestID, const FQuestProgressData& ProgressData, FQuestLogEntry& OutEntry) const
-{
-	if (QuestID.IsValid()) 
+	if (!QuestID.IsValid()) 
 	{
 		return false;
 	}

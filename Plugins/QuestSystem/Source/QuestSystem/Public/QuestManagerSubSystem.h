@@ -45,21 +45,14 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Quest|Events")
     FOnQuestEntryUpdatedDelegate OnQuestEntryUpdated;
 
-
-	// **** DTO 생성 로직 ****
-
-	/**
-	 * @brief QuestID를 기반으로 완전한 FQuestLogEntry DTO를 생성.
-	 * @param QuestID 퀘스트의 고유 ID
-	 * @param OutEntry [Out] 생성된 DTO가 담길 변수
-	 * @return DTO 생성 성공 여부
-	 */
-	bool BuildQuestLogEntry(const FGameplayTag& QuestID, FQuestLogEntry& OutEntry) const;
-
-
-
-	// 테스트용, 추후 삭제
+	// 퀘스트 수락용
 	virtual void AcceptQuest(FGameplayTag QuestID);
+
+
+	// **** 내부 시스템용 쿼리 함수 *****
+
+	// QuestID에 해당되는 FQuestProgressData의 값을 질의하고 받습니다.
+	virtual FQuestProgressData* QueryProgressDataForQuestId(const FGameplayTag& QuestId);
 
 protected:
 	// **** 퀘스트 상태 추적 프로퍼티 ****
@@ -99,7 +92,7 @@ private:
 	// **** Private 내부 상태 변화 함수 모음 ****
 
 	// 퀘스트를 활성화 상태로 변경
-	virtual void LoadAndActivateQuest(FGameplayTag QuestID, FQuestProgressData* ProgressData);
+	virtual void LoadAndActivateQuest(FGameplayTag QuestID);
 
 	// 퀘스트를 비활성화 상태로 변경하고 파괴
 	virtual void DeactivateAndDestroyQuest(UQuestObject* QuestObject);
@@ -110,10 +103,18 @@ private:
 	// void OnQuestRequestingWorldTasks(const TArray<TObjectPtr<UQuestWorldTask>> TasksToExecute);
 
 
-	// **** 내부 캡슐화된 함수 ****
+	// **** DTO 생성 로직 ****
 
-	// ProgressData를 직접 받는 DTO 빌더 함수 오버로딩
-	bool BuildQuestLogEntry(const FGameplayTag& QuestID, const FQuestProgressData& ProgressData, FQuestLogEntry& OutEntry) const;
+	/**
+	 * @brief QuestID를 기반으로 완전한 FQuestLogEntry DTO를 생성.
+	 * @param QuestID 퀘스트의 고유 ID
+	 * @param OutEntry [Out] 생성된 DTO가 담길 변수
+	 * @return DTO 생성 성공 여부
+	 */
+	bool BuildQuestLogEntry(const FGameplayTag& QuestID, FQuestLogEntry& OutEntry) const;
+
+
+	// **** 내부 캡슐화된 함수 ****
 
 	// OnSystemReady 함수에서 비동기 로드를 실행하고 받을 콜백 함수
 	virtual void OnQuestDataLoaded();

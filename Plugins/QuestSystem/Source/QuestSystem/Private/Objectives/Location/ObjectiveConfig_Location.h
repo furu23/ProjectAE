@@ -14,4 +14,16 @@ class UObjectiveConfig_Location : public UQuestObjectiveConfig
 {
 	GENERATED_BODY()
 	
+public:
+	// 클래스 기본값을 위한 생성자
+	UObjectiveConfig_Location();
+
+	UPROPERTY(EditInstanceOnly, Category = "Objective|Interact", meta = (ToolTip = "채널 태그입니다."))
+	FGameplayTag ListenTag;
+
+	UPROPERTY(EditInstanceOnly, Category = "Objective|Interact", meta = (ToolTip = "비교할 목표 태그입니다."))
+	FGameplayTagContainer TargetTags;
+
+	// 포맷 전달 함수를 오버라이드합니다.
+	virtual FText GetFormattedObjectiveText(const FQuestProgressData& ProgressData) const override;
 };

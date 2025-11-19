@@ -9,6 +9,7 @@
 #include "QuestObjective.generated.h"
 
 class UQuestObjectiveConfig;
+class UQuestManagerSubSystem;
 // class UQuestWorldTask
 
 DECLARE_DELEGATE_OneParam(FOnObjectiveCompleted, UQuestObjective* /* CompletedObjective */);
@@ -35,7 +36,7 @@ public:
 	// **** 외부 호출 함수 (퀘스트 모듈 내부에서만 사용할 것을 권장합니다.)****
 
 	// 초기화 함수
-	virtual void Initialize(const UQuestObjectiveConfig* Config, FQuestProgressData* ProgressRef);
+	virtual void Initialize(const UQuestObjectiveConfig* Config, UQuestManagerSubSystem* QuestSys, FGameplayTag ObjectQuestID);
 
 	// QuestObject 에서 호출할 GMS 구독 함수
 	virtual void Activate(UObject* WorldContext) PURE_VIRTUAL(UQuestObjective::Activate)
@@ -56,11 +57,17 @@ protected:
 	FGameplayMessageListenerHandle GMSListenHandle;
 
 
-	// **** 초기화 관련 멤버 ****
+	// **** 초기화 및 내부 멤버 ****
+
+	// 현재 퀘스트의 퀘스트 ID를 저장
+	FGameplayTag QuestID;
 
 	// 설정 데이터 참조
 	const UQuestObjectiveConfig* ObjectiveConfig;
 
-	// 진행도 포인터
-	FQuestProgressData* ProgressDataRef;
+	// 진행도 포인터 반환을 위한 퀘스트 시스템 캐시
+	TObjectPtr<UQuestManagerSubSystem> CachedQuestSys;
+
+	// 이미 완료 함수가 호출되었는 지를 확인하는 bool 프로퍼티
+	bool bHasFiredCompletion = false;
 };

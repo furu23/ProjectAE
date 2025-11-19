@@ -18,8 +18,7 @@ FText UObjectiveConfig_Interact::GetFormattedObjectiveText(const FQuestProgressD
     FString Status = (CurrentProgress >= 1) ? TEXT("[완료]") : TEXT("[미완료]");
 
     return FText::Format(
-        FText::FromString(TEXT("{0} {1}")),
-        FText::FromString(TEXT("Interact")), // "버튼 누르기"
-        FText::FromString(Status) // "[미완료]"
+        FText::FromString(TEXT("{0}")),
+        FText::FromString(Status)
     );
 }

@@ -34,7 +34,7 @@ public:
 	// **** 상위 객체 호출 함수 ****
 
 	// 퀘스트 런타임 객체를 초기화합니다.
-	virtual void Initialize(UDA_QuestBase* DefRef, FQuestProgressData* ProgressRef, UQuestManagerSubSystem* Manager);
+	virtual void Initialize(UDA_QuestBase* DefRef, UQuestManagerSubSystem* Manager);
 
 	// Objective 배열을 순회하며 활성화 시킵니다. 델리게이트에 OnObjectCompleted 함수를 바인드합니다.
 	virtual void Activate(UObject* WorldContext);
@@ -47,9 +47,6 @@ protected:
 
 	// 이 퀘스트 런타임 객체의 설계도가 되는 UDA_QuestBase 객체에 대한 참조입니다.
 	TObjectPtr<UDA_QuestBase> Definition;
-
-	// 퀘스트 진행도에 대한 레퍼런스를 가집니다.
-	FQuestProgressData* ProgressDataRef;
 
 	// 퀘스트의 하위 목표 객체 배열입니다.
 	TArray<TObjectPtr<UQuestObjective>> Objectives;

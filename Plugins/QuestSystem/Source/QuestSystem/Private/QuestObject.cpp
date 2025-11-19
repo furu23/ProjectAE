@@ -2,17 +2,17 @@
 
 
 #include "QuestObject.h"
+#include "QuestManagerSubSystem.h"
 #include "Data/DA_QuestBase.h"
 #include "Objectives/QuestObjectiveConfig.h"
 #include "Objectives/QuestObjective.h"
 #include "QuestSystem.h"
 
-void UQuestObject::Initialize(UDA_QuestBase* DefRef, FQuestProgressData* ProgressRef, UQuestManagerSubSystem* Manager)
+void UQuestObject::Initialize(UDA_QuestBase* DefRef, UQuestManagerSubSystem* Manager)
 {
 	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] Object Initialize"), *this->GetFName().ToString());
 	// 값 초기화
 	Definition = DefRef;
-	ProgressDataRef = ProgressRef;
 	CachedQuestSys = Manager;
 
 	// QuestObjective 배열 초기화
@@ -29,7 +29,7 @@ void UQuestObject::Initialize(UDA_QuestBase* DefRef, FQuestProgressData* Progres
 
 		// UClass 값을 통해 ObjectiveClass를 만들고, 
 		UQuestObjective* Objective = NewObject<UQuestObjective>(this, ObjectiveClass);
-		Objective->Initialize(Config, ProgressRef);
+		Objective->Initialize(Config, CachedQuestSys, Definition->QuestID);
 		Objectives.Add(Objective);
 		UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] object initialized end"), *this->GetFName().ToString());
 	}
@@ -64,7 +64,15 @@ void UQuestObject::OnObjectiveCompleted(UQuestObjective* Objective)
 {
 	if (CheckQuestCompletion())
 	{
-		ProgressDataRef->ProgressType = EQuestProgress::Completed_PendingTurnIn;
+		// ProgressData를 받아옵니다.
+		FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestId(Definition->QuestID);
+		if (!ProgressData)
+		{
+			UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] : [%s] object failed getting FQuestProgressData"), *this->GetFName().ToString());
+			return;
+		}
+
+		ProgressData->ProgressType = EQuestProgress::Completed_PendingTurnIn;
 		DeActivate();
 		UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] object get [%s] objective completion"), *this->GetFName().ToString(), *Objective->GetFName().ToString());
 	}

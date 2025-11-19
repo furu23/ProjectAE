@@ -5,12 +5,13 @@
 #include "Objectives/Interact/ObjectiveConfig_Interact.h"
 #include "Objectives/QuestObjectiveConfig.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
+#include "QuestManagerSubSystem.h"
 #include "QuestTypes.h"
 #include "QuestSystem.h"
 
-void UQuestObjective_Interact::Initialize(const UQuestObjectiveConfig* Config, FQuestProgressData* ProgressRef)
+void UQuestObjective_Interact::Initialize(const UQuestObjectiveConfig* Config, UQuestManagerSubSystem* QuestSys, FGameplayTag ObjectQuestID)
 {
-	Super::Initialize(Config, ProgressRef);
+	Super::Initialize(Config, QuestSys, ObjectQuestID);
 
 	InteractConfig = Cast<const UObjectiveConfig_Interact>(Config);
 	checkf(InteractConfig != nullptr, TEXT("ObjectiveConfig가 InteractConfig 타입이 아닙니다!"));
@@ -48,31 +49,45 @@ void UQuestObjective_Interact::DeActivate()
 
 bool UQuestObjective_Interact::IsComplete() const
 {
-	if (!InteractConfig || !ProgressDataRef) return false;
+	const FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestId(QuestID);
+	if (!ProgressData)
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] : [%s] objective faile to Get ProgressData."), *this->GetFName().ToString());
+		return false;
+	}
+	
+	if (!InteractConfig) return false;
 
-	const int32* ProgressPtr = ProgressDataRef->ObjectProgress.Find(InteractConfig->ObjectiveID);
+	const int32 ProgressPtr = ProgressData->ObjectProgress.FindRef(InteractConfig->ObjectiveID);
 	if (ProgressPtr)
 	{
-		return *ProgressPtr >= 1;
+		return ProgressPtr >= 1;
 	}
 	return false;
 }
 
 void UQuestObjective_Interact::OnMessageReceived(FGameplayTag Channel, const FQuestMessage_Generic& Message)
 {
+	FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestId(QuestID);
+	if (!ProgressData)
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] : [%s] objective faile to Get ProgressData."), *this->GetFName().ToString());
+		return;
+	}
+	
 	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] objective is getting Message Now! \
 		\nChecking Valid on Bool Property = %d,\
 		\nChecking Valid on Reference Validating = %d,\
 		\nChecking Listen Tag is Same = %d"),
-		*this->GetFName().ToString(), bHasFiredCompletion, (!ProgressDataRef || !Message.TargetActor), (Message.TargetTags.HasAll(InteractConfig->TargetTags)));
+		*this->GetFName().ToString(), bHasFiredCompletion, (!ProgressData || !Message.TargetActor), (Message.TargetTags.HasAll(InteractConfig->TargetTags)));
 
 	if (bHasFiredCompletion) return;
 
-	if (!ProgressDataRef || !Message.TargetActor) return;
+	if (!ProgressData || !Message.TargetActor) return;
 
 	if (Message.TargetTags.HasAll(InteractConfig->TargetTags))
 	{
-		ProgressDataRef->ObjectProgress.FindOrAdd(InteractConfig->ObjectiveID)++;
+		ProgressData->ObjectProgress.FindOrAdd(InteractConfig->ObjectiveID)++;
 		if (IsComplete())
 		{
 			UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] objective is completed"), *this->GetFName().ToString());
