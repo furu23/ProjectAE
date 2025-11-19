@@ -58,6 +58,9 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<class UInventoryComponent> InventoryComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class AAEPlayerController> AEPlayerController;
 
 	// **** 어빌리티 ****
 
