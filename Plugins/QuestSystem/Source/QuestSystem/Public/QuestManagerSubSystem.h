@@ -14,6 +14,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestEntryUpdatedDelegate, const 
 
 class UQuestObject;
 class UDA_QuestBase;
+struct FStreamableHandle;
 
 /**
  * @brief In-Raid 레벨 및 로비(창고) 레벨에서 모두 퀘스트를 관리하고 추적할 수 있도록 관리하는 서브시스템입니다.
@@ -32,7 +33,7 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 	// PC의 BeginPlay 타임에 초기화 작업을 시작합니다. 이 함수가 완료된 이후 QuestSystem이 동작합니다.
-	virtual void OnSystemReady();
+	virtual void OnSystemReady(FGameplayTag PhaseTag);
 
 
 	// **** 공용 API ****
@@ -118,5 +119,10 @@ private:
 
 	// OnSystemReady 함수에서 비동기 로드를 실행하고 받을 콜백 함수
 	virtual void OnQuestDataLoaded();
+
+
+	// **** 특수한 상황을 위한 로드 핸들링 ****
+
+	TSharedPtr<FStreamableHandle> LoadHandle;
 
 };

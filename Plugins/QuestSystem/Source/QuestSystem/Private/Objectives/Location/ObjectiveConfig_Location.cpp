@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Objectives/Location/ObjectiveConfig_Location.h"
@@ -6,7 +6,7 @@
 
 UObjectiveConfig_Location::UObjectiveConfig_Location()
 {
-    // ¾ÈÀüÇÑ ±âº»°ª ÇÏµåÄÚµù Á¤ÀÇ
+    // ì•ˆì „í•œ ê¸°ë³¸ê°’ í•˜ë“œì½”ë”© ì •ì˜
     ObjectiveClass = UQuestObjective_Location::StaticClass();
 }
 

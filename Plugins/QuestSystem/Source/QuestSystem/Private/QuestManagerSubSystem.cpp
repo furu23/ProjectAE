@@ -17,11 +17,9 @@ void UQuestManagerSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 	FQuestProgressData QuestData;
 	QuestData.ProgressType = EQuestProgress::CanAccept;
 	PlayerQuestHistory.Add(FGameplayTag::RequestGameplayTag("Quest.Id.Interact.GetBox"), QuestData);
-
-	OnSystemReady();
 }
 
-void UQuestManagerSubSystem::OnSystemReady()
+void UQuestManagerSubSystem::OnSystemReady(FGameplayTag NewPhase)
 {
 	UAssetManager& AssetManager = UAssetManager::Get();
 	
@@ -31,18 +29,28 @@ void UQuestManagerSubSystem::OnSystemReady()
 
 	if (AssetIdList.Num() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No QuestData assets found to load."));
+		UE_LOG(LogQuestSystem, Warning, TEXT("No QuestData assets found to load."));
 		return; // 로드할 것이 없음
 	}
 
-	FStreamableDelegate OnLoadCompleteDelegate = FStreamableDelegate::CreateUObject(this, &UQuestManagerSubSystem::OnQuestDataLoaded); // (예시)
-	
-	TSharedPtr<FStreamableHandle> LoadHandle = AssetManager.LoadPrimaryAssets(AssetIdList, TArray<FName>(), OnLoadCompleteDelegate);
+	FStreamableDelegate OnLoadCompleteDelegate = FStreamableDelegate::CreateUObject(this, &UQuestManagerSubSystem::OnQuestDataLoaded);
+	LoadHandle = AssetManager.LoadPrimaryAssets(AssetIdList, TArray<FName>(), OnLoadCompleteDelegate);
+
+	// 태그가 레이드 진행 중이라면
+	if (NewPhase.MatchesTag(FGameplayTag::RequestGameplayTag("Game.Phase.InRaid.GroundZero")))
+	{
+		OnRaidStart();
+	}
+	// 레이드가 끝났다면 (탈출/사망)
+	else if (NewPhase.MatchesTag(FGameplayTag::RequestGameplayTag("Game.Phase.Lobby")))
+	{
+		OnRaidEnd();
+	}
 }
 
 void UQuestManagerSubSystem::OnQuestDataLoaded()
 {
-	UE_LOG(LogTemp, Log, TEXT("All QuestData assets are now loaded. Caching..."));
+	UE_LOG(LogQuestSystem, Log, TEXT("All QuestData assets are now loaded. Caching..."));
 
 	// 로드 요청했던 목록을 다시 가져오거나, 멤버 변수로 저장해둔 목록을 순회합니다.
 	UAssetManager& AssetManager = UAssetManager::Get();
@@ -63,12 +71,7 @@ void UQuestManagerSubSystem::OnQuestDataLoaded()
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("Caching complete. %d quests loaded."), ActiveQuestDACaches.Num());
-
-	// (선택사항) 로드 핸들 해제
-	// this->QuestLoadHandle.Reset();
-
-	// 완료 델리게이트 방송
+	UE_LOG(LogQuestSystem, Log, TEXT("Caching complete. %d quests loaded."), ActiveQuestDACaches.Num());
 }
 
 TArray<FQuestLogEntry> UQuestManagerSubSystem::GetQuestLogEntries() const
