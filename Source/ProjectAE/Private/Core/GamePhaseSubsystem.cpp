@@ -17,11 +17,11 @@ void UGamePhaseSubsystem::SetGamePhase(FGameplayTag NewPhase)
 
 void UGamePhaseSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
-    UQuestManagerSubSystem* QuestSys = GetWorld()->GetFirstPlayerController()->GetLocalPlayer()->GetSubsystem<UQuestManagerSubSystem>();
-    if (!QuestSys)
-    {
-        UE_LOG(LogAECore, Log, TEXT("Failed Get QuestSys"));
-        return;
-    }
-    QuestSys->OnSystemReady(CurrentPhase);
+	UQuestManagerSubSystem* QuestSys = GetWorld()->GetFirstPlayerController()->GetLocalPlayer()->GetSubsystem<UQuestManagerSubSystem>();
+	if (!QuestSys)
+	{
+		UE_LOG(LogAECore, Log, TEXT("Failed Get QuestSys"));
+		return;
+	}
+	QuestSys->OnSystemReady(CurrentPhase);
 }

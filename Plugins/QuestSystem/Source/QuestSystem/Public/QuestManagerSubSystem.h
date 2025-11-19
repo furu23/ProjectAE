@@ -26,7 +26,6 @@ class QUESTSYSTEM_API UQuestManagerSubSystem : public ULocalPlayerSubsystem
 	GENERATED_BODY()
 	
 public:
-
 	// **** 초기화 관련 ****
 
 	// 자체 초기화 함수
@@ -36,7 +35,8 @@ public:
 	virtual void OnSystemReady(FGameplayTag PhaseTag);
 
 
-	// **** 공용 API ****
+
+	// **** 기능을 위한 공용 API ****
 
 	// UI 초기화 시, 퀘스트 목록을 생성
     UFUNCTION(BlueprintPure, Category = "Quest")
@@ -49,17 +49,31 @@ public:
 	// 퀘스트 수락용
 	virtual void AcceptQuest(FGameplayTag QuestID);
 
+	
+
+	// **** 저장 및 로드용 공용 API ****
+
+	// 저장 시 PlayerQuestHistory 만을 저장합니다
+	UFUNCTION(BlueprintCallable)
+	void GetSaveData(TArray<uint8>& OutData);
+
+	// PlayerQuestHistory 를 복구합니다
+	void LoadSaveData(const TArray<uint8>& InData);
+
+
 
 	// **** 내부 시스템용 쿼리 함수 *****
 
 	// QuestID에 해당되는 FQuestProgressData의 값을 질의하고 받습니다.
 	virtual FQuestProgressData* QueryProgressDataForQuestId(const FGameplayTag& QuestId);
 
+
+
 protected:
 	// **** 퀘스트 상태 추적 프로퍼티 ****
 
 	// 현재 '진행중인' 퀘스트들을 로드
-	UPROPERTY(Transient)
+	UPROPERTY(SaveGame)
 	TMap<FGameplayTag, FQuestProgressData> PlayerQuestHistory;
 
 	UPROPERTY(Transient)
@@ -70,9 +84,11 @@ protected:
 	TArray<TObjectPtr<UQuestObject>> ActiveQuests;
 
 
+
 	// **** 하위클래스 전용 상태 변경 알림 함수 ****
 
 	virtual void NotifyQuestUpdate(const FGameplayTag& QuestID);
+
 
 
 	// **** 로비 레벨 관련 ****
@@ -82,14 +98,16 @@ protected:
 	virtual void ClaimQuestReward(FGameplayTag QuestID);
 
 
+
 	// **** In-Raid 레벨 전환 관련 ****
 
 	virtual void OnRaidStart();
 
 	virtual void OnRaidEnd();
 
-private:
 
+
+private:
 	// **** Private 내부 상태 변화 함수 모음 ****
 
 	// 퀘스트를 활성화 상태로 변경
@@ -99,9 +117,11 @@ private:
 	virtual void DeactivateAndDestroyQuest(UQuestObject* QuestObject);
 
 
+
 	// **** 태스크 버블링 용 내부 델리게이트 바인딩 함수 ****
 
 	// void OnQuestRequestingWorldTasks(const TArray<TObjectPtr<UQuestWorldTask>> TasksToExecute);
+
 
 
 	// **** DTO 생성 로직 ****
@@ -115,10 +135,12 @@ private:
 	bool BuildQuestLogEntry(const FGameplayTag& QuestID, FQuestLogEntry& OutEntry) const;
 
 
+
 	// **** 내부 캡슐화된 함수 ****
 
 	// OnSystemReady 함수에서 비동기 로드를 실행하고 받을 콜백 함수
 	virtual void OnQuestDataLoaded();
+
 
 
 	// **** 특수한 상황을 위한 로드 핸들링 ****
