@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -15,15 +15,15 @@ class UObjectiveConfig_Location : public UQuestObjectiveConfig
 	GENERATED_BODY()
 	
 public:
-	// Å¬·¡½º ±âº»°ªÀ» À§ÇÑ »ı¼ºÀÚ
+	// í´ë˜ìŠ¤ ê¸°ë³¸ê°’ì„ ìœ„í•œ ìƒì„±ì
 	UObjectiveConfig_Location();
 
-	UPROPERTY(EditInstanceOnly, Category = "Objective|Interact", meta = (ToolTip = "Ã¤³Î ÅÂ±×ÀÔ´Ï´Ù."))
+	UPROPERTY(EditInstanceOnly, Category = "Objective|Interact", meta = (ToolTip = "ì±„ë„ íƒœê·¸ì…ë‹ˆë‹¤."))
 	FGameplayTag ListenTag;
 
-	UPROPERTY(EditInstanceOnly, Category = "Objective|Interact", meta = (ToolTip = "ºñ±³ÇÒ ¸ñÇ¥ ÅÂ±×ÀÔ´Ï´Ù."))
+	UPROPERTY(EditInstanceOnly, Category = "Objective|Interact", meta = (ToolTip = "ë¹„êµí•  ëª©í‘œ íƒœê·¸ì…ë‹ˆë‹¤."))
 	FGameplayTagContainer TargetTags;
 
-	// Æ÷¸Ë Àü´Ş ÇÔ¼ö¸¦ ¿À¹ö¶óÀÌµåÇÕ´Ï´Ù.
+	// í¬ë§· ì „ë‹¬ í•¨ìˆ˜ë¥¼ ì˜¤ë²„ë¼ì´ë“œí•©ë‹ˆë‹¤.
 	virtual FText GetFormattedObjectiveText(const FQuestProgressData& ProgressData) const override;
 };
