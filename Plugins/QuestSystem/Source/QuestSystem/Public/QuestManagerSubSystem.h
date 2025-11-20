@@ -39,7 +39,7 @@ public:
 	// **** 기능을 위한 공용 API ****
 
 	// UI 초기화 시, 퀘스트 목록을 생성
-    UFUNCTION(BlueprintPure, Category = "Quest")
+    UFUNCTION(BlueprintCallable, Category = "Quest", meta = (BlueprintPure = "false"))
     TArray<FQuestLogEntry> GetQuestLogEntries() const;
 
 	// UI 에 사용될 Entry 단일 객체를 가져오는 델리게이트
