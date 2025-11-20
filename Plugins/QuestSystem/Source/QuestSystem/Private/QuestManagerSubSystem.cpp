@@ -66,8 +66,6 @@ void UQuestManagerSubSystem::OnQuestDataLoaded()
 	TArray<FPrimaryAssetId> AssetIdList;
 	AssetManager.GetPrimaryAssetIdList(FName("QuestData"), AssetIdList);
 
-	ActiveQuestDACaches.Empty(AssetIdList.Num());
-
 	for (const FPrimaryAssetId& AssetId : AssetIdList)
 	{
 		// 로드가 완료되었으므로, GetPrimaryAssetObject는 즉시 유효한 UObject*를 반환합니다.
@@ -76,7 +74,7 @@ void UQuestManagerSubSystem::OnQuestDataLoaded()
 		if (QuestData)
 		{
 			// FName(ID)을 키로 TMap에 캐싱합니다.
-			ActiveQuestDACaches.Add(QuestData->QuestID, QuestData);
+			ActiveQuestDACaches.FindOrAdd(QuestData->QuestID, QuestData);
 		}
 	}
 
