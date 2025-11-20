@@ -8,6 +8,8 @@
 
 class UAbilityInputConfig;
 class UGameplayAbility;
+struct FInputAbilitySet;
+class UAEWeaponDefinition;
 
 /**
  * 
@@ -58,9 +60,13 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<class UInventoryComponent> InventoryComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
+	TObjectPtr<class UAEWeaponComponent> WeaponComponent;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class AAEPlayerController> AEPlayerController;
+
 
 	// **** 어빌리티 ****
 
@@ -80,5 +86,8 @@ protected:
 	// 기본 어빌리티 목록
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
-	
+
+	// 기본 무기
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category ="Ability")
+	TObjectPtr<UAEWeaponDefinition> DefaultWeapon;
 };

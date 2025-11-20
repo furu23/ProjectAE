@@ -11,10 +11,9 @@
 #include "Characters/Player/AEPlayerController.h"
 #include "Interaction/InteractionComponent.h"
 #include "Inventory/InventoryComponent.h"
-
-#if UE_BUILD_DEVELOPMENT
 #include "GameplayTagContainer.h"
-#endif
+#include "Characters/Player/AEWeaponComponent.h"
+#include "../ProjectAE.h"
 
 
 APlayerCharacter::APlayerCharacter()
@@ -26,6 +25,8 @@ APlayerCharacter::APlayerCharacter()
 
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+
+	WeaponComponent = CreateDefaultSubobject<UAEWeaponComponent>("WeaponComponent");
 
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>("InteractionComponent");
 	
@@ -65,8 +66,6 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -109,15 +108,18 @@ void APlayerCharacter::PossessedBy(AController* NewController)
 		AEPlayerController = PC;
 	}
 	
+	// 어빌리티 초기화
 	UAbilitySystemComponent* ASC = CachedASC.Get();
-	for (TSubclassOf<UGameplayAbility> AbilityForGrant : DefaultAbilities)
+	for (const TSubclassOf<UGameplayAbility>& AbilityForGrant : DefaultAbilities)
 	{
-		if (AbilityForGrant)
-		{
-			const FGameplayAbilitySpec Spec(AbilityForGrant, 1, -1, this);
-			ASC->GiveAbility(Spec);
-		}
+		FGameplayAbilitySpec Spec(AbilityForGrant, 1, -1, this);
+		ASC->GiveAbility(Spec);
 	}
+
+	// 기본 무기 장착 및 무기의 어빌리티 부여
+	WeaponComponent->EquipWeapon(DefaultWeapon);
+
+	// TODO: 변경 시 전파받아 상태 부여
 	#if UE_BUILD_DEVELOPMENT
 	ASC->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag("State.Area.InRaid"));
 	#endif
@@ -184,7 +186,7 @@ void APlayerCharacter::InputAbilityTagReleased(const class UInputAction* Action)
 	const FGameplayTag* FoundTag = AbilityInputConfig->AbilityInputActions.Find(Action);
 	if (FoundTag && FoundTag->IsValid())
 	{
+		UE_LOG(LogAbilitySys, Log, TEXT("InputTagReleased Succssesfully called"));
 		ASC->AbilityInputTagReleased(*FoundTag);
 	}
-
 }

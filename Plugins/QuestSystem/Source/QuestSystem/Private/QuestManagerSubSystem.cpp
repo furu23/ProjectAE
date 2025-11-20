@@ -9,6 +9,7 @@
 #include "Data/DA_QuestBase.h"
 #include "QuestObject.h"
 #include "Objectives/QuestObjectiveConfig.h"
+#include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
 void UQuestManagerSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -17,6 +18,14 @@ void UQuestManagerSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 	FQuestProgressData QuestData;
 	QuestData.ProgressType = EQuestProgress::CanAccept;
 	PlayerQuestHistory.Add(FGameplayTag::RequestGameplayTag("Quest.Id.Interact.GetBox"), QuestData);
+
+	FQuestProgressData QuestData2;
+	QuestData.ProgressType = EQuestProgress::Completed_PendingTurnIn;
+	PlayerQuestHistory.Add(FGameplayTag::RequestGameplayTag("Quest.Id.Interact.GetBox2"), QuestData2);
+
+	FQuestProgressData QuestData3;
+	QuestData.ProgressType = EQuestProgress::NotStarted;
+	PlayerQuestHistory.Add(FGameplayTag::RequestGameplayTag("Quest.Id.Interact.GetBox3"), QuestData3);
 }
 
 void UQuestManagerSubSystem::OnSystemReady(FGameplayTag NewPhase)
@@ -114,6 +123,31 @@ void UQuestManagerSubSystem::AcceptQuest(FGameplayTag QuestID)
 
 	OnRaidStart();
 }
+
+void UQuestManagerSubSystem::GetSaveData(TArray<uint8>& OutData)
+{
+	FMemoryWriter MemWriter(OutData, true);
+	FObjectAndNameAsStringProxyArchive Ar(MemWriter, true);
+
+	// SaveGame 태그가 붙은 변수만 골라서 직렬화
+	Ar.ArIsSaveGame = true;
+
+	// 이 객체의 변수들을 Ar에 씀
+	Serialize(Ar);
+}
+
+void UQuestManagerSubSystem::LoadSaveData(const TArray<uint8>& InData)
+{
+	if (InData.Num() == 0) return;
+
+	FMemoryReader MemReader(InData, true);
+	FObjectAndNameAsStringProxyArchive Ar(MemReader, true);
+
+	Ar.ArIsSaveGame = true;
+
+	// Ar에서 읽어서 이 객체 변수에 덮어씌움
+	Serialize(Ar);
+}	
 
 FQuestProgressData* UQuestManagerSubSystem::QueryProgressDataForQuestId(const FGameplayTag& QuestId)
 {
