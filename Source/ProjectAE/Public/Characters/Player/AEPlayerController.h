@@ -21,11 +21,22 @@ protected:
 	virtual void BeginPlay() override;
 	
 public:
+	void OnInteractionFocusChanged(AActor* NewFocusedActor);
+	
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	class UInputMappingContext* InputMappingContext;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class AAEHUD> AEHUD;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UAEGameHUDWidget> AEGameHUDWidget;
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<class UInventoryUIManager> InventoryUIManager;
-	
+
+	UFUNCTION(Exec)
+	void Cheat_AcceptQuest(const FString& QuestIDName);
 };

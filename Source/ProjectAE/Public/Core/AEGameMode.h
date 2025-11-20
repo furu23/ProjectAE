@@ -13,5 +13,8 @@ UCLASS()
 class PROJECTAE_API AAEGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
+
+public:
+	virtual void StartPlay() override;
 	
 };
