@@ -18,6 +18,14 @@ void UQuestManagerSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 	FQuestProgressData QuestData;
 	QuestData.ProgressType = EQuestProgress::CanAccept;
 	PlayerQuestHistory.Add(FGameplayTag::RequestGameplayTag("Quest.Id.Interact.GetBox"), QuestData);
+
+	FQuestProgressData QuestData2;
+	QuestData.ProgressType = EQuestProgress::Completed_PendingTurnIn;
+	PlayerQuestHistory.Add(FGameplayTag::RequestGameplayTag("Quest.Id.Interact.GetBox2"), QuestData2);
+
+	FQuestProgressData QuestData3;
+	QuestData.ProgressType = EQuestProgress::NotStarted;
+	PlayerQuestHistory.Add(FGameplayTag::RequestGameplayTag("Quest.Id.Interact.GetBox3"), QuestData3);
 }
 
 void UQuestManagerSubSystem::OnSystemReady(FGameplayTag NewPhase)
