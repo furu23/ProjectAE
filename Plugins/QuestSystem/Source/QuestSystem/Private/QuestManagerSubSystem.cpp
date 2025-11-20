@@ -84,6 +84,7 @@ void UQuestManagerSubSystem::OnQuestDataLoaded()
 TArray<FQuestLogEntry> UQuestManagerSubSystem::GetQuestLogEntries() const
 {
 	TArray<FQuestLogEntry> LogEntries;
+	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] GetQuestLogEntries: [%d] in PlayerQuestHistory..."), PlayerQuestHistory.Num());
 	for (const TPair<FGameplayTag, FQuestProgressData>& Pair : PlayerQuestHistory)
 	{
 		FQuestLogEntry Entry;
@@ -273,8 +274,10 @@ bool UQuestManagerSubSystem::BuildQuestLogEntry(const FGameplayTag& QuestID, FQu
 	{
 		return false;
 	}
-	UDA_QuestBase* QuestDef = *ActiveQuestDACaches.Find(QuestID);
-	if (!QuestDef)
+
+	UDA_QuestBase* QuestDef = ActiveQuestDACaches.FindRef(QuestID);
+	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] BuildQuestLogEntry: Making entry in questdef [%s]"), *QuestDef->GetFName().ToString());
+	if (QuestDef)
 	{
 		OutEntry.QuestID = QuestDef->QuestID;
 		OutEntry.Title = QuestDef->QuestName;
