@@ -57,3 +57,12 @@ void UAEWeaponComponent::EquipWeapon(UAEWeaponDefinition* NewWeaponDef)
     // 추가할 로직이 있다면 여기에
 }
 
+int32 UAEWeaponComponent::GetMaxAmmo()
+{
+    if (CurrentWeaponDef)
+    {
+        return CurrentWeaponDef->MaxAmmo;
+    }
+    return 0;
+}
+

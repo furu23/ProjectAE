@@ -29,4 +29,7 @@ public:
     // 무기 교체 함수, 전략 패턴을 구현합니다.
     UFUNCTION(BlueprintCallable)
     void EquipWeapon(UAEWeaponDefinition* NewWeaponDef);
+
+    UFUNCTION(BlueprintCallable)
+    int32 GetMaxAmmo();
 };
