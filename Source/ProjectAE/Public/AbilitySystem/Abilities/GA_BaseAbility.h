@@ -25,6 +25,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Ability")
 	TSubclassOf<class UGameplayEffect> CooldownGameplayEffect = nullptr;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Ability")
-	TArray<TSubclassOf<UGameplayEffect>> ExtraGameplayEffects;
+	UPROPERTY(EditDefaultsOnly, Category = "Ability|CooldownTag")
+	FName CooldownTagName = TEXT("Data.Cooldown");
 };

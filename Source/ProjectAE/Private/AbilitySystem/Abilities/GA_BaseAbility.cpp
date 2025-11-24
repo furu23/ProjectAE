@@ -24,7 +24,7 @@ void UGA_BaseAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, c
 		return;
 	}
 
-	const FGameplayTag CooldownTag = FGameplayTag::RequestGameplayTag(TEXT("Data.Cooldown"));
+	const FGameplayTag CooldownTag = FGameplayTag::RequestGameplayTag(CooldownTagName);
 	
 	// 쿨타임 GE 적용
 	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(CooldownGameplayEffect);
@@ -32,6 +32,7 @@ void UGA_BaseAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, c
 	{
 		// SetByCaller로 쿨타임 시간 적용
 		SpecHandle.Data->SetSetByCallerMagnitude(CooldownTag, AbilityCooldown);
+		SpecHandle.Data->DynamicGrantedTags.AddTag(CooldownTag);
 	}
 
 	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
