@@ -55,13 +55,24 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "UI|Interaction")
 	void SetInteractionPromptPos();
 	
+	// Quest Functions
+	// Quest Widget 은 블루프린트로 구현해 C++ 로 컨버팅할 시간이 없을 것 같아. 그대로 사용하겠습니다.
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "UI|Quest")
+	void ShowQuestPrompt();
+	
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "UI|Quest")
+	void HideQuestPrompt();
+	
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "UI|Quest")
+	void InitializeQuestWidget();
+	
 protected:
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<class UInventoryWidget> PlayerInventoryWidget;
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<class UInventoryWidget> ChestInventoryWidget;
 	
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<class UInteractionPromptWidget> InteractionPromptWidget;
 	
 	// UPROPERTY(meta = (BindWidget))
@@ -70,6 +81,6 @@ protected:
 	FTimerHandle InteractionPromptTimerHandle;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Interaction")
-	float InteractionPromptDelay = 0.03;
+	float InteractionPromptDelay = 0.03f;
 	
 };
