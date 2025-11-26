@@ -28,7 +28,7 @@ void UQuestManagerSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 	PlayerQuestHistory.Add(FGameplayTag::RequestGameplayTag("Quest.Id.Interact.GetBox3"), QuestData3);
 }
 
-void UQuestManagerSubSystem::OnSystemReady(FGameplayTag NewPhase)
+void UQuestManagerSubSystem::OnSystemReady(const FGameplayTag& NewPhase)
 {
 	UAssetManager& AssetManager = UAssetManager::Get();
 	
@@ -113,7 +113,7 @@ void UQuestManagerSubSystem::NotifyQuestUpdate(const FGameplayTag& QuestID)
 	}
 }
 
-void UQuestManagerSubSystem::AcceptQuest(FGameplayTag QuestID)
+void UQuestManagerSubSystem::AcceptQuest(const FGameplayTag& QuestID)
 {
 	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] AcceptQuest: [%s] Id is Accepting Now..."), *QuestID.GetTagName().ToString());
 
@@ -148,29 +148,106 @@ void UQuestManagerSubSystem::LoadSaveData(const TArray<uint8>& InData)
 	Serialize(Ar);
 }	
 
-FQuestProgressData* UQuestManagerSubSystem::QueryProgressDataForQuestId(const FGameplayTag& QuestId)
+FQuestProgressData* UQuestManagerSubSystem::QueryProgressDataForQuestID(const FGameplayTag& QuestID)
 {
-	if (!QuestId.IsValid())
+	if (!QuestID.IsValid())
 	{
 		return nullptr;
 	}
 
-	return PlayerQuestHistory.Find(QuestId);
+	return PlayerQuestHistory.Find(QuestID);
 }
 
-void UQuestManagerSubSystem::ClaimQuestReward(FGameplayTag QuestID)
+void UQuestManagerSubSystem::ClaimQuestReward(const FGameplayTag& QuestID)
 {
-	// 완료된 퀘스트의 보상을 청구합니다.
-	EQuestProgress QuestProgress = PlayerQuestHistory.FindRef(QuestID).ProgressType;
-	if (QuestProgress == EQuestProgress::Completed_PendingTurnIn)
+	// 퀘스트가 보상 대기 상태인지 검사
+	FQuestProgressData* CurrentQuestData = PlayerQuestHistory.Find(QuestID);
+	if (!CurrentQuestData || CurrentQuestData->ProgressType != EQuestProgress::Completed_PendingTurnIn)
 	{
-		FQuestProgressData& ProgressData = PlayerQuestHistory[QuestID];
-		ProgressData.ProgressType = EQuestProgress::Complete_Final;
-		// 보상 수령 로직...
+		return;
+	}
 
-		// if (FRewardData = ensure(ActiveQuestDACaches[QuestID]->RewardData))
+	CurrentQuestData->ProgressType = EQuestProgress::Complete_Final;
+
+	// 퀘스트 보상 제공
+	GiveReward(QuestID);
+
+	// 후행 퀘스트 상태 전이 확인
+	TryUnlockNextQuests(QuestID);
+
+	// 완료된 퀘스트 정리
+	DeactivateAndDestroyQuest(QuestID);
+}
+
+void UQuestManagerSubSystem::GiveReward(const FGameplayTag& QuestID)
+{
+	// [TODO] : FRewardData 작성 필요 시, 구조 고민.
+
+	// 현재 전략 패턴 느낌의 객체 반환과 타이트한 UObject 데이터 반환 두 가지 고려중
+}
+
+void UQuestManagerSubSystem::TryUnlockNextQuests(const FGameplayTag& QuestID)
+{
+
+	UDA_QuestBase* CurrentQuestDEf = ActiveQuestDACaches.FindRef(QuestID);
+	if (!ensureAlwaysMsgf(CurrentQuestDEf, TEXT("Quest Data Missing for ID: %s"), *QuestID.ToString()))
+	{
+		return;
+	}
+
+	const FGameplayTagContainer& NextQuests = CurrentQuestDEf->PostrequisiteQuests;
+
+	if (NextQuests.IsValid())
+	{
+		for (const FGameplayTag& NextID : NextQuests)
 		{
+			if (!NextID.IsValid()) continue;
 
+			FQuestProgressData* ExistingData = PlayerQuestHistory.Find(NextID);
+			if (ExistingData)
+			{
+				if (ExistingData->ProgressType != EQuestProgress::None &&
+					ExistingData->ProgressType != EQuestProgress::NotStarted)
+				{
+					continue;
+				}
+			}
+
+			UDA_QuestBase* NextQuestObjPtr = ActiveQuestDACaches.FindRef(NextID);
+			if (!ensure(NextQuestObjPtr)) continue;
+
+			const FGameplayTagContainer& Prerequisites = NextQuestObjPtr->PrerequisiteQuests;
+
+			bool bAllPrereqsMet = true;
+			for (const FGameplayTag& PrereqID : Prerequisites)
+			{
+				const FQuestProgressData* PrereqHistory = PlayerQuestHistory.Find(PrereqID);
+
+				// 기록이 아예 없거나, 최종 완료 상태가 아니라면 탈락
+				if (!PrereqHistory || PrereqHistory->ProgressType != EQuestProgress::Complete_Final)
+				{
+					bAllPrereqsMet = false;
+					break;
+				}
+			}
+
+			if (bAllPrereqsMet)
+			{
+				FQuestProgressData* NewQuestData = PlayerQuestHistory.Find(NextID);
+				if (NewQuestData)
+				{
+					if (NewQuestData->ProgressType == EQuestProgress::NotStarted)
+					{
+						NewQuestData->ProgressType = EQuestProgress::CanAccept;
+
+
+						FQuestLogEntry NewEntry;
+						BuildQuestLogEntry(QuestID, NewEntry);
+
+						OnQuestEntryUpdated.Broadcast(NewEntry);
+					}
+				}
+			}
 		}
 	}
 }
@@ -192,15 +269,9 @@ void UQuestManagerSubSystem::OnRaidStart()
 void UQuestManagerSubSystem::OnRaidEnd()
 {
 	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] In-Raid Level is ended now"));
-
-	for (UQuestObject* QuestObject : ActiveQuests)
-	{
-		DeactivateAndDestroyQuest(QuestObject);
-	}
-	ActiveQuests.Empty();
 }
 
-void UQuestManagerSubSystem::LoadAndActivateQuest(FGameplayTag QuestID)
+void UQuestManagerSubSystem::LoadAndActivateQuest(const FGameplayTag& QuestID)
 {
 	if (!QuestID.IsValid())
 	{
@@ -215,42 +286,38 @@ void UQuestManagerSubSystem::LoadAndActivateQuest(FGameplayTag QuestID)
 		return;
 	}
 
-	UWorld* World = GetWorld(); // Subsystem은 GetWorld()를 호출할 수 있습니다.
+	UWorld* World = GetWorld();
 	if (!World)
 	{
 		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] Cannot activate quest [%s], World is NULL."), *QuestDef->GetPrimaryAssetId().PrimaryAssetName.ToString());
 		return;
 	}
 
-	// 새로운 UAEQuestObject를 생성하고 초기화합니다.
+	// 새로운 UAEQuestObject를 생성하고 초기화
 	UQuestObject* NewQuestObject = NewObject<UQuestObject>(this);
 	NewQuestObject->Initialize(QuestDef, this);
 
-	// 델리게이트를 바인딩합니다.
 	NewQuestObject->OnQuestObjectChangedDelegate.BindUObject(this, &UQuestManagerSubSystem::NotifyQuestUpdate);
 	// NewQuestObject->OnRequestWorldTasksDelegate.BindUObject(this, &UQuestManagerSubSystem::OnQuestRequestingWorldTasks);
 
-	// 퀘스트를 활성화합니다.
 	NewQuestObject->Activate(World);
+	ActiveQuests.Add(QuestID);
 
-	// 활성화된 퀘스트 목록에 추가합니다.
-	ActiveQuests.Add(NewQuestObject);
-
-	// --- 기존 로직 끝 ---
-
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] ActivateQuestObject: [%s] Id is activated completely"), *QuestDef->GetPrimaryAssetId().PrimaryAssetName.ToString());
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] ActivateQuestObject: [%s] Id is activated completely"), *QuestDef->GetPrimaryAssetId().PrimaryAssetName.ToString());
 }
 
-void UQuestManagerSubSystem::DeactivateAndDestroyQuest(UQuestObject* QuestObject)
+void UQuestManagerSubSystem::DeactivateAndDestroyQuest(const FGameplayTag& QuestID)
 {
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] DeactivateAndDestroyQuest: Object [%s] is deactivated"), *QuestObject->GetFName().ToString());
-
 	// 퀘스트를 비활성화합니다.
-	QuestObject->DeActivate();
-	ActiveQuests.Remove(QuestObject);
+	UQuestObject* QuestObj = ActiveQuests.FindRef(QuestID);
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] DeactivateAndDestroyQuest: Object [%s] is deactivated"), *QuestObj->GetFName().ToString());
 
-	// 퀘스트 오브젝트를 가비지 컬렉션 대상으로 표시합니다.
-	QuestObject->MarkAsGarbage();
+
+	if (QuestObj)
+	{
+		QuestObj->OnQuestObjectChangedDelegate.Unbind();
+	}
+	ActiveQuests.Remove(QuestID);
 }
 
 /*
@@ -276,7 +343,7 @@ bool UQuestManagerSubSystem::BuildQuestLogEntry(const FGameplayTag& QuestID, FQu
 	}
 
 	UDA_QuestBase* QuestDef = ActiveQuestDACaches.FindRef(QuestID);
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] BuildQuestLogEntry: Making entry in questdef [%s]"), *QuestDef->GetFName().ToString());
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] BuildQuestLogEntry: Making entry in questdef [%s]"), *QuestDef->GetFName().ToString());
 	if (QuestDef)
 	{
 		OutEntry.QuestID = QuestDef->QuestID;

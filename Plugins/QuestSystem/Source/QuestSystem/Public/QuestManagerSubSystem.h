@@ -32,7 +32,7 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 	// PC의 BeginPlay 타임에 초기화 작업을 시작합니다. 이 함수가 완료된 이후 QuestSystem이 동작합니다.
-	virtual void OnSystemReady(FGameplayTag PhaseTag);
+	virtual void OnSystemReady(const FGameplayTag& PhaseTag);
 
 
 
@@ -47,7 +47,7 @@ public:
     FOnQuestEntryUpdatedDelegate OnQuestEntryUpdated;
 
 	// 퀘스트 수락용
-	virtual void AcceptQuest(FGameplayTag QuestID);
+	virtual void AcceptQuest(const FGameplayTag& QuestID);
 
 	
 
@@ -65,7 +65,7 @@ public:
 	// **** 내부 시스템용 쿼리 함수 *****
 
 	// QuestID에 해당되는 FQuestProgressData의 값을 질의하고 받습니다.
-	virtual FQuestProgressData* QueryProgressDataForQuestId(const FGameplayTag& QuestId);
+	virtual FQuestProgressData* QueryProgressDataForQuestID(const FGameplayTag& QuestID);
 
 
 
@@ -81,7 +81,7 @@ protected:
 
 	// 현재 활성화된 퀘스트 오브젝트들
 	UPROPERTY(Transient)
-	TArray<TObjectPtr<UQuestObject>> ActiveQuests;
+	TMap<FGameplayTag, TObjectPtr<UQuestObject>> ActiveQuests;
 
 
 
@@ -91,11 +91,19 @@ protected:
 
 
 
-	// **** 로비 레벨 관련 ****
+	// **** 퀘스트 플로우 관련 ****
 
+	// 퀘스트 수락 함수
 //	virtual void AcceptQuest(FGameplayTag QuestID);
+	
+	// 퀘스트 보상 함수
+	virtual void ClaimQuestReward(const FGameplayTag& QuestID);
 
-	virtual void ClaimQuestReward(FGameplayTag QuestID);
+	// 내부에서 호출될 실제 보상 수령 함수
+	virtual void GiveReward(const FGameplayTag& QuestID);
+
+	// 후속 퀘스트의 상태 변경을 검사하고 실행하는 함수
+	virtual void TryUnlockNextQuests(const FGameplayTag& QuestID);
 
 
 
@@ -111,10 +119,10 @@ private:
 	// **** Private 내부 상태 변화 함수 모음 ****
 
 	// 퀘스트를 활성화 상태로 변경
-	virtual void LoadAndActivateQuest(FGameplayTag QuestID);
+	virtual void LoadAndActivateQuest(const FGameplayTag& QuestID);
 
 	// 퀘스트를 비활성화 상태로 변경하고 파괴
-	virtual void DeactivateAndDestroyQuest(UQuestObject* QuestObject);
+	virtual void DeactivateAndDestroyQuest(const FGameplayTag& QuestID);
 
 
 
@@ -132,7 +140,7 @@ private:
 	 * @param OutEntry [Out] 생성된 DTO가 담길 변수
 	 * @return DTO 생성 성공 여부
 	 */
-	bool BuildQuestLogEntry(const FGameplayTag& QuestID, FQuestLogEntry& OutEntry) const;
+	virtual bool BuildQuestLogEntry(const FGameplayTag& QuestID, FQuestLogEntry& OutEntry) const;
 
 
 
