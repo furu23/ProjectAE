@@ -1,8 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Objectives/Interact/ObjectiveConfig_Interact.h"
-#include "Objectives/Interact/QuestObjective_Interact.h"
+#include "ObjectiveConfig_Interact.h"
+#include "QuestObjective_Interact.h"
 
 UObjectiveConfig_Interact::UObjectiveConfig_Interact()
 {

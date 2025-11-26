@@ -12,7 +12,7 @@ class UObjectiveConfig_Location;
  * 
  */
 UCLASS()
-class UQuestObjective_Location : public UQuestObjective
+class PROJECTAE_API UQuestObjective_Location : public UQuestObjective
 {
 	GENERATED_BODY()
 
