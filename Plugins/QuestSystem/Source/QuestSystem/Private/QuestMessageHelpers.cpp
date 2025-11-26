@@ -6,7 +6,7 @@
 #include "GameplayTagAssetInterface.h"
 #include "QuestTypes.h"
 
-void UQuestMessageHelpers::BroadcastAIKilledEvent(UObject* WorldContextObject, AActor* InstigatorActor, AActor* TargetActor)
+void UQuestMessageHelpers::BroadcastAIKilledEvent(UObject* WorldContextObject, AActor* InstigatorActor, AActor* TargetActor, FGameplayTagContainer TargetTags)
 {
 	if (!TargetActor) return;
 
@@ -49,6 +49,28 @@ void UQuestMessageHelpers::BroadcastInteractEvent(UObject* WorldContextObject, A
 	SendQuestMessage(WorldContextObject, Channel, Message);
 }
 
+
+void UQuestMessageHelpers::BroadcastLocationEvent(UObject* WorldContextObject, AActor* InstiagtorActor, AActor* TargetActor, FGameplayTagContainer TargetTags)
+{
+	if (!TargetActor) return;
+
+	// 메세지 생성
+	FQuestMessage_Generic Message;
+	Message.InstigatorActor = InstiagtorActor;
+	Message.TargetActor = TargetActor;
+	Message.TargetTags = TargetTags;
+
+	if (IGameplayTagAssetInterface* TagInterface = Cast<IGameplayTagAssetInterface>(TargetActor))
+	{
+		UE_LOG(LogTemp, Log, TEXT("It is not called"));
+		TagInterface->GetOwnedGameplayTags(Message.TargetTags);
+	}
+
+	// 매세지 보내기
+	FGameplayTag Channel = FGameplayTag::RequestGameplayTag(TEXT("Quest.Event.Location"));
+
+	SendQuestMessage(WorldContextObject, Channel, Message);
+}
 
 // --- Private 내부 래퍼 ---
 

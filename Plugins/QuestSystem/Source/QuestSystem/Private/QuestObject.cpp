@@ -65,7 +65,7 @@ void UQuestObject::OnObjectiveCompleted(UQuestObjective* Objective)
 	if (CheckQuestCompletion())
 	{
 		// ProgressData를 받아옵니다.
-		FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestId(Definition->QuestID);
+		FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestID(Definition->QuestID);
 		if (!ProgressData)
 		{
 			UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] : [%s] object failed getting FQuestProgressData"), *this->GetFName().ToString());

@@ -49,7 +49,7 @@ void UQuestObjective_Location::DeActivate()
 
 bool UQuestObjective_Location::IsComplete() const
 {
-	const FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestId(QuestID);
+	const FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestID(QuestID);
 	if (!ProgressData)
 	{
 		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] : [%s] objective faile to Get ProgressData."), *this->GetFName().ToString());
@@ -68,7 +68,7 @@ bool UQuestObjective_Location::IsComplete() const
 
 void UQuestObjective_Location::OnMessageReceived(FGameplayTag Channel, const FQuestMessage_Generic& Message)
 {
-	FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestId(QuestID);
+	FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestID(QuestID);
 	if (!ProgressData)
 	{
 		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] : [%s] objective faile to Get ProgressData."), *this->GetFName().ToString());
