@@ -4,6 +4,7 @@
 #include "Objectives/QuestObjective.h"
 #include "Objectives/QuestObjectiveConfig.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
+#include "QuestManagerSubSystem.h"
 
 void UQuestObjective::Initialize(const UQuestObjectiveConfig* Config, UQuestManagerSubSystem* QuestSys, FGameplayTag ObjectQuestID)
 {
@@ -11,4 +12,15 @@ void UQuestObjective::Initialize(const UQuestObjectiveConfig* Config, UQuestMana
 	ObjectiveConfig = Config;
 	QuestID = ObjectQuestID;
 	CachedQuestSys = QuestSys;
+}
+
+void UQuestObjective::Activate(UObject* WorldContext)
+{
+	if (IsComplete())
+	{
+		UE_LOG(LogTemp, Log, TEXT("[QuestSys] : [%s] objective is completed"), *this->GetFName().ToString());
+
+		bHasFiredCompletion = true;
+		OnObjectiveCompleteDelegate.ExecuteIfBound(this);
+	}
 }

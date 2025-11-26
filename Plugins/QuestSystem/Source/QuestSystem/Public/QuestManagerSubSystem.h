@@ -8,19 +8,29 @@
 #include "QuestTypes.h"
 #include "Delegates/DelegateCombinations.h"
 #include "Logging/LogMacros.h"
+#include "Task/QuestTask.h"
 #include "QuestManagerSubSystem.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestEntryUpdatedDelegate, const FQuestLogEntry&, UpdatedEntry);
+
+// 전방 선언
 
 class UQuestObject;
 class UDA_QuestBase;
 struct FStreamableHandle;
 
+
+// 델리게이트 선언
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestEntryUpdatedDelegate, const FQuestLogEntry&, UpdatedEntry);
+
+DECLARE_DELEGATE_OneParam(FOnQuestTaskBubbleDelegate, const TArray<TObjectPtr<UQuestTask>>&);
+
+
 /**
  * @brief In-Raid 레벨 및 로비(창고) 레벨에서 모두 퀘스트를 관리하고 추적할 수 있도록 관리하는 서브시스템입니다.
  * @note 데이터와 이벤트 주도의 방식으로 설계되었으며. 코드의 수정보다는 실제 Quest 행동에 대한 로직은 Gameplay Ability에서, 데이터는 DA에서 변경을 시도해주시길 바랍니다.
  */
-UCLASS()
+UCLASS(Abstract)
 class QUESTSYSTEM_API UQuestManagerSubSystem : public ULocalPlayerSubsystem
 {
 	GENERATED_BODY()
@@ -28,26 +38,30 @@ class QUESTSYSTEM_API UQuestManagerSubSystem : public ULocalPlayerSubsystem
 public:
 	// **** 초기화 관련 ****
 
-	// 자체 초기화 함수
+	// 초기화 함수
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
-	// PC의 BeginPlay 타임에 초기화 작업을 시작합니다. 이 함수가 완료된 이후 QuestSystem이 동작합니다.
-	virtual void OnSystemReady(const FGameplayTag& PhaseTag);
+	// 퀘스트 수락용 (임시)
+	virtual void AcceptQuest(const FGameplayTag& QuestID);
 
 
 
-	// **** 기능을 위한 공용 API ****
+	// **** 기능을 위한 공용 API 함수 ****
 
 	// UI 초기화 시, 퀘스트 목록을 생성
     UFUNCTION(BlueprintCallable, Category = "Quest", meta = (BlueprintPure = "false"))
     TArray<FQuestLogEntry> GetQuestLogEntries() const;
 
+
+
+	// **** 기능을 위한 공용 델리게이트 ****
+
 	// UI 에 사용될 Entry 단일 객체를 가져오는 델리게이트
     UPROPERTY(BlueprintAssignable, Category = "Quest|Events")
     FOnQuestEntryUpdatedDelegate OnQuestEntryUpdated;
 
-	// 퀘스트 수락용
-	virtual void AcceptQuest(const FGameplayTag& QuestID);
+	// 목표 객체에서 월드 태스크에 요청이 들어왔을 때
+	FOnQuestTaskBubbleDelegate OnQuestTaskBubbleUp;
 
 	
 
@@ -107,11 +121,23 @@ protected:
 
 
 
-	// **** In-Raid 레벨 전환 관련 ****
+	// **** 활성화 퀘스트 관련 ****
 
-	virtual void OnRaidStart();
+	// 첫 초기화 시에, 현재 InProgress 상태인 ActiveQuests 배열을 채움
+	virtual void StartActiveQuests();
 
-	virtual void OnRaidEnd();
+	// 필요 시, 현재 ActiveQuests 배열을 전부 비활성화하고 비움
+	virtual void StopActiveQuests();
+
+
+
+	// **** 데이터 비동기 로드 관련 ****
+
+	// 초기화 시점에 에셋 로드 작업을 시작합니다.
+	virtual void StartAsyncLoadData();
+
+	// 비동기 로드를 실행하고 받을 콜백 함수
+	virtual void OnQuestDataLoaded();
 
 
 
@@ -127,8 +153,7 @@ private:
 
 
 	// **** 태스크 버블링 용 내부 델리게이트 바인딩 함수 ****
-
-	// void OnQuestRequestingWorldTasks(const TArray<TObjectPtr<UQuestWorldTask>> TasksToExecute);
+	void OnQuestRequestingWorldTasks(const TArray<TObjectPtr<UQuestTask>>& TasksToExecute);
 
 
 
@@ -141,13 +166,6 @@ private:
 	 * @return DTO 생성 성공 여부
 	 */
 	virtual bool BuildQuestLogEntry(const FGameplayTag& QuestID, FQuestLogEntry& OutEntry) const;
-
-
-
-	// **** 내부 캡슐화된 함수 ****
-
-	// OnSystemReady 함수에서 비동기 로드를 실행하고 받을 콜백 함수
-	virtual void OnQuestDataLoaded();
 
 
 

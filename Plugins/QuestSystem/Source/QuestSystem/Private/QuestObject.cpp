@@ -38,10 +38,12 @@ void UQuestObject::Initialize(UDA_QuestBase* DefRef, UQuestManagerSubSystem* Man
 void UQuestObject::Activate(UObject* WorldContext)
 {
 	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] object activating is started"), *this->GetFName().ToString());
+	const FQuestProgressData* QuestData = CachedQuestSys->QueryProgressDataForQuestID(Definition->QuestID);
+
 	for (UQuestObjective* Objective : Objectives)
 	{
 		Objective->OnObjectiveCompleteDelegate.BindUObject(this, &UQuestObject::OnObjectiveCompleted);
-		// Objective->OnRequestTaskSignatureDelegate.BindUObject(this, &UAEQuestObject::OnObjectiveRequestingTasks);
+		Objective->OnRequestTaskSignatureDelegate.BindUObject(this, &UQuestObject::OnObjectiveRequestingTasks);
 		Objective->Activate(this);
 		UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] object activated end"), *this->GetFName().ToString());
 	}
@@ -53,12 +55,23 @@ void UQuestObject::DeActivate()
 	{
 		Objective->DeActivate();
 		Objective->OnObjectiveCompleteDelegate.Unbind();
+		Objective->OnRequestTaskSignatureDelegate.Unbind();
 
 		Objective->MarkAsGarbage();
 		UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] object deactivating is called successfully"), *this->GetFName().ToString());
 	}
 	Objectives.Empty();
 }
+
+bool UQuestObject::CheckQuestCompletion()
+{
+	for (UQuestObjective* Objective : Objectives)
+	{
+		if (!Objective->IsComplete()) return false;
+	}
+	return true;
+}
+
 
 void UQuestObject::OnObjectiveCompleted(UQuestObjective* Objective)
 {
@@ -79,17 +92,8 @@ void UQuestObject::OnObjectiveCompleted(UQuestObjective* Objective)
 	OnQuestObjectChangedDelegate.Execute(Definition->QuestID);
 }
 
-bool UQuestObject::CheckQuestCompletion()
-{
-	for (UQuestObjective* Objective : Objectives)
-	{
-		if (!Objective->IsComplete()) return false;
-	}
-	return true;
-}
 
-/*
-void UAEQuestObject::OnObjectiveRequestingTasks(const TArray<TObjectPtr<UQuestWorldTask>> TasksToExecute)
+void UQuestObject::OnObjectiveRequestingTasks(const TArray<TObjectPtr<UQuestTask>>& TasksToExecute)
 {
 	OnRequestWorldTasksDelegate.ExecuteIfBound(TasksToExecute);
-}*/
+}

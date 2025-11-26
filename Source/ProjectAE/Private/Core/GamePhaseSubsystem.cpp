@@ -15,13 +15,22 @@ void UGamePhaseSubsystem::SetGamePhase(FGameplayTag NewPhase)
     }
 }
 
-void UGamePhaseSubsystem::OnWorldBeginPlay(UWorld& InWorld)
+void UGamePhaseSubsystem::RegisterLoadingTask(FName SystemName)
 {
-	UQuestManagerSubSystem* QuestSys = GetWorld()->GetFirstPlayerController()->GetLocalPlayer()->GetSubsystem<UQuestManagerSubSystem>();
-	if (!QuestSys)
-	{
-		UE_LOG(LogAECore, Log, TEXT("Failed Get QuestSys"));
-		return;
-	}
-	QuestSys->OnSystemReady(CurrentPhase);
+    PendingLoadingTasks.Add(SystemName);
+}
+
+void UGamePhaseSubsystem::CompleteLoadingTask(FName SystemName)
+{
+    PendingLoadingTasks.Remove(SystemName);
+    CheckLoadingState();
+}
+
+void UGamePhaseSubsystem::CheckLoadingState()
+{
+    if (PendingLoadingTasks.Num() == 0)
+    {
+        // 현재 고치는 중...
+        SetGamePhase(FGameplayTag::RequestGameplayTag("Game.Phase.Lobby"));
+    }
 }

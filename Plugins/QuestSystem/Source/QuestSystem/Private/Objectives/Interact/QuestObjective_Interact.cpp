@@ -20,6 +20,10 @@ void UQuestObjective_Interact::Initialize(const UQuestObjectiveConfig* Config, U
 void UQuestObjective_Interact::Activate(UObject* WorldContext)
 {
 	UE_LOG(LogTemp, Verbose, TEXT("[QuestSys] : [%s] objective activating is started"), *this->GetFName().ToString());
+	Super::Activate(WorldContext);
+
+	// 부모의 Activate에서 이미 목표가 완료되었는지 확인
+	if (bHasFiredCompletion) return;
 
 	if (!InteractConfig || !WorldContext) return;
 
@@ -37,14 +41,19 @@ void UQuestObjective_Interact::Activate(UObject* WorldContext)
 	);
 
 	UE_LOG(LogTemp, Log, TEXT("[QuestSys] : [%s] objective activating is listen [%s] now."), *this->GetFName().ToString(), *ListenTag.GetTagName().ToString());
-	// OnRequestTaskSignatureDelegate.ExecuteIfBound(InteractConfig->TaskOnActivation());
+	const TArray<TObjectPtr<UQuestTask>>& RefTask = InteractConfig->TaskOnActivation;
+
+	OnRequestTaskSignatureDelegate.ExecuteIfBound(RefTask);
 }
 
 void UQuestObjective_Interact::DeActivate()
 {
 	UE_LOG(LogTemp, Log, TEXT("[QuestSys] : [%s] objective deactivating is successfully called"), *this->GetFName().ToString());
 
-	GMSListenHandle.Unregister();
+	if (GMSListenHandle.IsValid())
+	{
+		GMSListenHandle.Unregister();
+	}
 }
 
 bool UQuestObjective_Interact::IsComplete() const

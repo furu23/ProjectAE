@@ -11,75 +11,27 @@
 #include "Objectives/QuestObjectiveConfig.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
+// ============ 공용 함수 ===============
+
+
+// ==================================
+// 기본 초기화
+// ==================================
+
+
+
 void UQuestManagerSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	PlayerQuestHistory.Empty();
-
-	FQuestProgressData QuestData;
-	QuestData.ProgressType = EQuestProgress::CanAccept;
-	PlayerQuestHistory.Add(FGameplayTag::RequestGameplayTag("Quest.Id.Interact.GetBox"), QuestData);
-
-	FQuestProgressData QuestData2;
-	QuestData.ProgressType = EQuestProgress::Completed_PendingTurnIn;
-	PlayerQuestHistory.Add(FGameplayTag::RequestGameplayTag("Quest.Id.Interact.GetBox2"), QuestData2);
-
-	FQuestProgressData QuestData3;
-	QuestData.ProgressType = EQuestProgress::NotStarted;
-	PlayerQuestHistory.Add(FGameplayTag::RequestGameplayTag("Quest.Id.Interact.GetBox3"), QuestData3);
 }
 
-void UQuestManagerSubSystem::OnSystemReady(const FGameplayTag& NewPhase)
-{
-	UAssetManager& AssetManager = UAssetManager::Get();
-	
-	// "QuestData" 타입의 모든 에셋 ID 목록을 가져옵니다.
-	TArray<FPrimaryAssetId> AssetIdList;
-	AssetManager.GetPrimaryAssetIdList(FName("QuestData"), AssetIdList);
 
-	if (AssetIdList.Num() == 0)
-	{
-		UE_LOG(LogQuestSystem, Warning, TEXT("No QuestData assets found to load."));
-		return; // 로드할 것이 없음
-	}
 
-	FStreamableDelegate OnLoadCompleteDelegate = FStreamableDelegate::CreateUObject(this, &UQuestManagerSubSystem::OnQuestDataLoaded);
-	LoadHandle = AssetManager.LoadPrimaryAssets(AssetIdList, TArray<FName>(), OnLoadCompleteDelegate);
+// ==================================
+// UI를 위한 DTO 제공 API
+// ==================================
 
-	// 태그가 레이드 진행 중이라면
-	if (NewPhase.MatchesTag(FGameplayTag::RequestGameplayTag("Game.Phase.InRaid.GroundZero")))
-	{
-		OnRaidStart();
-	}
-	// 레이드가 끝났다면 (탈출/사망)
-	else if (NewPhase.MatchesTag(FGameplayTag::RequestGameplayTag("Game.Phase.Lobby")))
-	{
-		OnRaidEnd();
-	}
-}
 
-void UQuestManagerSubSystem::OnQuestDataLoaded()
-{
-	UE_LOG(LogQuestSystem, Log, TEXT("All QuestData assets are now loaded. Caching..."));
-
-	// 로드 요청했던 목록을 다시 가져오거나, 멤버 변수로 저장해둔 목록을 순회합니다.
-	UAssetManager& AssetManager = UAssetManager::Get();
-	TArray<FPrimaryAssetId> AssetIdList;
-	AssetManager.GetPrimaryAssetIdList(FName("QuestData"), AssetIdList);
-
-	for (const FPrimaryAssetId& AssetId : AssetIdList)
-	{
-		// 로드가 완료되었으므로, GetPrimaryAssetObject는 즉시 유효한 UObject*를 반환합니다.
-		UDA_QuestBase* QuestData = Cast<UDA_QuestBase>(AssetManager.GetPrimaryAssetObject(AssetId));
-
-		if (QuestData)
-		{
-			// FName(ID)을 키로 TMap에 캐싱합니다.
-			ActiveQuestDACaches.FindOrAdd(QuestData->QuestID, QuestData);
-		}
-	}
-
-	UE_LOG(LogQuestSystem, Log, TEXT("Caching complete. %d quests loaded."), ActiveQuestDACaches.Num());
-}
 
 TArray<FQuestLogEntry> UQuestManagerSubSystem::GetQuestLogEntries() const
 {
@@ -96,32 +48,12 @@ TArray<FQuestLogEntry> UQuestManagerSubSystem::GetQuestLogEntries() const
 	return LogEntries;
 }
 
-void UQuestManagerSubSystem::NotifyQuestUpdate(const FGameplayTag& QuestID)
-{
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] NotifyQuestUpdate: [%s] Id is Updated..."), *QuestID.GetTagName().ToString());
 
-	// 델리게이트에 구독자가 있는지 확인
-	if (OnQuestEntryUpdated.IsBound())
-	{
-		// DTO 빌더를 호출하여 최신 DTO 생성
-		FQuestLogEntry UpdatedEntry;
-		if (BuildQuestLogEntry(QuestID, UpdatedEntry))
-		{
-			// HUD 등 PUSH를 구독 중인 UI에게 DTO를 브로드캐스트
-			OnQuestEntryUpdated.Broadcast(UpdatedEntry);
-		}
-	}
-}
+// ==================================
+// 직렬화된 저장 관련
+// ==================================
 
-void UQuestManagerSubSystem::AcceptQuest(const FGameplayTag& QuestID)
-{
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] AcceptQuest: [%s] Id is Accepting Now..."), *QuestID.GetTagName().ToString());
 
-	// 퀘스트를 수락하고 진행 상태로 변경합니다.
-	PlayerQuestHistory.Emplace(QuestID, EQuestProgress::InProgress);
-
-	OnRaidStart();
-}
 
 void UQuestManagerSubSystem::GetSaveData(TArray<uint8>& OutData)
 {
@@ -146,7 +78,15 @@ void UQuestManagerSubSystem::LoadSaveData(const TArray<uint8>& InData)
 
 	// Ar에서 읽어서 이 객체 변수에 덮어씌움
 	Serialize(Ar);
-}	
+}
+
+
+
+// ==================================
+// 캡슐화를 위한 진행도 질의 함수
+// ==================================
+
+
 
 FQuestProgressData* UQuestManagerSubSystem::QueryProgressDataForQuestID(const FGameplayTag& QuestID)
 {
@@ -157,6 +97,33 @@ FQuestProgressData* UQuestManagerSubSystem::QueryProgressDataForQuestID(const FG
 
 	return PlayerQuestHistory.Find(QuestID);
 }
+
+
+
+// ============ 내부 함수 ==============
+
+
+// ==================================
+// 퀘스트 플로우 관련
+// ==================================
+
+
+
+void UQuestManagerSubSystem::AcceptQuest(const FGameplayTag& QuestID)
+{
+	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] AcceptQuest: [%s] Id is Accepting Now..."), *QuestID.GetTagName().ToString());
+	if (ActiveQuests.Contains(QuestID))
+	{
+		UE_LOG(LogQuestSystem, Warning, TEXT("Quest is already active!"));
+		return;
+	}
+
+	// 퀘스트를 수락하고 진행 상태로 변경합니다.
+	PlayerQuestHistory.Emplace(QuestID, EQuestProgress::InProgress);
+
+	LoadAndActivateQuest(QuestID);
+}
+
 
 void UQuestManagerSubSystem::ClaimQuestReward(const FGameplayTag& QuestID)
 {
@@ -174,9 +141,6 @@ void UQuestManagerSubSystem::ClaimQuestReward(const FGameplayTag& QuestID)
 
 	// 후행 퀘스트 상태 전이 확인
 	TryUnlockNextQuests(QuestID);
-
-	// 완료된 퀘스트 정리
-	DeactivateAndDestroyQuest(QuestID);
 }
 
 void UQuestManagerSubSystem::GiveReward(const FGameplayTag& QuestID)
@@ -252,9 +216,53 @@ void UQuestManagerSubSystem::TryUnlockNextQuests(const FGameplayTag& QuestID)
 	}
 }
 
-void UQuestManagerSubSystem::OnRaidStart()
+
+
+// ==================================
+// 하위클래스 전용 상태 알림 함수
+// ==================================
+
+
+
+void UQuestManagerSubSystem::NotifyQuestUpdate(const FGameplayTag& QuestID)
 {
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] In-Raid Level is started now"));
+	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] NotifyQuestUpdate: [%s] Id is Updated..."), *QuestID.GetTagName().ToString());
+
+	// 델리게이트에 구독자가 있는지 확인
+	if (OnQuestEntryUpdated.IsBound())
+	{
+		// DTO 빌더를 호출하여 최신 DTO 생성
+		FQuestLogEntry UpdatedEntry;
+		if (BuildQuestLogEntry(QuestID, UpdatedEntry))
+		{
+			// HUD 등 PUSH를 구독 중인 UI에게 DTO를 브로드캐스트
+			OnQuestEntryUpdated.Broadcast(UpdatedEntry);
+		}
+	}
+
+	UQuestObject* CurrentObject = ActiveQuests.FindRef(QuestID);
+	if (CurrentObject)
+	{
+		const FQuestProgressData& CurrentProgress = PlayerQuestHistory.FindRef(QuestID);
+		if (CurrentObject->CheckQuestCompletion() ||
+			CurrentProgress.ProgressType == EQuestProgress::Completed_PendingTurnIn)
+		{
+			DeactivateAndDestroyQuest(QuestID);
+		}
+	}
+}
+
+
+
+// ==================================
+// 퀘스트 전체적인 활성화 제어 관련
+// ==================================
+
+
+
+void UQuestManagerSubSystem::StartActiveQuests()
+{
+	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] Quests Are Now Active"));
 
 	for (auto& QuestPair : PlayerQuestHistory)
 	{
@@ -266,10 +274,73 @@ void UQuestManagerSubSystem::OnRaidStart()
 	}
 }
 
-void UQuestManagerSubSystem::OnRaidEnd()
+void UQuestManagerSubSystem::StopActiveQuests()
 {
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] In-Raid Level is ended now"));
+	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] Qeusts Are Now DeActivate"));
+
+	for (auto CurrentQuest : ActiveQuests)
+	{
+		DeactivateAndDestroyQuest(CurrentQuest.Key);
+	}
 }
+
+
+
+// ==================================
+// 데이터 로드 관련
+// ==================================
+
+
+
+void UQuestManagerSubSystem::StartAsyncLoadData()
+{
+	UAssetManager& AssetManager = UAssetManager::Get();
+
+	// "QuestData" 타입의 모든 에셋 ID 목록을 가져옵니다.
+	TArray<FPrimaryAssetId> AssetIdList;
+	AssetManager.GetPrimaryAssetIdList(FName("QuestData"), AssetIdList);
+
+	if (AssetIdList.Num() == 0)
+	{
+		UE_LOG(LogQuestSystem, Warning, TEXT("No QuestData assets found to load."));
+		return; // 로드할 것이 없음
+	}
+
+	FStreamableDelegate OnLoadCompleteDelegate = FStreamableDelegate::CreateUObject(this, &UQuestManagerSubSystem::OnQuestDataLoaded);
+	LoadHandle = AssetManager.LoadPrimaryAssets(AssetIdList, TArray<FName>(), OnLoadCompleteDelegate);
+}
+
+void UQuestManagerSubSystem::OnQuestDataLoaded()
+{
+	UE_LOG(LogQuestSystem, Log, TEXT("All QuestData assets are now loaded. Caching..."));
+
+	// 로드 요청했던 목록을 다시 가져오거나, 멤버 변수로 저장해둔 목록을 순회합니다.
+	UAssetManager& AssetManager = UAssetManager::Get();
+	TArray<FPrimaryAssetId> AssetIdList;
+	AssetManager.GetPrimaryAssetIdList(FName("QuestData"), AssetIdList);
+
+	for (const FPrimaryAssetId& AssetId : AssetIdList)
+	{
+		// 로드가 완료되었으므로, GetPrimaryAssetObject는 즉시 유효한 UObject*를 반환합니다.
+		UDA_QuestBase* QuestData = Cast<UDA_QuestBase>(AssetManager.GetPrimaryAssetObject(AssetId));
+
+		if (QuestData)
+		{
+			// FName(ID)을 키로 TMap에 캐싱합니다.
+			ActiveQuestDACaches.FindOrAdd(QuestData->QuestID, QuestData);
+		}
+	}
+
+	UE_LOG(LogQuestSystem, Log, TEXT("Caching complete. %d quests loaded."), ActiveQuestDACaches.Num());
+}
+
+
+
+// ==================================
+// 퀘스트 런타임 객체 관리
+// ==================================
+
+
 
 void UQuestManagerSubSystem::LoadAndActivateQuest(const FGameplayTag& QuestID)
 {
@@ -298,10 +369,10 @@ void UQuestManagerSubSystem::LoadAndActivateQuest(const FGameplayTag& QuestID)
 	NewQuestObject->Initialize(QuestDef, this);
 
 	NewQuestObject->OnQuestObjectChangedDelegate.BindUObject(this, &UQuestManagerSubSystem::NotifyQuestUpdate);
-	// NewQuestObject->OnRequestWorldTasksDelegate.BindUObject(this, &UQuestManagerSubSystem::OnQuestRequestingWorldTasks);
+	NewQuestObject->OnRequestWorldTasksDelegate.BindUObject(this, &UQuestManagerSubSystem::OnQuestRequestingWorldTasks);
 
 	NewQuestObject->Activate(World);
-	ActiveQuests.Add(QuestID);
+	ActiveQuests.FindOrAdd(QuestID);
 
 	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] ActivateQuestObject: [%s] Id is activated completely"), *QuestDef->GetPrimaryAssetId().PrimaryAssetName.ToString());
 }
@@ -312,26 +383,34 @@ void UQuestManagerSubSystem::DeactivateAndDestroyQuest(const FGameplayTag& Quest
 	UQuestObject* QuestObj = ActiveQuests.FindRef(QuestID);
 	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] DeactivateAndDestroyQuest: Object [%s] is deactivated"), *QuestObj->GetFName().ToString());
 
-
 	if (QuestObj)
 	{
 		QuestObj->OnQuestObjectChangedDelegate.Unbind();
+		QuestObj->OnRequestWorldTasksDelegate.Unbind();
 	}
 	ActiveQuests.Remove(QuestID);
 }
 
-/*
-void UQuestManagerSubSystem::OnQuestRequestingWorldTasks(const TArray<TObjectPtr<UQuestWorldTask>> TasksToExecute)
+
+
+// ==================================
+// 태스크 객체 관련
+// ==================================
+
+
+
+void UQuestManagerSubSystem::OnQuestRequestingWorldTasks(const TArray<TObjectPtr<UQuestTask>>& TasksToExecute)
 {
-	if (UQuestWorldDirector* WorldDirector = GetWorld()->GetSubsystem<UQuestWorldDirector>())
-		(
-			WorldDirector->ExecuteTasks(TasksToExecute);
-			)
-	else
-		(
-			UE_LOG(LogTemp, Warning, TEXT("UQuestWorldDirector가 없어 태스크를 실행할 수 없습니다!"));
-			)
-}*/
+	OnQuestTaskBubbleUp.ExecuteIfBound(TasksToExecute);
+}
+
+
+
+// ==================================
+// UI 용 DTO 관련
+// ==================================
+
+
 
 bool UQuestManagerSubSystem::BuildQuestLogEntry(const FGameplayTag& QuestID, FQuestLogEntry& OutEntry) const
 {

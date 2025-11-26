@@ -3,21 +3,25 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "QuestTypes.h"
 #include "QuestObjective.generated.h"
 
 class UQuestObjectiveConfig;
 class UQuestManagerSubSystem;
-// class UQuestWorldTask
+class UQuestObjective;
+class UQuestTask;
 
 DECLARE_DELEGATE_OneParam(FOnObjectiveCompleted, UQuestObjective* /* CompletedObjective */);
-// DECLARE_DELEGATE_OneParam(FOnRequestWorldTasksSignature, const TArray<TObjectPtr<UQuestWorldTask>> /* TasksToExecute */);
+DECLARE_DELEGATE_OneParam(FOnRequestWorldTasksSignature, const TArray<TObjectPtr<UQuestTask>>& /* TasksToExecute */);
 
 /**
  * @brief 런타임, In-Raid 레벨에서 실제 게임플레이 퀘스트 진행 완료에 관련된 클래스입니다.
- * @note 이 클래스는 직접적으로 GameplayMessageSubSystem을 통해 인-레이드 레벨 게임플레이와 통신해 목표 값을 갱신합니다.
+ * 
+ * 이 클래스는 직접적으로 GameplayMessageSubSystem을 통해 인-레이드 레벨 게임플레이와 통신해 목표 값을 갱신합니다.
+ * 
+ * @note 목표 값을 저장해야 하는 목표라면, 로드 시 구체적 클래스에서 반드시 CachedQuestSys에 쿼리해 진행도를 동기화해야 합니다.
+ * @note 구체 클래스에서 Activate 함수에서 bHasFiredCompletion을 체크하여 리턴할 것을 권장합니다.
  */
 UCLASS(Abstract)
 class QUESTSYSTEM_API UQuestObjective : public UObject
@@ -30,7 +34,7 @@ public:
 	FOnObjectiveCompleted OnObjectiveCompleteDelegate;
 
 	// 태스크 버블링 용 델리게이트
-	// FOnRequestWorldTasksSignature OnRequestTaskSignatureDelegate;
+	FOnRequestWorldTasksSignature OnRequestTaskSignatureDelegate;
 
 
 	// **** 외부 호출 함수 (퀘스트 모듈 내부에서만 사용할 것을 권장합니다.)****
@@ -39,7 +43,7 @@ public:
 	virtual void Initialize(const UQuestObjectiveConfig* Config, UQuestManagerSubSystem* QuestSys, FGameplayTag ObjectQuestID);
 
 	// QuestObject 에서 호출할 GMS 구독 함수
-	virtual void Activate(UObject* WorldContext) PURE_VIRTUAL(UQuestObjective::Activate)
+	virtual void Activate(UObject* WorldContext);
 	
 	// QuestObject 에서 호출할 비활성화 함수
 	virtual void DeActivate() PURE_VIRTUAL(UQuestObjective::DeActivate)

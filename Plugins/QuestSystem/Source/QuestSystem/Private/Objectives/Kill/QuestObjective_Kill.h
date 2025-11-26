@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Objectives/QuestObjectiveConfig.h"
-#include "ObjectiveConfig_Kill.generated.h"
+#include "Objectives/QuestObjective.h"
+#include "QuestObjective_Kill.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTAE_API UObjectiveConfig_Kill : public UQuestObjectiveConfig
+class UQuestObjective_Kill : public UQuestObjective
 {
 	GENERATED_BODY()
 	

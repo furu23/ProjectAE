@@ -12,7 +12,7 @@ class UObjectiveConfig_Interact;
  * 
  */
 UCLASS()
-class PROJECTAE_API UQuestObjective_Interact : public UQuestObjective
+class UQuestObjective_Interact : public UQuestObjective
 {
 	GENERATED_BODY()
 
