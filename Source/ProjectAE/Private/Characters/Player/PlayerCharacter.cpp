@@ -186,7 +186,6 @@ void APlayerCharacter::InputAbilityTagReleased(const class UInputAction* Action)
 	const FGameplayTag* FoundTag = AbilityInputConfig->AbilityInputActions.Find(Action);
 	if (FoundTag && FoundTag->IsValid())
 	{
-		UE_LOG(LogAbilitySys, Log, TEXT("InputTagReleased Succssesfully called"));
 		ASC->AbilityInputTagReleased(*FoundTag);
 	}
 }
