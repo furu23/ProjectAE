@@ -20,6 +20,7 @@ AAEPlayerState::AAEPlayerState()
 	// ASC, BaseSet 
 	ASC = CreateDefaultSubobject<UAEAbilitySystemComponent>("ASC");
 	BaseSet = CreateDefaultSubobject<UAS_BaseCombat>("AttributeSet");
+	HealthSet = CreateDefaultSubobject<UAS_HealthSet>("HealthSet");
 
 	// AttributeSet 등록
 	ASC->AddAttributeSetSubobject<UAS_BaseCombat>(BaseSet);

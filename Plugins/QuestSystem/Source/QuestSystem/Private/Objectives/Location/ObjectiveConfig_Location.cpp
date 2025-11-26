@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Objectives/Location/ObjectiveConfig_Location.h"
+#include "ObjectiveConfig_Location.h"
 #include "QuestObjective_Location.h"
 
 UObjectiveConfig_Location::UObjectiveConfig_Location()

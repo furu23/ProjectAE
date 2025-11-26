@@ -10,7 +10,7 @@
  * 
  */
 UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced)
-class QUESTSYSTEM_API UObjectiveConfig_Interact : public UQuestObjectiveConfig
+class UObjectiveConfig_Interact : public UQuestObjectiveConfig
 {
 	GENERATED_BODY()
 
