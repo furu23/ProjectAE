@@ -19,7 +19,7 @@ void UQuestObjective_Location::Initialize(const UQuestObjectiveConfig* Config, U
 
 void UQuestObjective_Location::Activate(UObject* WorldContext)
 {
-	UE_LOG(LogTemp, Log, TEXT("[QuestSys] : [%s] objective activating is started"), *this->GetFName().ToString());
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] objective activating is started"), *this->GetFName().ToString());
 
 	if (!InteractConfig || !WorldContext) return;
 
@@ -36,13 +36,13 @@ void UQuestObjective_Location::Activate(UObject* WorldContext)
 		&UQuestObjective_Location::OnMessageReceived
 	);
 
-	UE_LOG(LogTemp, Log, TEXT("[QuestSys] : [%s] objective activating is listen [%s] now."), *this->GetFName().ToString(), *ListenTag.GetTagName().ToString());
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] objective activating is listen [%s] now."), *this->GetFName().ToString(), *ListenTag.GetTagName().ToString());
 	// OnRequestTaskSignatureDelegate.ExecuteIfBound(InteractConfig->TaskOnActivation());
 }
 
 void UQuestObjective_Location::DeActivate()
 {
-	UE_LOG(LogTemp, Log, TEXT("[QuestSys] : [%s] objective deactivating is successfully called"), *this->GetFName().ToString());
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] objective deactivating is successfully called"), *this->GetFName().ToString());
 
 	GMSListenHandle.Unregister();
 }
@@ -52,7 +52,7 @@ bool UQuestObjective_Location::IsComplete() const
 	const FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestID(QuestID);
 	if (!ProgressData)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[QuestSys] : [%s] objective faile to Get ProgressData."), *this->GetFName().ToString());
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] : [%s] objective faile to Get ProgressData."), *this->GetFName().ToString());
 		return false;
 	}
 
@@ -71,11 +71,11 @@ void UQuestObjective_Location::OnMessageReceived(FGameplayTag Channel, const FQu
 	FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestID(QuestID);
 	if (!ProgressData)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[QuestSys] : [%s] objective faile to Get ProgressData."), *this->GetFName().ToString());
+		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] objective faile to Get ProgressData."), *this->GetFName().ToString());
 		return;
 	}
 	
-	UE_LOG(LogTemp, Log, TEXT("[QuestSys] : [%s] objective is getting Message Now! \
+	UE_LOG(LogQuestSystem, VeryVerbose, TEXT("[QuestSys] : [%s] objective is getting Message Now! \
 		\nChecking Valid on Bool Property = %d,\
 		\nChecking Valid on Reference Validating = %d,\
 		\nChecking Listen Tag is Same = %d"),
@@ -90,7 +90,7 @@ void UQuestObjective_Location::OnMessageReceived(FGameplayTag Channel, const FQu
 		ProgressData->ObjectProgress.FindOrAdd(InteractConfig->ObjectiveID)++;
 		if (IsComplete())
 		{
-			UE_LOG(LogTemp, Log, TEXT("[QuestSys] : [%s] objective is completed"), *this->GetFName().ToString());
+			UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] objective is completed"), *this->GetFName().ToString());
 
 			bHasFiredCompletion = true;
 			OnObjectiveCompleteDelegate.ExecuteIfBound(this);

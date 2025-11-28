@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "QuestObject.h"
@@ -10,12 +10,12 @@
 
 void UQuestObject::Initialize(UDA_QuestBase* DefRef, UQuestManagerSubSystem* Manager)
 {
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] Object Initialize"), *this->GetFName().ToString());
-	// °ª ÃÊ±âÈ­
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] Object Initialize"), *this->GetFName().ToString());
+	// ê°’ ì´ˆê¸°í™”
 	Definition = DefRef;
 	CachedQuestSys = Manager;
 
-	// QuestObjective ¹è¿­ ÃÊ±âÈ­
+	// QuestObjective ë°°ì—´ ì´ˆê¸°í™”
 	for (const UQuestObjectiveConfig* Config : DefRef->ObjectConfigs)
 	{
 		if (!Config) continue;
@@ -27,17 +27,17 @@ void UQuestObject::Initialize(UDA_QuestBase* DefRef, UQuestManagerSubSystem* Man
 			continue;
 		}
 
-		// UClass °ªÀ» ÅëÇØ ObjectiveClass¸¦ ¸¸µé°í, 
+		// UClass ê°’ì„ í†µí•´ ObjectiveClassë¥¼ ë§Œë“¤ê³ , 
 		UQuestObjective* Objective = NewObject<UQuestObjective>(this, ObjectiveClass);
 		Objective->Initialize(Config, CachedQuestSys, Definition->QuestID);
 		Objectives.Add(Objective);
-		UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] object initialized end"), *this->GetFName().ToString());
+		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object initialized end"), *this->GetFName().ToString());
 	}
 }
 
 void UQuestObject::Activate(UObject* WorldContext)
 {
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] object activating is started"), *this->GetFName().ToString());
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object activating is started"), *this->GetFName().ToString());
 	const FQuestProgressData* QuestData = CachedQuestSys->QueryProgressDataForQuestID(Definition->QuestID);
 
 	for (UQuestObjective* Objective : Objectives)
@@ -45,7 +45,7 @@ void UQuestObject::Activate(UObject* WorldContext)
 		Objective->OnObjectiveCompleteDelegate.BindUObject(this, &UQuestObject::OnObjectiveCompleted);
 		Objective->OnRequestTaskSignatureDelegate.BindUObject(this, &UQuestObject::OnObjectiveRequestingTasks);
 		Objective->Activate(this);
-		UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] object activated end"), *this->GetFName().ToString());
+		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object activated end"), *this->GetFName().ToString());
 	}
 }
 
@@ -58,7 +58,7 @@ void UQuestObject::DeActivate()
 		Objective->OnRequestTaskSignatureDelegate.Unbind();
 
 		Objective->MarkAsGarbage();
-		UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] object deactivating is called successfully"), *this->GetFName().ToString());
+		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object deactivating is called successfully"), *this->GetFName().ToString());
 	}
 	Objectives.Empty();
 }
@@ -77,7 +77,7 @@ void UQuestObject::OnObjectiveCompleted(UQuestObjective* Objective)
 {
 	if (CheckQuestCompletion())
 	{
-		// ProgressData¸¦ ¹Ş¾Æ¿É´Ï´Ù.
+		// ProgressDataë¥¼ ë°›ì•„ì˜µë‹ˆë‹¤.
 		FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestID(Definition->QuestID);
 		if (!ProgressData)
 		{
@@ -87,7 +87,7 @@ void UQuestObject::OnObjectiveCompleted(UQuestObjective* Objective)
 
 		ProgressData->ProgressType = EQuestProgress::Completed_PendingTurnIn;
 		DeActivate();
-		UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] : [%s] object get [%s] objective completion"), *this->GetFName().ToString(), *Objective->GetFName().ToString());
+		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object get [%s] objective completion"), *this->GetFName().ToString(), *Objective->GetFName().ToString());
 	}
 	OnQuestObjectChangedDelegate.Execute(Definition->QuestID);
 }

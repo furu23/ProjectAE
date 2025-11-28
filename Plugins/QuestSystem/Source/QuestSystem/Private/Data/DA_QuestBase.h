@@ -39,6 +39,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "인게임에 보여지는 퀘스트 설명입니다."))
 	FText Description;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "뉴 게임 시작 시, CanAccept 상태인 퀘스트 입니다."))
+	bool bIsStartingQuest = false;
+
 	// 퀘스트의 보상입니다.
 	// UPROPERTY(...)
 	// FRewardData RewardData;

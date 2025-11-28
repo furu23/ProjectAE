@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+Ôªø// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Interaction/InteractionComponent.h"
@@ -9,6 +9,7 @@
 #include "GameplayAbilitySpecHandle.h"
 #include "GameplayAbilitySpec.h"
 #include "AbilitySystemComponent.h"
+#include "../ProjectAE.h"
 
 
 // Sets default values for this component's properties
@@ -75,9 +76,9 @@ void UInteractionComponent::UpdateTracing()
 			IInteractable::Execute_OnFocusChanged(CurrentFocus, OwnerRef, true);
 			OnFocusChanged.Broadcast(CurrentFocus);
 
-			// **** [√ﬂ∞°] Ability Grant ∞¸∑√ ****
+			// **** [Ï∂îÍ∞Ä] Ability Grant Í¥ÄÎ†® ****
 
-			UE_LOG(LogTemp, Log, TEXT("---Pull and Grant Ability on Actor---"));
+			UE_LOG(LogAbilitySys, Verbose, TEXT("---Pull and Grant Ability on Actor---"));
 
 			ABaseCharacter* CastedCharacter = GetOwner<ABaseCharacter>();
 			if (CastedCharacter)
@@ -94,15 +95,15 @@ void UInteractionComponent::UpdateTracing()
 						GrantedAbilityHandle = OwnerASC->GiveAbility(Spec);
 						if (GrantedAbilityHandle.IsValid())
 						{
-							UE_LOG(LogTemp, Log, TEXT("OnBeginFocus: GiveAbility SUCCESS. Handle: %s"), *GrantedAbilityHandle.ToString());
+							UE_LOG(LogAbilitySys, Verbose, TEXT("OnBeginFocus: GiveAbility SUCCESS. Handle: %s"), *GrantedAbilityHandle.ToString());
 						}
 						else
 						{
-							// ¿Ã ∑Œ±◊∞° ∂·¥Ÿ∏È ASC ≥ª∫Œø°º≠ ∫Œø©∞° Ω«∆–«— ∞Õ
-							UE_LOG(LogTemp, Error, TEXT("OnBeginFocus: GiveAbility FAILED. Returned Invalid Handle."));
+							// Ïù¥ Î°úÍ∑∏Í∞Ä Îú¨Îã§Î©¥ ASC ÎÇ¥Î∂ÄÏóêÏÑú Î∂ÄÏó¨Í∞Ä Ïã§Ìå®Ìïú Í≤É
+							UE_LOG(LogAbilitySys, Error, TEXT("OnBeginFocus: GiveAbility FAILED. Returned Invalid Handle."));
 						}
-						UE_LOG(LogTemp, Log, TEXT("Granted On ABaseCharacter"));
-						UE_LOG(LogTemp, Log, TEXT("-------------------------"));
+						UE_LOG(LogAbilitySys, Verbose, TEXT("Granted On ABaseCharacter"));
+						UE_LOG(LogAbilitySys, Verbose, TEXT("-------------------------"));
 					}
 				}
 			}

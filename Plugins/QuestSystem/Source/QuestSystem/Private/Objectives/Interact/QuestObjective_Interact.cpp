@@ -19,7 +19,7 @@ void UQuestObjective_Interact::Initialize(const UQuestObjectiveConfig* Config, U
 
 void UQuestObjective_Interact::Activate(UObject* WorldContext)
 {
-	UE_LOG(LogTemp, Verbose, TEXT("[QuestSys] : [%s] objective activating is started"), *this->GetFName().ToString());
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] objective activating is started"), *this->GetFName().ToString());
 	Super::Activate(WorldContext);
 
 	// 부모의 Activate에서 이미 목표가 완료되었는지 확인
@@ -40,7 +40,7 @@ void UQuestObjective_Interact::Activate(UObject* WorldContext)
 		&UQuestObjective_Interact::OnMessageReceived
 	);
 
-	UE_LOG(LogTemp, Log, TEXT("[QuestSys] : [%s] objective activating is listen [%s] now."), *this->GetFName().ToString(), *ListenTag.GetTagName().ToString());
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] objective activating is listen [%s] now."), *this->GetFName().ToString(), *ListenTag.GetTagName().ToString());
 	const TArray<TObjectPtr<UQuestTask>>& RefTask = InteractConfig->TaskOnActivation;
 
 	OnRequestTaskSignatureDelegate.ExecuteIfBound(RefTask);
@@ -48,7 +48,7 @@ void UQuestObjective_Interact::Activate(UObject* WorldContext)
 
 void UQuestObjective_Interact::DeActivate()
 {
-	UE_LOG(LogTemp, Log, TEXT("[QuestSys] : [%s] objective deactivating is successfully called"), *this->GetFName().ToString());
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] objective deactivating is successfully called"), *this->GetFName().ToString());
 
 	if (GMSListenHandle.IsValid())
 	{
@@ -61,7 +61,7 @@ bool UQuestObjective_Interact::IsComplete() const
 	const FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestID(QuestID);
 	if (!ProgressData)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[QuestSys] : [%s] objective faile to Get ProgressData."), *this->GetFName().ToString());
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] : [%s] objective faile to Get ProgressData."), *this->GetFName().ToString());
 		return false;
 	}
 	
@@ -80,11 +80,11 @@ void UQuestObjective_Interact::OnMessageReceived(FGameplayTag Channel, const FQu
 	FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestID(QuestID);
 	if (!ProgressData)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[QuestSys] : [%s] objective faile to Get ProgressData."), *this->GetFName().ToString());
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] : [%s] objective faile to Get ProgressData."), *this->GetFName().ToString());
 		return;
 	}
 	
-	UE_LOG(LogTemp, Log, TEXT("[QuestSys] : [%s] objective is getting Message Now! \
+	UE_LOG(LogQuestSystem, VeryVerbose, TEXT("[QuestSys] : [%s] objective is getting Message Now! \
 		\nChecking Valid on Bool Property = %d,\
 		\nChecking Valid on Reference Validating = %d,\
 		\nChecking Listen Tag is Same = %d"),
@@ -99,7 +99,7 @@ void UQuestObjective_Interact::OnMessageReceived(FGameplayTag Channel, const FQu
 		ProgressData->ObjectProgress.FindOrAdd(InteractConfig->ObjectiveID)++;
 		if (IsComplete())
 		{
-			UE_LOG(LogTemp, Log, TEXT("[QuestSys] : [%s] objective is completed"), *this->GetFName().ToString());
+			UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] objective is completed"), *this->GetFName().ToString());
 
 			bHasFiredCompletion = true;
 			OnObjectiveCompleteDelegate.ExecuteIfBound(this);

@@ -5,32 +5,60 @@
 #include "QuestManagerSubSystem.h"
 #include "ProjectAE/ProjectAE.h"
 
-void UGamePhaseSubsystem::SetGamePhase(FGameplayTag NewPhase)
-{
-    if (CurrentPhase != NewPhase)
-    {
-        CurrentPhase = NewPhase;
-        OnGamePhaseChangeDelegate.Broadcast(CurrentPhase);
-        UE_LOG(LogAECore, Log, TEXT("Game Phase Changed: %s"), *NewPhase.ToString());
-    }
-}
-
 void UGamePhaseSubsystem::RegisterLoadingTask(FName SystemName)
 {
+    if (bIsMonitoring)
+    {
+        UE_LOG(LogAECore, Warning, TEXT("Warning: Task [%s] registered AFTER monitoring started."), *SystemName.ToString());
+    }
+
     PendingLoadingTasks.Add(SystemName);
+    UE_LOG(LogAECore, Log, TEXT("[GamePhase] Task Registered: %s. Total: %d"), *SystemName.ToString(), PendingLoadingTasks.Num());
 }
 
 void UGamePhaseSubsystem::CompleteLoadingTask(FName SystemName)
 {
-    PendingLoadingTasks.Remove(SystemName);
+    if (PendingLoadingTasks.Contains(SystemName))
+    {
+        PendingLoadingTasks.Remove(SystemName);
+        UE_LOG(LogAECore, Log, TEXT("[GamePhase] Task Completed: %s. Remaining: %d"), *SystemName.ToString(), PendingLoadingTasks.Num());
+
+        // 작업이 하나 끝날 때마다 상태 체크
+        CheckLoadingState();
+    }
+}
+
+void UGamePhaseSubsystem::StartPhaseMonitoring()
+{
+    UE_LOG(LogAECore, Log, TEXT("[GamePhase] GameMode finished registration. Starting Monitoring..."));
+
+    bIsMonitoring = true;
+
+    // 만약 등록된 태스크가 하나도 없었거나, 이미 다 끝난 상태일 수 있으므로 즉시 체크
     CheckLoadingState();
 }
 
 void UGamePhaseSubsystem::CheckLoadingState()
 {
+    if (!bIsMonitoring)
+    {
+        return;
+    }
+
     if (PendingLoadingTasks.Num() == 0)
     {
-        // 현재 고치는 중...
-        SetGamePhase(FGameplayTag::RequestGameplayTag("Game.Phase.Lobby"));
+        bIsMonitoring = false;
+
+        SetGamePhase(FGameplayTag::RequestGameplayTag("Game.Phase.InGame"));
+    }
+}
+
+void UGamePhaseSubsystem::SetGamePhase(FGameplayTag NewPhase)
+{
+    if (CurrentPhase != NewPhase)
+    {
+        CurrentPhase = NewPhase;
+        OnGamePhaseChangeDelegate.Broadcast(NewPhase);
+        UE_LOG(LogAECore, Log, TEXT("[GamePhase] Phase Changed to: %s"), *NewPhase.ToString());
     }
 }

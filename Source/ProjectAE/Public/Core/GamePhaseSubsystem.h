@@ -31,11 +31,13 @@ public:
 	// 게임모드가 호출할 게임 페이즈 지정 방송 함수
 	void SetGamePhase(FGameplayTag NewPhase);
 
+	// 게임모드가 모든 등록 절차를 끝낸 뒤에 호출합니다
+	void StartPhaseMonitoring();
 
-	// 로딩 작업을 등록합니다. (예: "QuestSystem")
+	// 로딩 작업을 등록합니다 (예: QuestSystem)
 	void RegisterLoadingTask(FName SystemName);
 
-	// 로딩 작업이 끝났음을 알립니다.
+	// 로딩 작업이 끝났음을 알립니다
 	void CompleteLoadingTask(FName SystemName);
 
 
@@ -46,6 +48,8 @@ private:
 	// 현재 진행 중인 로딩 작업 목록
 	TSet<FName> PendingLoadingTasks;
 
+	// GameMode가 등록 끝을 선언했는지 여부
+	bool bIsMonitoring = false;
 
 	// 태스크 목록이 비었는지 확인하는 함수
 	void CheckLoadingState(); 

@@ -5,6 +5,7 @@
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameplayTagAssetInterface.h"
 #include "QuestTypes.h"
+#include "QuestSystem.h"
 
 void UQuestMessageHelpers::BroadcastAIKilledEvent(UObject* WorldContextObject, AActor* InstigatorActor, AActor* TargetActor, FGameplayTagContainer TargetTags)
 {
@@ -39,7 +40,6 @@ void UQuestMessageHelpers::BroadcastInteractEvent(UObject* WorldContextObject, A
 
 	if (IGameplayTagAssetInterface* TagInterface = Cast<IGameplayTagAssetInterface>(TargetActor))
 	{
-		UE_LOG(LogTemp, Log, TEXT("It is not called"));
 		TagInterface->GetOwnedGameplayTags(Message.TargetTags);
 	}
 
@@ -62,7 +62,6 @@ void UQuestMessageHelpers::BroadcastLocationEvent(UObject* WorldContextObject, A
 
 	if (IGameplayTagAssetInterface* TagInterface = Cast<IGameplayTagAssetInterface>(TargetActor))
 	{
-		UE_LOG(LogTemp, Log, TEXT("It is not called"));
 		TagInterface->GetOwnedGameplayTags(Message.TargetTags);
 	}
 

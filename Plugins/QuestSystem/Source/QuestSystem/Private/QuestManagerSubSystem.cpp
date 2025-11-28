@@ -36,7 +36,7 @@ void UQuestManagerSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 TArray<FQuestLogEntry> UQuestManagerSubSystem::GetQuestLogEntries() const
 {
 	TArray<FQuestLogEntry> LogEntries;
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] GetQuestLogEntries: [%d] in PlayerQuestHistory..."), PlayerQuestHistory.Num());
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] GetQuestLogEntries: [%d] in PlayerQuestHistory..."), PlayerQuestHistory.Num());
 	for (const TPair<FGameplayTag, FQuestProgressData>& Pair : PlayerQuestHistory)
 	{
 		FQuestLogEntry Entry;
@@ -100,6 +100,35 @@ FQuestProgressData* UQuestManagerSubSystem::QueryProgressDataForQuestID(const FG
 
 
 
+void UQuestManagerSubSystem::SetupNewGameQuests()
+{
+	if (PlayerQuestHistory.Num() > 0)
+	{
+		UE_LOG(LogQuestSystem, Warning, TEXT("SetupNewGameQuests called but History is not empty!"));
+		return;
+	}
+
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] Setting up new game quests..."));
+
+	// 데이터 초기화
+	PlayerQuestHistory.Empty();
+
+	// 캐시된 모든 퀘스트 데이터 에셋을 순회
+	for (const TPair<FGameplayTag, TObjectPtr<UDA_QuestBase>>& Pair : ActiveQuestDACaches)
+	{
+		UDA_QuestBase* QuestDef = Pair.Value;
+		if (QuestDef && QuestDef->bIsStartingQuest)
+		{
+			// 해당 퀘스트를 CanAccept 상태로 등록
+			PlayerQuestHistory.FindOrAdd(QuestDef->QuestID).ProgressType = EQuestProgress::CanAccept;
+
+			UE_LOG(LogQuestSystem, Verbose, TEXT(" - Initial Quest Set: [%s]"), *QuestDef->QuestID.ToString());
+		}
+	}
+}
+
+
+
 // ============ 내부 함수 ==============
 
 
@@ -111,7 +140,7 @@ FQuestProgressData* UQuestManagerSubSystem::QueryProgressDataForQuestID(const FG
 
 void UQuestManagerSubSystem::AcceptQuest(const FGameplayTag& QuestID)
 {
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] AcceptQuest: [%s] Id is Accepting Now..."), *QuestID.GetTagName().ToString());
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] AcceptQuest: [%s] Id is Accepting Now..."), *QuestID.GetTagName().ToString());
 	if (ActiveQuests.Contains(QuestID))
 	{
 		UE_LOG(LogQuestSystem, Warning, TEXT("Quest is already active!"));
@@ -226,7 +255,7 @@ void UQuestManagerSubSystem::TryUnlockNextQuests(const FGameplayTag& QuestID)
 
 void UQuestManagerSubSystem::NotifyQuestUpdate(const FGameplayTag& QuestID)
 {
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] NotifyQuestUpdate: [%s] Id is Updated..."), *QuestID.GetTagName().ToString());
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] NotifyQuestUpdate: [%s] Id is Updated..."), *QuestID.GetTagName().ToString());
 
 	// 델리게이트에 구독자가 있는지 확인
 	if (OnQuestEntryUpdated.IsBound())
@@ -262,7 +291,7 @@ void UQuestManagerSubSystem::NotifyQuestUpdate(const FGameplayTag& QuestID)
 
 void UQuestManagerSubSystem::StartActiveQuests()
 {
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] Quests Are Now Active"));
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] Quests Are Now Active"));
 
 	for (auto& QuestPair : PlayerQuestHistory)
 	{
@@ -276,9 +305,9 @@ void UQuestManagerSubSystem::StartActiveQuests()
 
 void UQuestManagerSubSystem::StopActiveQuests()
 {
-	UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] Qeusts Are Now DeActivate"));
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] Qeusts Are Now DeActivate"));
 
-	for (auto CurrentQuest : ActiveQuests)
+	for (TPair<FGameplayTag, TObjectPtr<UQuestObject>> CurrentQuest : ActiveQuests)
 	{
 		DeactivateAndDestroyQuest(CurrentQuest.Key);
 	}
@@ -312,7 +341,7 @@ void UQuestManagerSubSystem::StartAsyncLoadData()
 
 void UQuestManagerSubSystem::OnQuestDataLoaded()
 {
-	UE_LOG(LogQuestSystem, Log, TEXT("All QuestData assets are now loaded. Caching..."));
+	UE_LOG(LogQuestSystem, Verbose, TEXT("All QuestData assets are now loaded. Caching..."));
 
 	// 로드 요청했던 목록을 다시 가져오거나, 멤버 변수로 저장해둔 목록을 순회합니다.
 	UAssetManager& AssetManager = UAssetManager::Get();
@@ -331,7 +360,7 @@ void UQuestManagerSubSystem::OnQuestDataLoaded()
 		}
 	}
 
-	UE_LOG(LogQuestSystem, Log, TEXT("Caching complete. %d quests loaded."), ActiveQuestDACaches.Num());
+	UE_LOG(LogQuestSystem, Verbose, TEXT("Caching complete. %d quests loaded."), ActiveQuestDACaches.Num());
 }
 
 

@@ -5,13 +5,13 @@
 #include "Core/AESaveGame.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/AEGloabalHelper.h"
-#include "QuestManagerSubSystem.h"
+#include "Quest/AEQuestSubSystem.h"
 
 void USaveGameSubsystem::SaveGame()
 {
 	UAESaveGame* SaveInst = Cast<UAESaveGame>(UGameplayStatics::CreateSaveGameObject(UAESaveGame::StaticClass()));
 
-	UQuestManagerSubSystem* QuestSys = UAEGloabalHelper::GetQuestSubsystem(GetWorld());
+	UAEQuestSubSystem* QuestSys = UAEGloabalHelper::GetQuestSubsystem(GetWorld());
 	if (QuestSys)
 	{
 		QuestSys->GetSaveData(SaveInst->QuestSystemData);
@@ -26,7 +26,7 @@ void USaveGameSubsystem::LoadGame()
 {
 	UAESaveGame* LoadInst = Cast<UAESaveGame>(UGameplayStatics::LoadGameFromSlot(FString("Save"), 0));
 
-	UQuestManagerSubSystem* QuestSys = UAEGloabalHelper::GetQuestSubsystem(GetWorld());
+	UAEQuestSubSystem* QuestSys = UAEGloabalHelper::GetQuestSubsystem(GetWorld());
 	if (QuestSys)
 	{
 		QuestSys->LoadSaveData(LoadInst->QuestSystemData);

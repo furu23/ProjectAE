@@ -45,7 +45,7 @@ public:
 	// **** 기능을 위한 공용 API 함수 ****
 
 	// UI 초기화 시, 퀘스트 목록을 생성
-    UFUNCTION(BlueprintCallable, Category = "Quest", meta = (BlueprintPure = "false"))
+    UFUNCTION(BlueprintCallable, Category = "Quest", meta = (BlueprintPure = "false", ToolTip = "첫 생성 시 모든 DTO 객체를 빌드하고 보냅니다."))
     TArray<FQuestLogEntry> GetQuestLogEntries() const;
 
 
@@ -53,7 +53,7 @@ public:
 	// **** 기능을 위한 공용 델리게이트 ****
 
 	// UI 에 사용될 Entry 단일 객체를 가져오는 델리게이트
-    UPROPERTY(BlueprintAssignable, Category = "Quest|Events")
+    UPROPERTY(BlueprintAssignable, Category = "Quest|Events", meta = (ToolTip = "단일 객체를 업데이트 하는 델리게이트입니다."))
     FOnQuestEntryUpdatedDelegate OnQuestEntryUpdated;
 
 	// 목표 객체에서 월드 태스크에 요청이 들어왔을 때
@@ -64,28 +64,37 @@ public:
 	// **** 저장 및 로드용 공용 API ****
 
 	// 저장 시 PlayerQuestHistory 만을 저장합니다
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Quest", meta = (ToolTip = "퀘스트 시스템에 필요한 저장 정보를 직렬화 해 저장합니다."))
 	void GetSaveData(TArray<uint8>& OutData);
 
 	// PlayerQuestHistory 를 복구합니다
+	UFUNCTION(BlueprintCallable, Category = "Quest", meta = (ToolTip = "퀘스트 시스템에 필요한 직렬화된 저장 정보를 로드합니다."))
 	void LoadSaveData(const TArray<uint8>& InData);
 
 
 
 	// **** 내부 시스템용 쿼리 함수 *****
 
-	// QuestID에 해당되는 FQuestProgressData의 값을 질의하고 받습니다.
+	// QuestID에 해당되는 FQuestProgressData의 값을 질의하고 받습니다
 	virtual FQuestProgressData* QueryProgressDataForQuestID(const FGameplayTag& QuestID);
 
+
+	
+	// **** 새 게임 시작 시 호출될 기본 초기화 함수 ****
+
+	// NewGame 시에 호출되는 PlayerQuestHistory 초기 상태 전이 함수입니다
+	UFUNCTION(BlueprintCallable, Category = "Quest", meta = (ToolTip = "새 게임 시작 시 호출되어야 하는 함수입니다."))
+	virtual void SetupNewGameQuests();
 
 
 protected:
 	// **** 퀘스트 상태 추적 프로퍼티 ****
 
-	// 현재 '진행중인' 퀘스트들을 로드
+	// 모든 퀘스트들의 추적을 로드 및 저장
 	UPROPERTY(SaveGame)
 	TMap<FGameplayTag, FQuestProgressData> PlayerQuestHistory;
 
+	// PlayerQuestHistoty를 기반으로 빌드되는 설계도 객체 캐시들 (현재 전부 로드되어 있는 설계입니다 많은 퀘스트 사용 시 변용을 요합니다)
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, TObjectPtr<UDA_QuestBase>> ActiveQuestDACaches;
 
