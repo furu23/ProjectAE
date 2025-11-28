@@ -24,6 +24,13 @@ public:
 	UPROPERTY(EditInstanceOnly, Category = "Objective|Interact", meta = (ToolTip = "상호작용 대상의 태그입니다."))
 	FGameplayTagContainer TargetTags;
 
+    UPROPERTY(EditInstanceOnly, Category = "Objective|Interact", meta = (MultiLine = true, ToolTip = "목표의 포맷 텍스트입니다."))
+    FText DescriptionFormat;
+
+    // 완료되었을 때 보여줄 텍스트 (옵션)
+    UPROPERTY(EditInstanceOnly, Category = "Objective|Interact", meta = (ToolTip = "목표 완료 시 보일 완료 메세지입니다."))
+    FText CompletedDescription;
+
 	// 포맷 전달 함수를 오버라이드합니다.
 	virtual FText GetFormattedObjectiveText(const FQuestProgressData& ProgressData) const override;
 };

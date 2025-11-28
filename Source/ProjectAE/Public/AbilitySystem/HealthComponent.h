@@ -11,6 +11,9 @@ class UAbilitySystemComponent;
 class UAS_HealthSet;
 
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDeathSignature, AActor*, Causer, AActor*, Victim);
+
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTAE_API UHealthComponent : public UActorComponent
 {
@@ -19,6 +22,8 @@ class PROJECTAE_API UHealthComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UHealthComponent();
+
+	FOnDeathSignature OnDeathDelegate;
 
 public:
 	/**
@@ -45,4 +50,8 @@ protected:
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
 
 	virtual void OnMaxHealthAttributeChanged(const FOnAttributeChangeData& Data);
+
+private:
+	// 사망 여부
+	bool bIsDead = false;
 };

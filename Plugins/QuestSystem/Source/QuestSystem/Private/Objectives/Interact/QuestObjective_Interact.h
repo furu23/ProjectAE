@@ -19,7 +19,7 @@ class UQuestObjective_Interact : public UQuestObjective
 public:
 	// **** 기본 공용 함수 오버라이드 ****
 
-	virtual void Initialize(const UQuestObjectiveConfig* Config, UQuestManagerSubSystem* QuestSys, FGameplayTag QuestID) override;
+	virtual void Initialize(const UQuestObjectiveConfig* Config, UQuestManagerSubSystem* QuestSys, FGameplayTag ObjectiveQuestID) override;
 
 	virtual void Activate(UObject* WorldContext) override;
 

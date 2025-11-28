@@ -9,7 +9,7 @@
 #include "GameplayAbilitySpecHandle.h"
 #include "GameplayAbilitySpec.h"
 #include "AbilitySystemComponent.h"
-#include "../ProjectAE.h"
+#include "ProjectAE/ProjectAE.h"
 
 
 // Sets default values for this component's properties

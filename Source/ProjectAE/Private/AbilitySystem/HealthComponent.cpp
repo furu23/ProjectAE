@@ -5,6 +5,8 @@
 #include "Characters/BaseCharacter.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AS_HealthSet.h"
+#include "QuestMessageHelpers.h"
+#include "GameplayEffectExtension.h"
 
 // Sets default values for this component's properties
 UHealthComponent::UHealthComponent()
@@ -22,7 +24,9 @@ bool UHealthComponent::TryInitAbilitySystem(UAbilitySystemComponent* InASC)
 	{
 		return true;
 	}
+
 	CachedASC = InASC;
+
 	if (CachedASC)
 	{
 		 HealthSet = CachedASC->GetSet<UAS_HealthSet>();
@@ -40,6 +44,41 @@ bool UHealthComponent::TryInitAbilitySystem(UAbilitySystemComponent* InASC)
 void UHealthComponent::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 {
 	// 여기서 체력 변화요소를 정리합니다.
+
+	// 이미 죽었다면 리턴
+	if (bIsDead)
+	{
+		return;
+	}
+
+	if (Data.NewValue <= 0.f)
+	{
+		// 대상 찾아보기
+		AActor* Instigator = nullptr;
+		if (Data.GEModData != nullptr)
+		{
+			const FGameplayEffectContextHandle& Context = Data.GEModData->EffectSpec.GetContext();
+			Instigator = Context.GetInstigator();
+		}
+
+		OnDeathDelegate.Broadcast(Instigator, GetOwner());
+
+
+		// 퀘스트 목표 갱신을 위해 사망 GMS를 방송
+		if (ABaseCharacter* OwnerCharacter = Cast<ABaseCharacter>(GetOwner()))
+		{
+			if (OwnerCharacter->GetCharacterTag().IsValid())
+			{
+				// QuestSystem의 헬퍼 함수 호출
+				UQuestMessageHelpers::BroadcastAIKilledEvent(
+					this,
+					Instigator,
+					OwnerCharacter,
+					OwnerCharacter->GetCharacterTag()
+				);
+			}
+		}
+	}
 }
 
 void UHealthComponent::OnMaxHealthAttributeChanged(const FOnAttributeChangeData& Data)

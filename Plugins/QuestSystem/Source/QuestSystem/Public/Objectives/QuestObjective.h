@@ -12,7 +12,7 @@ class UQuestManagerSubSystem;
 class UQuestObjective;
 class UQuestTask;
 
-DECLARE_DELEGATE_OneParam(FOnObjectiveCompleted, UQuestObjective* /* CompletedObjective */);
+DECLARE_DELEGATE_OneParam(FOnObjectiveCompletedSignature, UQuestObjective* /* CompletedObjective */);
 DECLARE_DELEGATE_OneParam(FOnRequestWorldTasksSignature, const TArray<TObjectPtr<UQuestTask>>& /* TasksToExecute */);
 
 /**
@@ -31,7 +31,7 @@ public:
 	// **** 목표 완료 시 방송용 델리게이트 ****
 
 	// 목표 완료 시 델리게이트
-	FOnObjectiveCompleted OnObjectiveCompleteDelegate;
+	FOnObjectiveCompletedSignature OnObjectiveCompleteDelegate;
 
 	// 태스크 버블링 용 델리게이트
 	FOnRequestWorldTasksSignature OnRequestTaskSignatureDelegate;

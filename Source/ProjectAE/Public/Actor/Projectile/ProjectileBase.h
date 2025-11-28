@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -9,7 +9,7 @@
 
 class USphereComponent;
 class UProjectileMovementComponent;
-class UNiagaraSystem;
+class UNiagaraComponent;
 
 UCLASS()
 class PROJECTAE_API AProjectileBase : public AActor
@@ -22,19 +22,21 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-    // Ãæµ¹ Ã³¸® ÇÔ¼ö
+    // ì¶©ëŒ ì²˜ë¦¬ í•¨ìˆ˜
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 public:
-    // 1. ¹°¸®Àû ±¸¼º ¿ä¼Ò
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
-	TObjectPtr<USphereComponent> SphereComp; // Ãæµ¹Ã¼
+	TObjectPtr<USphereComponent> SphereComp; // ì¶©ëŒì²´
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
-	TObjectPtr<UProjectileMovementComponent> MovementComp; // ¿òÁ÷ÀÓ ´ã´ç
+	TObjectPtr<UProjectileMovementComponent> MovementComp; // ì›€ì§ì„ ë‹´ë‹¹
 
-    // 3. [ÇÙ½É] ¹è´ŞÇÒ GAS ¼ÒÆ÷ (ExposeOnSpawnÀ¸·Î ½ºÆù ½Ã ÁÖÀÔ¹ŞÀ½)
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	TObjectPtr<UNiagaraComponent> ProjectileEffect;
+
+    // 3. [í•µì‹¬] ë°°ë‹¬í•  GAS ì†Œí¬ (ExposeOnSpawnìœ¼ë¡œ ìŠ¤í° ì‹œ ì£¼ì…ë°›ìŒ)
     UPROPERTY(BlueprintReadWrite, Meta = (ExposeOnSpawn = true))
     FGameplayEffectSpecHandle DamageEffectSpecHandle;
 };

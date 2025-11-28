@@ -13,7 +13,7 @@ class UQuestManagerSubSystem;
 class UQuestObjective;
 class UQuestTask;
 
-DECLARE_DELEGATE_OneParam(FOnQuestObjectChanged, const FGameplayTag&);
+DECLARE_DELEGATE_OneParam(FOnQuestObjectChangedSignature, const FGameplayTag&);
 DECLARE_DELEGATE_OneParam(FOnRequestWorldTasksSignature, const TArray<TObjectPtr<UQuestTask>>&);
 
 /**
@@ -28,7 +28,7 @@ public:
 	// **** 델리게이트 ****
 	
 	// 퀘스트 상태 변경을 알리기 위한 델리게이트
-	FOnQuestObjectChanged OnQuestObjectChangedDelegate;
+	FOnQuestObjectChangedSignature OnQuestObjectChangedDelegate;
 
 	FOnRequestWorldTasksSignature OnRequestWorldTasksDelegate;
 

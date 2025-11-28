@@ -13,7 +13,9 @@
 #include "Inventory/InventoryComponent.h"
 #include "GameplayTagContainer.h"
 #include "Characters/Player/AEWeaponComponent.h"
-#include "../ProjectAE.h"
+#include "ProjectAE/ProjectAE.h"
+#include "Components/CapsuleComponent.h"
+#include "AbilitySystem/HealthComponent.h"
 
 
 APlayerCharacter::APlayerCharacter()
@@ -27,6 +29,8 @@ APlayerCharacter::APlayerCharacter()
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 
 	WeaponComponent = CreateDefaultSubobject<UAEWeaponComponent>("WeaponComponent");
+
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>("HealthComponent");
 
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>("InteractionComponent");
 	
@@ -50,8 +54,6 @@ APlayerCharacter::APlayerCharacter()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	// GetCharacterMovement()->bOrientRotationToMovement = false;
-
 	// InteractionComponent의 포커스 변경 시 호출될 콜백 함수 등록
 	InteractionComponent->OnFocusChanged.AddDynamic(this, &APlayerCharacter::OnFocusChanged);
 
@@ -61,6 +63,8 @@ APlayerCharacter::APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	HealthComponent->OnDeathDelegate.AddDynamic(this, &APlayerCharacter::OnDeath);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -107,21 +111,27 @@ void APlayerCharacter::PossessedBy(AController* NewController)
 	{
 		AEPlayerController = PC;
 	}
+
 	
 	// 어빌리티 초기화
-	UAbilitySystemComponent* ASC = CachedASC.Get();
 	for (const TSubclassOf<UGameplayAbility>& AbilityForGrant : DefaultAbilities)
 	{
 		FGameplayAbilitySpec Spec(AbilityForGrant, 1, -1, this);
-		ASC->GiveAbility(Spec);
+		CachedASC->GiveAbility(Spec);
 	}
 
-	// 기본 무기 장착 및 무기의 어빌리티 부여
-	WeaponComponent->EquipWeapon(DefaultWeapon);
+	if (CachedASC)
+	{
+		// 헬스컴포넌트 초기화 시도
+		HealthComponent->TryInitAbilitySystem(CachedASC);
+
+		// 기본 무기 장착 및 무기의 어빌리티 부여
+		WeaponComponent->EquipWeapon(DefaultWeapon);
+	}
 
 	// TODO: 변경 시 전파받아 상태 부여
 	#if UE_BUILD_DEVELOPMENT
-	ASC->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag("State.Area.InRaid"));
+	CachedASC->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag("State.Area.InRaid"));
 	#endif
 }
 
@@ -159,6 +169,12 @@ void APlayerCharacter::RotateToCursor()
 
 		TargetRotation = Direction.Rotation();
 	}
+}
+
+void APlayerCharacter::OnDeath_Implementation(AActor* Causer, AActor* Victim)
+{
+	GetMesh()->SetSimulatePhysics(true);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void APlayerCharacter::InputAbilityTagPressed(const class UInputAction* Action)

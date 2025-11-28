@@ -237,7 +237,7 @@ void UQuestManagerSubSystem::TryUnlockNextQuests(const FGameplayTag& QuestID)
 						FQuestLogEntry NewEntry;
 						BuildQuestLogEntry(QuestID, NewEntry);
 
-						OnQuestEntryUpdated.Broadcast(NewEntry);
+						OnQuestEntryUpdatedDelegate.Broadcast(NewEntry);
 					}
 				}
 			}
@@ -258,14 +258,14 @@ void UQuestManagerSubSystem::NotifyQuestUpdate(const FGameplayTag& QuestID)
 	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] NotifyQuestUpdate: [%s] Id is Updated..."), *QuestID.GetTagName().ToString());
 
 	// 델리게이트에 구독자가 있는지 확인
-	if (OnQuestEntryUpdated.IsBound())
+	if (OnQuestEntryUpdatedDelegate.IsBound())
 	{
 		// DTO 빌더를 호출하여 최신 DTO 생성
 		FQuestLogEntry UpdatedEntry;
 		if (BuildQuestLogEntry(QuestID, UpdatedEntry))
 		{
 			// HUD 등 PUSH를 구독 중인 UI에게 DTO를 브로드캐스트
-			OnQuestEntryUpdated.Broadcast(UpdatedEntry);
+			OnQuestEntryUpdatedDelegate.Broadcast(UpdatedEntry);
 		}
 	}
 
@@ -430,7 +430,7 @@ void UQuestManagerSubSystem::DeactivateAndDestroyQuest(const FGameplayTag& Quest
 
 void UQuestManagerSubSystem::OnQuestRequestingWorldTasks(const TArray<TObjectPtr<UQuestTask>>& TasksToExecute)
 {
-	OnQuestTaskBubbleUp.ExecuteIfBound(TasksToExecute);
+	OnQuestTaskBubbleUpDelegate.ExecuteIfBound(TasksToExecute);
 }
 
 

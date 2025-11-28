@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GameplayTagContainer.h"
 #include "BaseCharacter.generated.h"
 
 class UAbilitySystemComponent;
@@ -30,8 +31,15 @@ public:
 
 	virtual void PossessedBy(AController* NewController) override;
 
+
+
+	// 태그 반환용 게터 함수
+	FORCEINLINE const FGameplayTagContainer& GetCharacterTag() const { return CharacterTag; }
+
+	// ASC를 반환하는 헬퍼 함수
 	UFUNCTION(BlueprintCallable, Category = "Ability")
 	UAbilitySystemComponent* GetASC() const;
+
 
 
 	// **** Develop Test&Debug Only ****
@@ -67,7 +75,6 @@ public:
 	// *********************************
 
 protected:
-
 	// *** 어빌리티 시스템 관련 기능 ***
 	// 추후, 하위 클래스 작성 시 옮기거나 확장할 수 있습니다.
 
@@ -80,4 +87,10 @@ protected:
 	// 어빌리티 시스템 컴포넌트 캐시
 	UPROPERTY(Transient)
 	TObjectPtr<UAbilitySystemComponent> CachedASC;
+
+
+private:
+	// 캐릭터의 태그 목록 (예: Gunner, Enemy 등...)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character", meta = (AllowPrivateAccess = "true", ToolTip = "캐릭터의 태그 목록입니다. GMS 발송 시 사용."))
+	FGameplayTagContainer CharacterTag;
 };

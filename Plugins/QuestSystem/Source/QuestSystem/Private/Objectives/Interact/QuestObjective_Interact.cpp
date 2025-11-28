@@ -9,9 +9,9 @@
 #include "QuestTypes.h"
 #include "QuestSystem.h"
 
-void UQuestObjective_Interact::Initialize(const UQuestObjectiveConfig* Config, UQuestManagerSubSystem* QuestSys, FGameplayTag ObjectQuestID)
+void UQuestObjective_Interact::Initialize(const UQuestObjectiveConfig* Config, UQuestManagerSubSystem* QuestSys, FGameplayTag ObjectiveQuestID)
 {
-	Super::Initialize(Config, QuestSys, ObjectQuestID);
+	Super::Initialize(Config, QuestSys, ObjectiveQuestID);
 
 	InteractConfig = Cast<const UObjectiveConfig_Interact>(Config);
 	checkf(InteractConfig != nullptr, TEXT("ObjectiveConfig가 InteractConfig 타입이 아닙니다!"));

@@ -8,7 +8,7 @@ public class ProjectAE : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayAbilities", "GameplayTags", "GameplayTasks", "GameplayMessageRuntime", "QuestSystem" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayAbilities", "GameplayTags", "GameplayTasks", "GameplayMessageRuntime", "QuestSystem", "Niagara" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 

@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -9,6 +9,7 @@
 
 class UAEAbilitySystemComponent;
 class UAS_HealthSet;
+class UHealthComponent;
 
 /**
  * 
@@ -19,15 +20,26 @@ class PROJECTAE_API ABaseEnemyCharacter : public ABaseCharacter, public IAbility
 	GENERATED_BODY()
 
 public:
-	// ASC�� ��ȯ�ϴ� ���� API �Լ��Դϴ�.
+	// ASC를 반환하는 공용 API 함수입니다.
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	ABaseEnemyCharacter();
 
 protected:
-	UPROPERTY()
+	virtual void BeginPlay();
+
+	virtual void PossessedBy(AController* NewController);
+
+	// 캐릭터가 죽었을 때 호출될 함수
+	UFUNCTION(BlueprintNativeEvent, Category = "Character|Event")
+	void OnDeath(AActor* Causer, AActor* Victim);
+
+	// ASC
 	TObjectPtr<UAEAbilitySystemComponent> ASC;
 
-	UPROPERTY()
+	// 체력 컴포넌트
+	TObjectPtr<UHealthComponent> HealthComp;
+
+	// 체력 어트리뷰트
 	TObjectPtr<UAS_HealthSet> HealthSet;
 };

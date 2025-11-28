@@ -41,6 +41,10 @@ protected:
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void RotateToCursor();
+
+	// 캐릭터가 죽었을 때 호출될 함수
+	UFUNCTION(BlueprintNativeEvent, Category = "Character|Event")
+	void OnDeath(AActor* Causer, AActor* Victim);
 	
 private:
 	FRotator TargetRotation;
@@ -60,6 +64,9 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<class UInventoryComponent> InventoryComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
+	TObjectPtr<class UHealthComponent> HealthComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<class UAEWeaponComponent> WeaponComponent;

@@ -21,9 +21,8 @@ struct FStreamableHandle;
 
 // 델리게이트 선언
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestEntryUpdatedDelegate, const FQuestLogEntry&, UpdatedEntry);
-
-DECLARE_DELEGATE_OneParam(FOnQuestTaskBubbleDelegate, const TArray<TObjectPtr<UQuestTask>>&);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestEntryUpdatedSignature, const FQuestLogEntry&, UpdatedEntry);
+DECLARE_DELEGATE_OneParam(FOnQuestTaskBubbleSignature, const TArray<TObjectPtr<UQuestTask>>&);
 
 
 /**
@@ -54,10 +53,10 @@ public:
 
 	// UI 에 사용될 Entry 단일 객체를 가져오는 델리게이트
     UPROPERTY(BlueprintAssignable, Category = "Quest|Events", meta = (ToolTip = "단일 객체를 업데이트 하는 델리게이트입니다."))
-    FOnQuestEntryUpdatedDelegate OnQuestEntryUpdated;
+    FOnQuestEntryUpdatedSignature OnQuestEntryUpdatedDelegate;
 
 	// 목표 객체에서 월드 태스크에 요청이 들어왔을 때
-	FOnQuestTaskBubbleDelegate OnQuestTaskBubbleUp;
+	FOnQuestTaskBubbleSignature OnQuestTaskBubbleUpDelegate;
 
 	
 

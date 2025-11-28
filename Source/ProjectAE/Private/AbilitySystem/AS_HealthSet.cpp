@@ -4,8 +4,9 @@
 #include "AbilitySystem/AS_HealthSet.h"
 #include "Net/UnrealNetwork.h"
 #include "GameplayEffectExtension.h"
+#include "Core/AEGloabalHelper.h"
 
-#define MINIMUM_HEALTH 10.f
+#define MINIMUM_MAXHEALTH 10.f
 
 UAS_HealthSet::UAS_HealthSet()
 {
@@ -22,7 +23,7 @@ void UAS_HealthSet::PreAttributeChange(const FGameplayAttribute& Attribute, floa
 	else if (Attribute == UAS_HealthSet::GetMaxHealthAttribute())
 	{
 		// 최소 최대 체력 값을 10으로 제한합니다.
-		NewValue = FMath::Clamp(NewValue, MINIMUM_HEALTH, GetMaxHealth());
+		NewValue = FMath::Clamp(NewValue, MINIMUM_MAXHEALTH, GetMaxHealth());
 	}
 }
 
@@ -39,6 +40,7 @@ void UAS_HealthSet::PostAttributeChange(const FGameplayAttribute& Attribute, flo
 			}
 		}
 	}
+	UAEGloabalHelper::PrintString(FString::Printf(TEXT("%f %f"), OldValue, NewValue));
 }
 
 void UAS_HealthSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
@@ -47,7 +49,6 @@ void UAS_HealthSet::PostGameplayEffectExecute(const struct FGameplayEffectModCal
 	{
 		if (GetHealth() <= 0)
 		{
-			// 캐릭터 죽음 관련 로직 실행
 		}
 	}
 }

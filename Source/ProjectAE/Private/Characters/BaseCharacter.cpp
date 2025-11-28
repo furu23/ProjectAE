@@ -21,7 +21,6 @@ ABaseCharacter::ABaseCharacter()
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
@@ -44,9 +43,6 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 
 	// 어빌리티 시스템 초기화
 	InitAbiltySystem();
-
-	
-	// TODO: 어빌리티 부여 등 추가 초기화 작업
 }
 
 UAbilitySystemComponent* ABaseCharacter::GetASC() const
