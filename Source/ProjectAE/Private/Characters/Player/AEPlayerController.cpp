@@ -3,9 +3,13 @@
 #include "Characters/Player/AEPlayerController.h"
 #include "EnhancedInputSubsystems.h"
 #include "Inventory/InventoryUIManager.h"
-#include "QuestManagerSubSystem.h"
 #include "Core/AEHUD.h"
 #include "Widgets/AEGameHUDWidget.h"
+
+#if UE_BUILD_DEVELOPMENT
+#include "Core/AEGloabalHelper.h"
+#include "Quest/AEQuestSubSystem.h"
+#endif
 
 
 AAEPlayerController::AAEPlayerController()
@@ -49,15 +53,15 @@ void AAEPlayerController::OnInteractionFocusChanged(AActor* NewFocusedActor)
 	}
 }
 
+#if UE_BUILD_DEVELOPMENT
 void AAEPlayerController::Cheat_AcceptQuest(const FString& QuestIDName)
 {
-	if (ULocalPlayer* LP = GetLocalPlayer())
+	UAEQuestSubSystem* QuestManager = UAEGloabalHelper::GetQuestSubsystem(this);
+	if (!ensureMsgf(QuestManager, TEXT("QuestManager is not valid")))
 	{
-		if (UQuestManagerSubSystem* QuestManager = LP->GetSubsystem<UQuestManagerSubSystem>())
-		{
-			FGameplayTag QuestID = FGameplayTag::RequestGameplayTag(*QuestIDName);
-			QuestManager->AcceptQuest(QuestID); // [ȣ��]
-			UE_LOG(LogTemp, Log, TEXT("Cheat: Quest [%s] Accepted."), *QuestIDName);
-		}
+		const FGameplayTag& QuestID = FGameplayTag::RequestGameplayTag(*QuestIDName);
+		QuestManager->AcceptQuestForID(QuestID);
+		UE_LOG(LogTemp, Log, TEXT("Cheat: Quest [%s] Accepted."), *QuestIDName);
 	}
 }
+#endif

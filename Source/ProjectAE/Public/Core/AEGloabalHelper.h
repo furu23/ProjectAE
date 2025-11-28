@@ -17,7 +17,7 @@ class AAEPlayerState;
 class APlayerCharacter;
 class AChracter;
 class APawn;
-class UQuestManagerSubSystem;
+class UAEQuestSubSystem;
 
 // 2. GAS 클래스
 class UAEAbilitySystemComponent;
@@ -75,10 +75,10 @@ public:
 	// (GetGameInstance()->GetSubsystem<T>() 호출을 캡슐화합니다)
 	// ----------------------------------------------------------------------
 
-	/** UQuestManagerSubSystem(Local Player Subsystem)을 가져옵니다. */
+	/** UAEQuestSubSystem(Local Player Subsystem)을 가져옵니다. */
 
  	UFUNCTION(BlueprintPure, Category = "ProjectAE|Subsystems", meta = (WorldContext = "WorldContextObject"))
- 	static UQuestManagerSubSystem* GetQuestSubsystem(const UObject* WorldContextObject);
+ 	static UAEQuestSubSystem* GetQuestSubsystem(const UObject* WorldContextObject);
 
  	/** UWorldManagerSubsystem (GameInstance Subsystem)을 가져옵니다. */
 // 	UFUNCTION(BlueprintPure, Category = "MyGame|Subsystems", meta = (WorldContext = "WorldContextObject"))

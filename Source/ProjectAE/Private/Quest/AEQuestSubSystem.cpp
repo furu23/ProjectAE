@@ -8,6 +8,16 @@ void UAEQuestSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 	Super::Initialize(Collection);
 }
 
+void UAEQuestSubSystem::AcceptQuestForID(const FGameplayTag& QuestID)
+{
+	AcceptQuest(QuestID);
+}
+
+void UAEQuestSubSystem::CompleteQuestForID(const FGameplayTag& QuestID)
+{
+	ClaimQuestReward(QuestID);
+}
+
 void UAEQuestSubSystem::OnQuestDataLoaded()
 {
 	Super::OnQuestDataLoaded();

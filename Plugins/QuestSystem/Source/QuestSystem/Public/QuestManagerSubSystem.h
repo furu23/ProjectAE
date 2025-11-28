@@ -41,10 +41,6 @@ public:
 	// 초기화 함수
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
-	// 퀘스트 수락용 (임시)
-	virtual void AcceptQuest(const FGameplayTag& QuestID);
-
-
 
 	// **** 기능을 위한 공용 API 함수 ****
 
@@ -108,7 +104,7 @@ protected:
 	// **** 퀘스트 플로우 관련 ****
 
 	// 퀘스트 수락 함수
-//	virtual void AcceptQuest(FGameplayTag QuestID);
+	virtual void AcceptQuest(const FGameplayTag& QuestID);
 	
 	// 퀘스트 보상 함수
 	virtual void ClaimQuestReward(const FGameplayTag& QuestID);
