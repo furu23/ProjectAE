@@ -9,6 +9,8 @@
 #include "Engine/EngineTypes.h"
 #include "Components/SceneComponent.h"
 #include "NiagaraComponent.h"
+#include "FX/Data/HitFeedback.h"
+#include "NiagaraFunctionLibrary.h"
 
 AProjectileBase::AProjectileBase()
 {
@@ -46,6 +48,15 @@ void AProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UP
 {
     if (!OtherActor || OtherActor == GetInstigator() || OtherActor == this) return;
 
+    // 타격 이팩트 적용
+    EPhysicalSurface SurfaceType = SurfaceType_Default;
+    if (Hit.PhysMaterial.IsValid())
+    {
+		SurfaceType = Hit.PhysMaterial->SurfaceType;
+	}
+
+    SpawnImpactHit(Hit.Location, Hit.Normal, SurfaceType);
+
     // GAS 적용
     if (HasAuthority())
     {
@@ -70,4 +81,16 @@ void AProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UP
     {
         MovementComp->StopMovementImmediately();
     }
+}
+
+void AProjectileBase::SpawnImpactHit(FVector Location, FVector Normal, EPhysicalSurface PhysSurf)
+{
+    if (!ensureMsgf(PhysSurfaceMap, TEXT("No Valid Data Asset In Bullet"))) { return; }
+
+    UNiagaraSystem* EffectToSpawn = PhysSurfaceMap->SurfEffectMap.FindRef(PhysSurf).VisualEffect;
+    
+
+    if (!ensureMsgf(EffectToSpawn, TEXT("No Valid Spawnable Effect In Bullet"))) { return; }
+
+    UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, EffectToSpawn, Location, Normal.Rotation())->Activate();
 }
