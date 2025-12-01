@@ -65,6 +65,7 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	HealthComponent->OnDeathDelegate.AddDynamic(this, &APlayerCharacter::OnDeath);
+	HealthComponent->OnDamageDelegate.AddDynamic(this, &APlayerCharacter::OnDamaged);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -175,6 +176,10 @@ void APlayerCharacter::OnDeath_Implementation(AActor* Causer, AActor* Victim)
 {
 	GetMesh()->SetSimulatePhysics(true);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void APlayerCharacter::OnDamaged_Implementation(AActor* Causer, AActor* Victim)
+{
 }
 
 void APlayerCharacter::InputAbilityTagPressed(const class UInputAction* Action)

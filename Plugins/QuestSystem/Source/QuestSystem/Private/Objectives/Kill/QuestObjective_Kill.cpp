@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "QuestObjective_Kill.h"
@@ -11,7 +11,7 @@ void UQuestObjective_Kill::Initialize(const UQuestObjectiveConfig* Config, UQues
 	Super::Initialize(Config, QuestSys, ObjectiveQuestID);
 
 	KillConfig = Cast<const UObjectiveConfig_Kill>(Config);
-	checkf(KillConfig != nullptr, TEXT("ObjectiveConfig°¡ KillConfig Å¸ÀÔÀÌ ¾Æ´Õ´Ï´Ù!"));
+	checkf(KillConfig != nullptr, TEXT("ObjectiveConfigê°€ KillConfig íƒ€ì…ì´ ì•„ë‹™ë‹ˆë‹¤!"));
 }
 
 void UQuestObjective_Kill::Activate(UObject* WorldContext)
@@ -19,18 +19,18 @@ void UQuestObjective_Kill::Activate(UObject* WorldContext)
 	Super::Activate(WorldContext);
 	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] objective activating is started"), *this->GetFName().ToString());
 
-	// ºÎ¸ğÀÇ Activate¿¡¼­ ÀÌ¹Ì ¸ñÇ¥°¡ ¿Ï·áµÇ¾ú´ÂÁö È®ÀÎ
+	// ë¶€ëª¨ì˜ Activateì—ì„œ ì´ë¯¸ ëª©í‘œê°€ ì™„ë£Œë˜ì—ˆëŠ”ì§€ í™•ì¸
 	if (bHasFiredCompletion) return;
 
 	if (!KillConfig || !WorldContext) return;
 
-	// GMS¸¦ °¡Á®¿È
+	// GMSë¥¼ ê°€ì ¸ì˜´
 	UGameplayMessageSubsystem& GMS = UGameplayMessageSubsystem::Get(WorldContext);
 
-	// ±¸µ¶ÇÒ Ã¤³Î °¡Á®¿È
+	// êµ¬ë…í•  ì±„ë„ ê°€ì ¸ì˜´
 	FGameplayTag ListenTag = KillConfig->ListenTag;
 
-	// ±¸µ¶ÇÏ°í ¹İÈ¯ÇÏ´Â ÇÚµé ÀúÀå
+	// êµ¬ë…í•˜ê³  ë°˜í™˜í•˜ëŠ” í•¸ë“¤ ì €ì¥
 	GMSListenHandle = GMS.RegisterListener<FQuestMessage_Generic, UQuestObjective_Kill>(
 		ListenTag,
 		this,
