@@ -3,12 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AS_HealthSet.h"
 #include "Components/ActorComponent.h"
 #include "GameplayEffectTypes.h"
 #include "HealthComponent.generated.h"
 
 class UAbilitySystemComponent;
-class UAS_HealthSet;
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDeathSignature, AActor*, Causer, AActor*, Victim);
@@ -39,8 +39,8 @@ public:
 	virtual bool TryInitAbilitySystem(UAbilitySystemComponent* InASC);
 
 	// **** 공용 API 함수 ****
-
-	//virtual float GetHealth() const {}
+	UFUNCTION(BlueprintCallable, Category = "Health|Event")
+	FORCEINLINE float GetHealth1() const { return HealthSet ? HealthSet->GetHealth() : 0.f; }
 
 protected:
 	UPROPERTY(Transient)
