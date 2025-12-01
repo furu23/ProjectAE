@@ -12,6 +12,7 @@ class UAS_HealthSet;
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDeathSignature, AActor*, Causer, AActor*, Victim);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDamagedSiganature, AActor*, Causer, AActor*, Victim);
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -23,7 +24,11 @@ public:
 	// Sets default values for this component's properties
 	UHealthComponent();
 
+	UPROPERTY(BlueprintAssignable, Category = "Health|Event")
 	FOnDeathSignature OnDeathDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category = "Health|Event")
+	FOnDamagedSiganature OnDamageDelegate;
 
 public:
 	/**

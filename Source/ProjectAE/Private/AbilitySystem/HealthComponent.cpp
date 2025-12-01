@@ -43,15 +43,14 @@ bool UHealthComponent::TryInitAbilitySystem(UAbilitySystemComponent* InASC)
 
 void UHealthComponent::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 {
-	// 여기서 체력 변화요소를 정리합니다.
-
 	// 이미 죽었다면 리턴
 	if (bIsDead)
 	{
 		return;
 	}
 
-	if (Data.NewValue <= 0.f)
+	// 데미지 하향 변동 시
+	if (Data.OldValue < Data.NewValue)
 	{
 		// 대상 찾아보기
 		AActor* Instigator = nullptr;
@@ -61,22 +60,30 @@ void UHealthComponent::OnHealthAttributeChanged(const FOnAttributeChangeData& Da
 			Instigator = Context.GetInstigator();
 		}
 
-		OnDeathDelegate.Broadcast(Instigator, GetOwner());
-
-
-		// 퀘스트 목표 갱신을 위해 사망 GMS를 방송
-		if (ABaseCharacter* OwnerCharacter = Cast<ABaseCharacter>(GetOwner()))
+		// 사망 시에
+		if (Data.NewValue <= 0.f)
 		{
-			if (OwnerCharacter->GetCharacterTag().IsValid())
+			OnDeathDelegate.Broadcast(Instigator, GetOwner());
+
+			// 퀘스트 목표 갱신을 위해 사망 GMS를 방송
+			if (ABaseCharacter* OwnerCharacter = Cast<ABaseCharacter>(GetOwner()))
 			{
-				// QuestSystem의 헬퍼 함수 호출
-				UQuestMessageHelpers::BroadcastAIKilledEvent(
-					this,
-					Instigator,
-					OwnerCharacter,
-					OwnerCharacter->GetCharacterTag()
-				);
+				if (OwnerCharacter->GetCharacterTag().IsValid())
+				{
+					// QuestSystem의 헬퍼 함수 호출
+					UQuestMessageHelpers::BroadcastAIKilledEvent(
+						this,
+						Instigator,
+						OwnerCharacter,
+						OwnerCharacter->GetCharacterTag()
+					);
+				}
 			}
+		}
+		// 데미지 받았을 시에.
+		else
+		{
+			OnDamageDelegate.Broadcast(Instigator, GetOwner());
 		}
 	}
 }
