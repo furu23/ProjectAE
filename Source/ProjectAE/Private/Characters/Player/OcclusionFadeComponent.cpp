@@ -54,9 +54,9 @@ void UOcclusionFadeComponent::TracingOcclusionObjects(TSet<UPrimitiveComponent*>
 	TArray<FHitResult> HitResults;
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(PlayerPawn);
+	FCollisionShape SphereShape = FCollisionShape::MakeSphere(TraceRadius);
 	
-	bool bHit = GetWorld()->LineTraceMultiByChannel(HitResults, Start, End, OcclusionChannel, Params);
-	if (!bHit) return;
+	GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, OcclusionChannel, SphereShape, Params);
 	
 	for (const FHitResult Hit : HitResults)
 	{

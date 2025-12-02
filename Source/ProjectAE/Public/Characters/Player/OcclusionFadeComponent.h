@@ -44,6 +44,9 @@ public:
 	TEnumAsByte<ECollisionChannel> OcclusionChannel = ECC_GameTraceChannel3;	// 현재 Transparency 채널 (Default Response = Overlap, 무시할 액터는 Ignore로 따로 설정)
 	
 	UPROPERTY(EditAnywhere, Category = "Occlusion")
+	float TraceRadius = 20.0f;
+	
+	UPROPERTY(EditAnywhere, Category = "Occlusion")
 	float OccludedTargetValue = 1.0f; // 기본 값: 1.0 (투명)
 	
 	UPROPERTY(VisibleAnywhere, Category = "Occlusion")
