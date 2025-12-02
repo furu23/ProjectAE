@@ -41,6 +41,7 @@ protected:
 	TObjectPtr<UAEAbilitySystemComponent> ASC;
 
 	// 체력 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UHealthComponent> HealthComp;
 
 	// 체력 어트리뷰트

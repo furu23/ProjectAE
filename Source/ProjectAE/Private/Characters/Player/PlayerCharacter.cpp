@@ -16,6 +16,7 @@
 #include "ProjectAE/ProjectAE.h"
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystem/HealthComponent.h"
+#include "Characters/Player/OcclusionFadeComponent.h"
 
 
 APlayerCharacter::APlayerCharacter()
@@ -36,6 +37,8 @@ APlayerCharacter::APlayerCharacter()
 	
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("InventoryComponent");
 	InventoryComponent->bIsPlayerInventory = true;
+	
+	OcclusionFadeComponent = CreateDefaultSubobject<UOcclusionFadeComponent>("OcclusionFadeComponent");
 
 	SpringArm->TargetArmLength = 1000.f;
 	SpringArm->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));

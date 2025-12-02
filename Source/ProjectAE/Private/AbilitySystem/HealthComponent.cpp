@@ -50,7 +50,7 @@ void UHealthComponent::OnHealthAttributeChanged(const FOnAttributeChangeData& Da
 	}
 
 	// 데미지 하향 변동 시
-	if (Data.OldValue < Data.NewValue)
+	if (Data.OldValue > Data.NewValue)
 	{
 		// 대상 찾아보기
 		AActor* Instigator = nullptr;
