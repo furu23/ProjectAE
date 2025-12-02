@@ -31,5 +31,4 @@ class PROJECTAE_API UHitFeedback : public UDataAsset
 public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX")
 	TMap<TEnumAsByte<EPhysicalSurface>, FImpactFXInfo> SurfEffectMap;
-	
 };

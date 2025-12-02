@@ -75,7 +75,7 @@ public:
 	// **** 내부 시스템용 쿼리 함수 *****
 
 	// QuestID에 해당되는 FQuestProgressData의 값을 질의하고 받습니다
-	virtual FQuestProgressData* QueryProgressDataForQuestID(const FGameplayTag& QuestID);
+	FQuestProgressData* QueryProgressDataForQuestID(const FGameplayTag& QuestID);
 
 
 	
@@ -149,10 +149,10 @@ private:
 	// **** Private 내부 상태 변화 함수 모음 ****
 
 	// 퀘스트를 활성화 상태로 변경
-	virtual void LoadAndActivateQuest(const FGameplayTag& QuestID);
+	void LoadAndActivateQuest(const FGameplayTag& QuestID);
 
 	// 퀘스트를 비활성화 상태로 변경하고 파괴
-	virtual void DeactivateAndDestroyQuest(const FGameplayTag& QuestID);
+	void DeactivateAndDestroyQuest(const FGameplayTag& QuestID);
 
 
 

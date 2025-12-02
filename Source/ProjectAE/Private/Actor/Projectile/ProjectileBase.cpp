@@ -11,6 +11,7 @@
 #include "NiagaraComponent.h"
 #include "FX/Data/HitFeedback.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 AProjectileBase::AProjectileBase()
 {
@@ -87,10 +88,16 @@ void AProjectileBase::SpawnImpactHit(FVector Location, FVector Normal, EPhysical
 {
     if (!ensureMsgf(PhysSurfaceMap, TEXT("No Valid Data Asset In Bullet"))) { return; }
 
-    UNiagaraSystem* EffectToSpawn = PhysSurfaceMap->SurfEffectMap.FindRef(PhysSurf).VisualEffect;
-    
+    const FImpactFXInfo* FXInfoToSpawn = PhysSurfaceMap->SurfEffectMap.Find(PhysSurf);
+
+    UNiagaraSystem* EffectToSpawn = FXInfoToSpawn->VisualEffect;
+    USoundBase* SoundToSpawn = FXInfoToSpawn->SoundEffect;
 
     if (!ensureMsgf(EffectToSpawn, TEXT("No Valid Spawnable Effect In Bullet"))) { return; }
 
     UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, EffectToSpawn, Location, Normal.Rotation())->Activate();
+
+    if (!ensureMsgf(EffectToSpawn, TEXT("No Valid Spawnable Sound In Bullet"))) { return; }
+
+    UGameplayStatics::PlaySoundAtLocation(this, SoundToSpawn, Location);
 }
