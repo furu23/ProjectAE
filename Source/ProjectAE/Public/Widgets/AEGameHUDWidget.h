@@ -64,7 +64,7 @@ public:
 	void HideQuestPrompt();
 	
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "UI|Quest")
-	void InitializeQuestWidget();
+	void ToggleQuestWidget();
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
