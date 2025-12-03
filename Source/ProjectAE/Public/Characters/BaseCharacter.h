@@ -8,6 +8,7 @@
 #include "BaseCharacter.generated.h"
 
 class UAbilitySystemComponent;
+class UHitFeedback;
 
 UCLASS()
 class PROJECTAE_API ABaseCharacter : public ACharacter
@@ -76,7 +77,6 @@ public:
 
 protected:
 	// *** 어빌리티 시스템 관련 기능 ***
-	// 추후, 하위 클래스 작성 시 옮기거나 확장할 수 있습니다.
 
 	// 어빌리티 시스템 초기화
 	void InitAbiltySystem();
@@ -87,6 +87,13 @@ protected:
 	// 어빌리티 시스템 컴포넌트 캐시
 	UPROPERTY(Transient)
 	TObjectPtr<UAbilitySystemComponent> CachedASC;
+
+
+	// **** VFX / SFX 관련 ****
+
+	// 풋스텝 VFX DA
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|VFX")
+	TObjectPtr<UHitFeedback> FootstepMap;
 
 
 private:

@@ -47,15 +47,17 @@ void UQuestObject::Activate(UObject* WorldContext)
 		Objective->Activate(this);
 		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object activated end"), *this->GetFName().ToString());
 	}
+
+	OnQuestObjectChangedDelegate.ExecuteIfBound(Definition->QuestID);
 }
 
 void UQuestObject::DeActivate()
 {
 	for (UQuestObjective* Objective : Objectives)
 	{
-		Objective->DeActivate();
 		Objective->OnObjectiveCompleteDelegate.Unbind();
 		Objective->OnRequestTaskSignatureDelegate.Unbind();
+		Objective->DeActivate();
 
 		Objective->MarkAsGarbage();
 		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object deactivating is called successfully"), *this->GetFName().ToString());
@@ -72,6 +74,44 @@ bool UQuestObject::CheckQuestCompletion()
 	return true;
 }
 
+
+void UQuestObject::ForceCompleteQuest()
+{
+	// ProgressData를 받아옵니다.
+	FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestID(Definition->QuestID);
+	if (!ProgressData)
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] : [%s] object failed getting FQuestProgressData"), *this->GetFName().ToString());
+		return;
+	}
+
+	ProgressData->ProgressType = EQuestProgress::Completed_PendingTurnIn;
+	DeActivate();
+
+	OnQuestObjectChangedDelegate.Execute(Definition->QuestID);
+
+}
+
+#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
+void UQuestObject::ForceCompleteQuestObj(const FGameplayTag& ObjectiveID)
+{
+	for (UQuestObjective* Objective : Objectives)
+	{
+		if (!Objective)
+		{
+			UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] ForceCompleteQuestObj: not valid runtime object. Please Accept Quest First"));
+		}
+
+		if(Objective->GetQuestObjectiveID() == ObjectiveID)
+		{
+			Objective->ForceCompleteQuestObjective();
+			break;
+		}
+	}
+}
+
+#endif
 
 void UQuestObject::OnObjectiveCompleted(UQuestObjective* Objective)
 {

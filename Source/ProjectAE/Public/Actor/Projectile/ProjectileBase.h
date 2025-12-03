@@ -10,6 +10,8 @@
 class USphereComponent;
 class UProjectileMovementComponent;
 class UNiagaraComponent;
+class UDataAsset;
+class UHitFeedback;
 
 UCLASS()
 class PROJECTAE_API AProjectileBase : public AActor
@@ -36,7 +38,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
 	TObjectPtr<UNiagaraComponent> ProjectileEffect;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	TObjectPtr<UHitFeedback> PhysSurfaceMap;
+
     // 3. [핵심] 배달할 GAS 소포 (ExposeOnSpawn으로 스폰 시 주입받음)
     UPROPERTY(BlueprintReadWrite, Meta = (ExposeOnSpawn = true))
     FGameplayEffectSpecHandle DamageEffectSpecHandle;
+
+private:
+	virtual void SpawnImpactHit(FVector Location, FVector Normal, EPhysicalSurface PhysSurf);
 };

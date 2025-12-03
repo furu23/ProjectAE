@@ -47,6 +47,16 @@ public:
 	// 퀘스트가 완료되었는지 확인합니다.
 	virtual bool CheckQuestCompletion();
 
+#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
+	// 디버그 전용 퀘스트 완료 함수입니다.
+	void ForceCompleteQuest();
+
+	// 디버그 전용 퀘스트 목표 완료 함수입니다.
+	void ForceCompleteQuestObj(const FGameplayTag& ObjectiveID);
+
+#endif
+
 protected:
 	// **** 초기화될 기본 프로퍼티 ****
 

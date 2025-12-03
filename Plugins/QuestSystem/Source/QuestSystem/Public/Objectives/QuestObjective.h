@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "QuestTypes.h"
+#include "QuestObjectiveConfig.h"
 #include "QuestObjective.generated.h"
 
 class UQuestObjectiveConfig;
@@ -50,6 +51,19 @@ public:
 
 	// 완료 여부를 반환
 	virtual bool IsComplete() const PURE_VIRTUAL(UQuestObjective::IsComplete, return false;)
+
+
+	// **** 게터 함수 ****
+
+	FORCEINLINE const FGameplayTag& GetQuestObjectiveID() const { return ObjectiveConfig ? ObjectiveConfig->ObjectiveID : FGameplayTag::EmptyTag; }
+
+
+#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
+	// 디버그용 목표 완료 함수입니다.
+	void ForceCompleteQuestObjective();
+
+#endif
 
 protected:
 	// **** GMS 관련 ****

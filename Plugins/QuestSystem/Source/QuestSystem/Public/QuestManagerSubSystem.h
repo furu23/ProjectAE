@@ -16,6 +16,7 @@
 
 class UQuestObject;
 class UDA_QuestBase;
+class IConsoleObject;
 struct FStreamableHandle;
 
 
@@ -39,6 +40,9 @@ public:
 
 	// 초기화 함수
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
+	// 종료
+	virtual void Deinitialize() override;
 
 
 	// **** 기능을 위한 공용 API 함수 ****
@@ -75,7 +79,7 @@ public:
 	// **** 내부 시스템용 쿼리 함수 *****
 
 	// QuestID에 해당되는 FQuestProgressData의 값을 질의하고 받습니다
-	virtual FQuestProgressData* QueryProgressDataForQuestID(const FGameplayTag& QuestID);
+	FQuestProgressData* QueryProgressDataForQuestID(const FGameplayTag& QuestID);
 
 
 	
@@ -87,8 +91,6 @@ public:
 
 
 protected:
-	// **** 퀘스트 상태 추적 프로퍼티 ****
-
 	// 모든 퀘스트들의 추적을 로드 및 저장
 	UPROPERTY(SaveGame)
 	TMap<FGameplayTag, FQuestProgressData> PlayerQuestHistory;
@@ -106,6 +108,8 @@ protected:
 	// **** 하위클래스 전용 상태 변경 알림 함수 ****
 
 	virtual void NotifyQuestUpdate(const FGameplayTag& QuestID);
+	// **** 퀘스트 상태 추적 프로퍼티 ****
+
 
 
 
@@ -149,10 +153,10 @@ private:
 	// **** Private 내부 상태 변화 함수 모음 ****
 
 	// 퀘스트를 활성화 상태로 변경
-	virtual void LoadAndActivateQuest(const FGameplayTag& QuestID);
+	void LoadAndActivateQuest(const FGameplayTag& QuestID);
 
 	// 퀘스트를 비활성화 상태로 변경하고 파괴
-	virtual void DeactivateAndDestroyQuest(const FGameplayTag& QuestID);
+	void DeactivateAndDestroyQuest(const FGameplayTag& QuestID);
 
 
 
@@ -163,12 +167,7 @@ private:
 
 	// **** DTO 생성 로직 ****
 
-	/**
-	 * @brief QuestID를 기반으로 완전한 FQuestLogEntry DTO를 생성.
-	 * @param QuestID 퀘스트의 고유 ID
-	 * @param OutEntry [Out] 생성된 DTO가 담길 변수
-	 * @return DTO 생성 성공 여부
-	 */
+	// UI 전달용 DTO를 빌드하는 함수
 	virtual bool BuildQuestLogEntry(const FGameplayTag& QuestID, FQuestLogEntry& OutEntry) const;
 
 
@@ -176,5 +175,23 @@ private:
 	// **** 특수한 상황을 위한 로드 핸들링 ****
 
 	TSharedPtr<FStreamableHandle> LoadHandle;
+
+
+
+	// ========= DEVELOPMENT-ONLY =========
+
+	// **** 개발자용 private 디버깅 함수 ****
+
+#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
+	void Cheat_SetupNewGameQuests();
+	void Cheat_ForceCompleteQuest(const FString& QuestID);
+	void Cheat_ForceCompleteQuestObj(const FString& QuestID, const FString& ObjectiveID);
+
+	void Console_ForceCompleteQuest(const TArray<FString>& Args);
+	void Console_ForceCompleteQuestObj(const TArray<FString>& Args);
+
+	TArray<IConsoleObject*> ConsoleCommands;
+#endif
 
 };

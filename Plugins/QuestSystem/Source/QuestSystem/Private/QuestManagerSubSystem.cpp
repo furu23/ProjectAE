@@ -11,6 +11,10 @@
 #include "Objectives/QuestObjectiveConfig.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
+#if !UE_BUILD_SHIPPING
+#include "HAL/IConsoleManager.h"
+#endif
+
 // ============ 공용 함수 ===============
 
 
@@ -23,9 +27,58 @@
 void UQuestManagerSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	PlayerQuestHistory.Empty();
+
+	#if !UE_BUILD_SHIPPING
+
+    if (this->GetLocalPlayer() != this->GetWorld()->GetGameInstance()->GetFirstGamePlayer())
+    {
+        return;
+    }
+
+    IConsoleManager& ConsoleMgr = IConsoleManager::Get();
+
+    // 1. 퀘스트 리셋 (인자 없음)
+    ConsoleCommands.Add(ConsoleMgr.RegisterConsoleCommand(
+        TEXT("Quest.Reset"),
+        TEXT("Resets all quest progress (New Game Setup). Usage: Quest.Reset"),
+        FConsoleCommandDelegate::CreateUObject(this, &UQuestManagerSubSystem::Cheat_SetupNewGameQuests),
+        ECVF_Cheat
+    ));
+
+    // 2. 퀘스트 강제 완료 (인자 1개)
+    ConsoleCommands.Add(ConsoleMgr.RegisterConsoleCommand(
+        TEXT("Quest.ForceComplete"),
+        TEXT("Force completes a quest. Usage: Quest.ForceComplete <QuestID>"),
+        FConsoleCommandWithArgsDelegate::CreateUObject(this, &UQuestManagerSubSystem::Console_ForceCompleteQuest),
+        ECVF_Cheat
+    ));
+
+    // 3. 목표 강제 완료 (인자 2개)
+    ConsoleCommands.Add(ConsoleMgr.RegisterConsoleCommand(
+        TEXT("Quest.ForceCompleteObj"),
+        TEXT("Force completes a specific objective. Usage: Quest.ForceCompleteObj <QuestID> <ObjID>"),
+        FConsoleCommandWithArgsDelegate::CreateUObject(this, &UQuestManagerSubSystem::Console_ForceCompleteQuestObj),
+        ECVF_Cheat
+    ));
+
+    UE_LOG(LogQuestSystem, Log, TEXT("[QuestSys] Debug Console Commands Registered."));
+	#endif
 }
 
 
+
+void UQuestManagerSubSystem::Deinitialize()
+{
+	#if !UE_BUILD_SHIPPING
+	for (IConsoleObject* Cmd : ConsoleCommands)
+	{
+		IConsoleManager::Get().UnregisterConsoleObject(Cmd);
+	}
+	ConsoleCommands.Empty();
+	#endif
+
+	Super::Deinitialize();
+}
 
 // ==================================
 // UI를 위한 DTO 제공 API
@@ -124,6 +177,10 @@ void UQuestManagerSubSystem::SetupNewGameQuests()
 
 			UE_LOG(LogQuestSystem, Verbose, TEXT(" - Initial Quest Set: [%s]"), *QuestDef->QuestID.ToString());
 		}
+		else
+		{
+			PlayerQuestHistory.FindOrAdd(QuestDef->QuestID).ProgressType = EQuestProgress::NotStarted;
+		}
 	}
 }
 
@@ -160,10 +217,18 @@ void UQuestManagerSubSystem::ClaimQuestReward(const FGameplayTag& QuestID)
 	FQuestProgressData* CurrentQuestData = PlayerQuestHistory.Find(QuestID);
 	if (!CurrentQuestData || CurrentQuestData->ProgressType != EQuestProgress::Completed_PendingTurnIn)
 	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] ClaimQuestReward: [%s] ID has not validate data"), *QuestID.GetTagName().ToString());
 		return;
 	}
 
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] ClaimQuestReward: Complete Quest for [%s] ID"), *QuestID.GetTagName().ToString());
 	CurrentQuestData->ProgressType = EQuestProgress::Complete_Final;
+
+	FQuestLogEntry UpdatedEntry;
+	if (BuildQuestLogEntry(QuestID, UpdatedEntry))
+	{
+		OnQuestEntryUpdatedDelegate.Broadcast(UpdatedEntry);
+	}
 
 	// 퀘스트 보상 제공
 	GiveReward(QuestID);
@@ -181,6 +246,7 @@ void UQuestManagerSubSystem::GiveReward(const FGameplayTag& QuestID)
 
 void UQuestManagerSubSystem::TryUnlockNextQuests(const FGameplayTag& QuestID)
 {
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] TryUnlockNextQuests: Unlock Quest Next of [%s] ID"), *QuestID.GetTagName().ToString());
 
 	UDA_QuestBase* CurrentQuestDEf = ActiveQuestDACaches.FindRef(QuestID);
 	if (!ensureAlwaysMsgf(CurrentQuestDEf, TEXT("Quest Data Missing for ID: %s"), *QuestID.ToString()))
@@ -231,13 +297,16 @@ void UQuestManagerSubSystem::TryUnlockNextQuests(const FGameplayTag& QuestID)
 				{
 					if (NewQuestData->ProgressType == EQuestProgress::NotStarted)
 					{
+						UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] TryUnlockNextQuests: Unlock New Quest [%s] Successfully"), *NextID.GetTagName().ToString());
+
 						NewQuestData->ProgressType = EQuestProgress::CanAccept;
 
 
-						FQuestLogEntry NewEntry;
-						BuildQuestLogEntry(QuestID, NewEntry);
-
-						OnQuestEntryUpdatedDelegate.Broadcast(NewEntry);
+						FQuestLogEntry UpdatedEntry;
+						if (BuildQuestLogEntry(NextID, UpdatedEntry))
+						{
+							OnQuestEntryUpdatedDelegate.Broadcast(UpdatedEntry);
+						}
 					}
 				}
 			}
@@ -264,7 +333,6 @@ void UQuestManagerSubSystem::NotifyQuestUpdate(const FGameplayTag& QuestID)
 		FQuestLogEntry UpdatedEntry;
 		if (BuildQuestLogEntry(QuestID, UpdatedEntry))
 		{
-			// HUD 등 PUSH를 구독 중인 UI에게 DTO를 브로드캐스트
 			OnQuestEntryUpdatedDelegate.Broadcast(UpdatedEntry);
 		}
 	}
@@ -361,6 +429,10 @@ void UQuestManagerSubSystem::OnQuestDataLoaded()
 	}
 
 	UE_LOG(LogQuestSystem, Verbose, TEXT("Caching complete. %d quests loaded."), ActiveQuestDACaches.Num());
+
+	// 임시!
+	SetupNewGameQuests();
+	StartActiveQuests();
 }
 
 
@@ -401,7 +473,7 @@ void UQuestManagerSubSystem::LoadAndActivateQuest(const FGameplayTag& QuestID)
 	NewQuestObject->OnRequestWorldTasksDelegate.BindUObject(this, &UQuestManagerSubSystem::OnQuestRequestingWorldTasks);
 
 	NewQuestObject->Activate(World);
-	ActiveQuests.FindOrAdd(QuestID);
+	ActiveQuests.FindOrAdd(QuestID, NewQuestObject);
 
 	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] ActivateQuestObject: [%s] Id is activated completely"), *QuestDef->GetPrimaryAssetId().PrimaryAssetName.ToString());
 }
@@ -477,3 +549,65 @@ bool UQuestManagerSubSystem::BuildQuestLogEntry(const FGameplayTag& QuestID, FQu
 	}
 	return true;
 }
+
+
+
+// ==================================
+// DEVELOPMENT_ONLY
+// ==================================
+
+
+#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
+void UQuestManagerSubSystem::Cheat_SetupNewGameQuests()
+{
+	SetupNewGameQuests();
+}
+
+void UQuestManagerSubSystem::Cheat_ForceCompleteQuest(const FString& QuestID)
+{
+	UQuestObject* QuestRef = ActiveQuests.FindRef(FGameplayTag::RequestGameplayTag(*QuestID));
+	if (!QuestRef)
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] Cheat_ForceCompleteQuest: QuestID [%s] is not valid. Need to call Cheat_SetupNewGameQuest First"), *QuestID);
+		return;
+	}
+
+	QuestRef->ForceCompleteQuest();
+}
+
+void UQuestManagerSubSystem::Cheat_ForceCompleteQuestObj(const FString& QuestID, const FString& ObjectiveID)
+{
+	UQuestObject* QuestRef = ActiveQuests.FindRef(FGameplayTag::RequestGameplayTag(*QuestID));
+	if (!QuestRef)
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] Cheat_ForceCompleteQuestObj: QuestID [%s] is not valid. Need to call Cheat_SetupNewGameQuest First"), *QuestID);
+		return;
+	}
+
+	QuestRef->ForceCompleteQuestObj(FGameplayTag::RequestGameplayTag(*ObjectiveID));
+}
+
+void UQuestManagerSubSystem::Console_ForceCompleteQuest(const TArray<FString>& Args)
+{
+	if (Args.Num() < 1)
+	{
+		UE_LOG(LogQuestSystem, Warning, TEXT("Usage: Quest.ForceComplete <QuestID>"));
+		return;
+	}
+	// 인자를 받아서 실제 치트 함수로 전달
+	Cheat_ForceCompleteQuest(Args[0]);
+}
+
+void UQuestManagerSubSystem::Console_ForceCompleteQuestObj(const TArray<FString>& Args)
+{
+	if (Args.Num() < 2)
+	{
+		UE_LOG(LogQuestSystem, Warning, TEXT("Usage: Quest.ForceCompleteObj <QuestID> <ObjectiveID>"));
+		return;
+	}
+	// 인자를 받아서 실제 치트 함수로 전달
+	Cheat_ForceCompleteQuestObj(Args[0], Args[1]);
+}
+
+#endif

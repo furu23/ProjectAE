@@ -9,6 +9,7 @@
 #if UE_BUILD_DEVELOPMENT
 #include "Core/AEGloabalHelper.h"
 #include "Quest/AEQuestSubSystem.h"
+#include "Core/SaveGameSubsystem.h"
 #endif
 
 
@@ -53,15 +54,54 @@ void AAEPlayerController::OnInteractionFocusChanged(AActor* NewFocusedActor)
 	}
 }
 
-#if UE_BUILD_DEVELOPMENT
 void AAEPlayerController::Cheat_AcceptQuest(const FString& QuestIDName)
 {
+	#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
 	UAEQuestSubSystem* QuestManager = UAEGloabalHelper::GetQuestSubsystem(this);
-	if (!ensureMsgf(QuestManager, TEXT("QuestManager is not valid")))
+	if (ensureMsgf(QuestManager, TEXT("QuestManager is not valid")))
 	{
 		const FGameplayTag& QuestID = FGameplayTag::RequestGameplayTag(*QuestIDName);
 		QuestManager->AcceptQuestForID(QuestID);
 		UE_LOG(LogTemp, Log, TEXT("Cheat: Quest [%s] Accepted."), *QuestIDName);
 	}
+
+	#endif
 }
-#endif
+
+void AAEPlayerController::Cheat_CompleteQuest(const FString& QuestIDName)
+{
+	#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
+	UAEQuestSubSystem* QuestManager = UAEGloabalHelper::GetQuestSubsystem(this);
+	if (ensureMsgf(QuestManager, TEXT("QuestManager is not valid")))
+	{
+		const FGameplayTag& QuestID = FGameplayTag::RequestGameplayTag(*QuestIDName);
+		QuestManager->CompleteQuestForID(QuestID);
+		UE_LOG(LogTemp, Log, TEXT("Cheat: Quest [%s] Accepted."), *QuestIDName);
+	}
+
+	#endif
+}
+
+void AAEPlayerController::Cheat_SaveQuestSys()
+{
+	#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
+	USaveGameSubsystem* SaveSys = GetGameInstance()->GetSubsystem<USaveGameSubsystem>();
+
+	SaveSys->SaveGame();
+
+	#endif
+}
+
+void AAEPlayerController::Cheat_LoadQuestSys()
+{
+	#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
+	USaveGameSubsystem* SaveSys = GetGameInstance()->GetSubsystem<USaveGameSubsystem>();
+
+	SaveSys->LoadGame();
+
+	#endif
+}
