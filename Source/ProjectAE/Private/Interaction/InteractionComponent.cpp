@@ -141,6 +141,9 @@ AActor* UInteractionComponent::PerformTrace(const FVector& TraceStart, const FVe
 
 	if (AActor* HitActor = Hit.GetActor())
 	{
+		float DistanceToTarget = FVector::Dist(OwnerRef->GetActorLocation(), Hit.ImpactPoint);
+		if (DistanceToTarget > InteractionRange) return nullptr;
+		
 		if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
 		{
 			if (IInteractable::Execute_CanFocus(HitActor))
@@ -164,9 +167,6 @@ bool UInteractionComponent::GetTracePoint(FVector& OutStart, FVector& OutEnd)
 	FVector WorldDirection;
 
 	if (!PC->DeprojectMousePositionToWorld(WorldLocation, WorldDirection)) return false;
-
-	// FVector PlayerLocation = OwnerRef->GetActorLocation();
-	// if ((PlayerLocation - WorldLocation).Size() > 1000.f) return false;
 
 	OutStart = WorldLocation;
 	OutEnd = OutStart + (WorldDirection * TraceDistance);

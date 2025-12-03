@@ -28,12 +28,12 @@ void ABaseInteractableActor::Tick(float DeltaTime)
 
 void ABaseInteractableActor::OnInteract_Implementation(AActor* Caller)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Interacting with %s"), *Caller->GetName()));
+	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Interacting with %s"), *Caller->GetName()));
 }
 
 void ABaseInteractableActor::OnFocusChanged_Implementation(AActor* Caller, bool bIsFocused)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Focus changed %s to %s"), bCanBeFocused ? TEXT("true") : TEXT("false"), *Caller->GetName()));
+	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Focus changed %s to %s"), bCanBeFocused ? TEXT("true") : TEXT("false"), *Caller->GetName()));
 }
 
 bool ABaseInteractableActor::CanInteract_Implementation() const
