@@ -20,8 +20,10 @@ class PROJECTAE_API USaveGameSubsystem : public UGameInstanceSubsystem
 	
 public:
 	// 세이브 게임 용도
+	UFUNCTION(BlueprintCallable)
 	void SaveGame();
 
 	// 로드 게임 용도
+	UFUNCTION(BlueprintCallable)
 	void LoadGame();
 };
