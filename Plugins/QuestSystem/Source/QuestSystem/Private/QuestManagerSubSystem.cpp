@@ -177,6 +177,10 @@ void UQuestManagerSubSystem::SetupNewGameQuests()
 
 			UE_LOG(LogQuestSystem, Verbose, TEXT(" - Initial Quest Set: [%s]"), *QuestDef->QuestID.ToString());
 		}
+		else
+		{
+			PlayerQuestHistory.FindOrAdd(QuestDef->QuestID).ProgressType = EQuestProgress::NotStarted;
+		}
 	}
 }
 
@@ -213,10 +217,18 @@ void UQuestManagerSubSystem::ClaimQuestReward(const FGameplayTag& QuestID)
 	FQuestProgressData* CurrentQuestData = PlayerQuestHistory.Find(QuestID);
 	if (!CurrentQuestData || CurrentQuestData->ProgressType != EQuestProgress::Completed_PendingTurnIn)
 	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] ClaimQuestReward: [%s] ID has not validate data"), *QuestID.GetTagName().ToString());
 		return;
 	}
 
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] ClaimQuestReward: Complete Quest for [%s] ID"), *QuestID.GetTagName().ToString());
 	CurrentQuestData->ProgressType = EQuestProgress::Complete_Final;
+
+	FQuestLogEntry UpdatedEntry;
+	if (BuildQuestLogEntry(QuestID, UpdatedEntry))
+	{
+		OnQuestEntryUpdatedDelegate.Broadcast(UpdatedEntry);
+	}
 
 	// 퀘스트 보상 제공
 	GiveReward(QuestID);
@@ -234,6 +246,7 @@ void UQuestManagerSubSystem::GiveReward(const FGameplayTag& QuestID)
 
 void UQuestManagerSubSystem::TryUnlockNextQuests(const FGameplayTag& QuestID)
 {
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] TryUnlockNextQuests: Unlock Quest Next of [%s] ID"), *QuestID.GetTagName().ToString());
 
 	UDA_QuestBase* CurrentQuestDEf = ActiveQuestDACaches.FindRef(QuestID);
 	if (!ensureAlwaysMsgf(CurrentQuestDEf, TEXT("Quest Data Missing for ID: %s"), *QuestID.ToString()))
@@ -284,13 +297,16 @@ void UQuestManagerSubSystem::TryUnlockNextQuests(const FGameplayTag& QuestID)
 				{
 					if (NewQuestData->ProgressType == EQuestProgress::NotStarted)
 					{
+						UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] TryUnlockNextQuests: Unlock New Quest [%s] Successfully"), *NextID.GetTagName().ToString());
+
 						NewQuestData->ProgressType = EQuestProgress::CanAccept;
 
 
-						FQuestLogEntry NewEntry;
-						BuildQuestLogEntry(QuestID, NewEntry);
-
-						OnQuestEntryUpdatedDelegate.Broadcast(NewEntry);
+						FQuestLogEntry UpdatedEntry;
+						if (BuildQuestLogEntry(NextID, UpdatedEntry))
+						{
+							OnQuestEntryUpdatedDelegate.Broadcast(UpdatedEntry);
+						}
 					}
 				}
 			}
@@ -317,7 +333,6 @@ void UQuestManagerSubSystem::NotifyQuestUpdate(const FGameplayTag& QuestID)
 		FQuestLogEntry UpdatedEntry;
 		if (BuildQuestLogEntry(QuestID, UpdatedEntry))
 		{
-			// HUD 등 PUSH를 구독 중인 UI에게 DTO를 브로드캐스트
 			OnQuestEntryUpdatedDelegate.Broadcast(UpdatedEntry);
 		}
 	}
@@ -414,6 +429,10 @@ void UQuestManagerSubSystem::OnQuestDataLoaded()
 	}
 
 	UE_LOG(LogQuestSystem, Verbose, TEXT("Caching complete. %d quests loaded."), ActiveQuestDACaches.Num());
+
+	// 임시!
+	SetupNewGameQuests();
+	StartActiveQuests();
 }
 
 
@@ -454,7 +473,7 @@ void UQuestManagerSubSystem::LoadAndActivateQuest(const FGameplayTag& QuestID)
 	NewQuestObject->OnRequestWorldTasksDelegate.BindUObject(this, &UQuestManagerSubSystem::OnQuestRequestingWorldTasks);
 
 	NewQuestObject->Activate(World);
-	ActiveQuests.FindOrAdd(QuestID);
+	ActiveQuests.FindOrAdd(QuestID, NewQuestObject);
 
 	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] ActivateQuestObject: [%s] Id is activated completely"), *QuestDef->GetPrimaryAssetId().PrimaryAssetName.ToString());
 }

@@ -47,15 +47,17 @@ void UQuestObject::Activate(UObject* WorldContext)
 		Objective->Activate(this);
 		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object activated end"), *this->GetFName().ToString());
 	}
+
+	OnQuestObjectChangedDelegate.ExecuteIfBound(Definition->QuestID);
 }
 
 void UQuestObject::DeActivate()
 {
 	for (UQuestObjective* Objective : Objectives)
 	{
-		Objective->DeActivate();
 		Objective->OnObjectiveCompleteDelegate.Unbind();
 		Objective->OnRequestTaskSignatureDelegate.Unbind();
+		Objective->DeActivate();
 
 		Objective->MarkAsGarbage();
 		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object deactivating is called successfully"), *this->GetFName().ToString());

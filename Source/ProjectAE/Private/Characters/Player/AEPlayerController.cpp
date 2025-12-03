@@ -59,7 +59,7 @@ void AAEPlayerController::Cheat_AcceptQuest(const FString& QuestIDName)
 	#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
 
 	UAEQuestSubSystem* QuestManager = UAEGloabalHelper::GetQuestSubsystem(this);
-	if (!ensureMsgf(QuestManager, TEXT("QuestManager is not valid")))
+	if (ensureMsgf(QuestManager, TEXT("QuestManager is not valid")))
 	{
 		const FGameplayTag& QuestID = FGameplayTag::RequestGameplayTag(*QuestIDName);
 		QuestManager->AcceptQuestForID(QuestID);
@@ -74,7 +74,7 @@ void AAEPlayerController::Cheat_CompleteQuest(const FString& QuestIDName)
 	#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
 
 	UAEQuestSubSystem* QuestManager = UAEGloabalHelper::GetQuestSubsystem(this);
-	if (!ensureMsgf(QuestManager, TEXT("QuestManager is not valid")))
+	if (ensureMsgf(QuestManager, TEXT("QuestManager is not valid")))
 	{
 		const FGameplayTag& QuestID = FGameplayTag::RequestGameplayTag(*QuestIDName);
 		QuestManager->CompleteQuestForID(QuestID);
