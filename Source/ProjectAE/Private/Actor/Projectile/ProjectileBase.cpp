@@ -15,19 +15,17 @@
 
 AProjectileBase::AProjectileBase()
 {
-    PrimaryActorTick.bCanEverTick = false; // 투사체는 틱 돌리지 마세요 (성능 최적화)
+    PrimaryActorTick.bCanEverTick = false;
 
-    // 1. 충돌체 설정
     SphereComp = CreateDefaultSubobject<USphereComponent>("SphereComp");
     SetRootComponent(SphereComp);
     SphereComp->SetCollisionProfileName("Projectile"); // Projectile 전용 채널 추천
     SphereComp->OnComponentHit.AddDynamic(this, &AProjectileBase::OnHit);
 
-    // 2. 무브먼트 설정
     MovementComp = CreateDefaultSubobject<UProjectileMovementComponent>("MovementComp");
     MovementComp->InitialSpeed = 2000.f;
     MovementComp->MaxSpeed = 2000.f;
-    MovementComp->ProjectileGravityScale = 0.f; // 직선 탄도 (중력 무시)
+    MovementComp->ProjectileGravityScale = 0.f;
 
     ProjectileEffect = CreateDefaultSubobject<UNiagaraComponent>("NiagaraComponent");
     ProjectileEffect->SetupAttachment(RootComponent);
@@ -36,7 +34,7 @@ AProjectileBase::AProjectileBase()
 void AProjectileBase::BeginPlay()
 {
     Super::BeginPlay();
-    SetLifeSpan(3.0f); // 3초 뒤 자동 삭제 (메모리 누수 방지)
+    SetLifeSpan(3.0f);
 
     if (GetInstigator())
     {

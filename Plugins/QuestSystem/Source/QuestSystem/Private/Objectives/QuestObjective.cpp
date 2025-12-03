@@ -25,3 +25,16 @@ void UQuestObjective::Activate(UObject* WorldContext)
 		OnObjectiveCompleteDelegate.ExecuteIfBound(this);
 	}
 }
+
+#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
+void UQuestObjective::ForceCompleteQuestObjective()
+{
+	FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestID(QuestID);
+	ProgressData->ObjectProgress.FindOrAdd(ObjectiveConfig->ObjectiveID) = 99999;
+
+	bHasFiredCompletion = true;
+	OnObjectiveCompleteDelegate.ExecuteIfBound(this);
+}
+
+#endif
