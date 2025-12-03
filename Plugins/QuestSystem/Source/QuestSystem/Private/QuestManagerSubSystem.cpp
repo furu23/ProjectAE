@@ -177,7 +177,7 @@ void UQuestManagerSubSystem::SetupNewGameQuests()
 
 			UE_LOG(LogQuestSystem, Verbose, TEXT(" - Initial Quest Set: [%s]"), *QuestDef->QuestID.ToString());
 		}
-		else
+		else if (QuestDef)
 		{
 			PlayerQuestHistory.FindOrAdd(QuestDef->QuestID).ProgressType = EQuestProgress::NotStarted;
 		}
