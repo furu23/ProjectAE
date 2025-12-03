@@ -8,5 +8,6 @@ Developed with Unreal Engine 5.4.4
 - Content/Abocado
 - Content/ArrowTrail
 - Content/Fab
+- Content/ModSci_Engineer
 - Content/RadicalMike
 - Content/StylizedProvencal
