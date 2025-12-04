@@ -28,7 +28,7 @@ bool UGA_BaseStaminaAbility::CanActivateAbility(const FGameplayAbilitySpecHandle
 
 	if (StaminaDrainCostGE)
 	{
-		return StaminaDrainPerSecond <= CurrentStamina;
+		return MinimalCostForActivate <= CurrentStamina;
 	}
 	return false;
 }

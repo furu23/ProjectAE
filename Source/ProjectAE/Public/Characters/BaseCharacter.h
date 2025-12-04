@@ -9,6 +9,8 @@
 
 class UAbilitySystemComponent;
 class UHitFeedback;
+class UAEAudioComponent;
+class UWidgetComponent;
 
 UCLASS()
 class PROJECTAE_API ABaseCharacter : public ACharacter
@@ -92,8 +94,15 @@ protected:
 	// **** VFX / SFX 관련 ****
 
 	// 풋스텝 VFX DA
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|VFX")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|FX")
 	TObjectPtr<UHitFeedback> FootstepMap;
+
+
+	// **** 기타 컴포넌트 ****
+
+	// 체력바용 위젯 컴포넌트
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|UI")
+	TObjectPtr<UWidgetComponent> StatBarComp;
 
 
 private:

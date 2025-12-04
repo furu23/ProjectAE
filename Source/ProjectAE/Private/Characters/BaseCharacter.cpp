@@ -8,6 +8,9 @@
 #include "GameplayTagContainer.h"
 #include "EnhancedInputComponent.h"
 #include "Core/AEGloabalHelper.h"
+#include "FX/AEAudioComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Widgets/StatBarContainerWidget.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -15,6 +18,14 @@ ABaseCharacter::ABaseCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// 스텟 바 생성 및 부착
+	StatBarComp = CreateDefaultSubobject<UWidgetComponent>("StatBarComp");
+	StatBarComp->SetupAttachment(RootComponent);
+
+	// 기타 초기 설정
+	StatBarComp->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
+	StatBarComp->SetWidgetSpace(EWidgetSpace::Screen);
+	StatBarComp->SetDrawAtDesiredSize(true);
 }
 
 // Called when the game starts or when spawned
@@ -96,6 +107,18 @@ void ABaseCharacter::InitAbiltySystem()
 	{
 		CachedASC = FoundASC;
 		CachedASC->InitAbilityActorInfo(FoundASC->GetOwner(), this);
+	}
+
+	if (CachedASC && StatBarComp)
+	{
+		StatBarComp->InitWidget();
+
+		UStatBarContainerWidget* OverheadWidget = Cast<UStatBarContainerWidget>(StatBarComp->GetUserWidgetObject());
+
+		if (OverheadWidget)
+		{
+			OverheadWidget->SetAbilitySystemComponent(CachedASC);
+		}
 	}
 }
 

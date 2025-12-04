@@ -52,7 +52,9 @@ void ABaseEnemyCharacter::PossessedBy(AController* NewController)
 void ABaseEnemyCharacter::OnDeath_Implementation(AActor* Causer, AActor* Victim)
 {
 	GetMesh()->SetSimulatePhysics(true);
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);	
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+
 }
 
 void ABaseEnemyCharacter::OnDamaged_Implementation(AActor* Causer, AActor* Victim)
