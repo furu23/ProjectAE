@@ -12,7 +12,6 @@
  * @note 현재는 아직 사용처가 없습니다.
  * 
  * 낮/밤, 변화요소, 날씨, 맵 종류 등 다양한 변화를 확인하는 중간 서브시스템입니다.
- * 현재 레이드 종류는 하나로, 사용되지 않지만 확장 시 중요합니다.
  */
 UCLASS()
 class PROJECTAE_API URaidSessionSubsystem : public UGameInstanceSubsystem

@@ -12,5 +12,8 @@ void AAEGameMode::StartPlay()
     UGamePhaseSubsystem* PhaseSys = GetWorld()->GetSubsystem<UGamePhaseSubsystem>();
 
     // 로비 상태 선언 및 방송
-    PhaseSys->SetGamePhase(FGameplayTag::RequestGameplayTag("Game.Phase.Lobby"));
+    if (PhaseTag.IsValid())
+    {
+        PhaseSys->SetGamePhase(PhaseTag);
+    }
 }

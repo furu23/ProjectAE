@@ -43,7 +43,7 @@ public:
 
 private:
 	// 현재 페이즈
-	FGameplayTag CurrentPhase;
+	FGameplayTag CurrentPhase = FGameplayTag::RequestGameplayTag("Game.Phase.Loading");
 
 	// 현재 진행 중인 로딩 작업 목록
 	TSet<FName> PendingLoadingTasks;
