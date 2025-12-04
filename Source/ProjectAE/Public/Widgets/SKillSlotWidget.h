@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -29,10 +29,10 @@ protected:
 	void OnCooldownTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
 
 private:
-	// ½ºÅ³ ÅÂ±×
+	// ìŠ¤í‚¬ íƒœê·¸
 	FGameplayTag CoolDownTag;
 
-	// ASC Ä³½Ã
+	// ASC ìºì‹œ
 	TWeakObjectPtr<UAbilitySystemComponent> WeakASC;
 
 	float ColdownStartTime = 0.f;
