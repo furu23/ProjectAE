@@ -5,6 +5,7 @@
 
 #include "Inventory/Data/ItemData.h"
 #include "Inventory/Data/InventorySlot.h"
+#include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
 
 // Sets default values for this component's properties
@@ -27,6 +28,31 @@ void UInventoryComponent::BeginPlay()
 	
 	// TODO: 게임 인스턴스에서 인벤토리 데이터 받아오기
 	// OnInventoryUpdated.Broadcast();
+}
+
+void UInventoryComponent::GetSaveData(TArray<uint8>& OutData)
+{
+	FMemoryWriter MemoryWriter(OutData, true);
+	FObjectAndNameAsStringProxyArchive Ar(MemoryWriter, true);
+	
+	Ar.ArIsSaveGame = true;
+
+	Serialize(Ar);
+}
+
+void UInventoryComponent::LoadSaveData(const TArray<uint8>& InData)
+{
+	if (InData.Num() == 0) return;
+
+	FMemoryReader MemReader(InData, true);
+	FObjectAndNameAsStringProxyArchive Ar(MemReader, true);
+
+	Ar.ArIsSaveGame = true;
+
+	// Ar에서 읽어서 이 객체 변수에 덮어씌움
+	Serialize(Ar);
+
+	OnInventoryUpdated.Broadcast();
 }
 
 bool UInventoryComponent::AddItem(FName ItemID, int32 Amount, int32& OutRemainingAmount)

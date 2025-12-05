@@ -24,6 +24,10 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	void GetSaveData(TArray<uint8>& OutData);
+
+	void LoadSaveData(const TArray<uint8>& InData);
+	
 	/**
 	 * 아이템을 인벤토리에 추가
 	 * @param ItemID 추가할 아이템 ID
@@ -87,7 +91,7 @@ public:
 	/**
 	 * TArray 가 실제 데이터이며, SaveGame 에 저장될 대상
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Inventory")
+	UPROPERTY(SaveGame, VisibleAnywhere, BlueprintReadOnly, Category="Inventory")
 	TArray<struct FInventorySlot> InventorySlots;
 
 	UPROPERTY(BlueprintAssignable, Category="Inventory")
