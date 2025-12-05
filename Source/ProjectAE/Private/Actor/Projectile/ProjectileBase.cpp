@@ -12,6 +12,8 @@
 #include "FX/Data/HitFeedback.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "Core/AEGloabalHelper.h"
+#include "AbilitySystem/AEAbilitySystemComponent.h"
 
 AProjectileBase::AProjectileBase()
 {
@@ -57,14 +59,11 @@ void AProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UP
     SpawnImpactHit(Hit.Location, Hit.Normal, SurfaceType);
 
     // GAS 적용
-    if (HasAuthority())
-    {
-        UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor);
+    UAEAbilitySystemComponent* TargetASC = UAEGloabalHelper::GetAbilitySystemComponent(OtherActor);
 
-        if (TargetASC && DamageEffectSpecHandle.IsValid())
-        {
-            TargetASC->ApplyGameplayEffectSpecToSelf(*DamageEffectSpecHandle.Data.Get());
-        }
+    if (TargetASC && DamageEffectSpecHandle.IsValid())
+    {
+        TargetASC->ApplyGameplayEffectSpecToSelf(*DamageEffectSpecHandle.Data.Get());
     }
 
     // 시각 효과
