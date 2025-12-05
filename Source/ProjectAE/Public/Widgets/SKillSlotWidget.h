@@ -20,7 +20,7 @@ class PROJECTAE_API USkillSlotWidget : public UUserWidget
 
 public:
 	// 쿨다운에 관련된 위젯 바인딩을 처리, 반드시 시작하기 전에 호출해야 함
-	UFUNCTION(BlueprintCallable, Category = "GAS")
+	UFUNCTION(BlueprintCallable, Category = "GAS", meta = (AutoCreateRefTerm = "InCoolDownTag"))
 	void BindToASC(UAbilitySystemComponent* ASC, const FGameplayTag& InCoolDownTag);
 
 

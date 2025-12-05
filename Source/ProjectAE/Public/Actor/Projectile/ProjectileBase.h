@@ -35,7 +35,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<UProjectileMovementComponent> MovementComp; // 움직임 담당
 
-	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
 	TObjectPtr<UNiagaraComponent> ProjectileEffect;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")

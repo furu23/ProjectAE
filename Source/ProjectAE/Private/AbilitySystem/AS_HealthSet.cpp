@@ -16,6 +16,8 @@ UAS_HealthSet::UAS_HealthSet()
 
 void UAS_HealthSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
+    Super::PreAttributeChange(Attribute, NewValue);
+
 	if (Attribute == UAS_HealthSet::GetHealthAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
@@ -29,28 +31,38 @@ void UAS_HealthSet::PreAttributeChange(const FGameplayAttribute& Attribute, floa
 
 void UAS_HealthSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
 {
-	if (Attribute == UAS_HealthSet::GetMaxHealthAttribute())
-	{
-		if (GetHealth() > NewValue)
-		{
-			UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
-			if (ASC)
-			{
-				ASC->SetNumericAttributeBase(GetHealthAttribute(), NewValue);
-			}
-		}
-	}
-	UAEGloabalHelper::PrintString(FString::Printf(TEXT("%f %f"), OldValue, NewValue));
+    Super::PostAttributeChange(Attribute, OldValue, NewValue);
+
+    if (Attribute == GetMaxHealthAttribute())
+    {
+        // 1. 현재 적용된 Modifier 값 계산 (최종값 - 기본값)
+        // 주의: 이 시점에서 GetHealth()는 아직 클램핑 전의 값을 리턴할 수 있음
+        float CurrentHealth = GetHealth();
+        float CurrentBaseHealth = GetHealthAttribute().GetNumericValue(this);
+        float CurrentModifiers = CurrentHealth - CurrentBaseHealth;
+
+        // 2. 만약 (현재 체력 > 새로운 최대 체력) 이라면?
+        if (CurrentHealth > NewValue)
+        {
+            UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+            if (ASC)
+            {
+                // 3. Modifier를 고려하여 Base 값을 설정
+                // 목표: Base + Modifiers = NewMaxHealth
+                // 따라서: Base = NewMaxHealth - Modifiers
+                float NewBaseHealth = NewValue - CurrentModifiers;
+
+                // Base 값을 수정하여 최종 값이 NewValue(MaxHealth)와 같게 만듦
+                ASC->SetNumericAttributeBase(GetHealthAttribute(), NewBaseHealth);
+            }
+        }
+    }
+
+    UAEGloabalHelper::PrintString(FString::Printf(TEXT("MaxHealth Changed: %f -> %f"), OldValue, NewValue));
 }
 
 void UAS_HealthSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
-	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
-	{
-		if (GetHealth() <= 0)
-		{
-		}
-	}
 }
 
 void UAS_HealthSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
