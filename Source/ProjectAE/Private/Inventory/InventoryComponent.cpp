@@ -51,6 +51,8 @@ void UInventoryComponent::LoadSaveData(const TArray<uint8>& InData)
 
 	// Ar에서 읽어서 이 객체 변수에 덮어씌움
 	Serialize(Ar);
+
+	OnInventoryUpdated.Broadcast();
 }
 
 bool UInventoryComponent::AddItem(FName ItemID, int32 Amount, int32& OutRemainingAmount)

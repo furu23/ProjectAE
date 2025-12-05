@@ -53,15 +53,9 @@ struct FQuestLogEntry
     UPROPERTY(BlueprintReadOnly, Category = "Quest")
     EQuestProgress CurrentState = EQuestProgress::None;
 
-    // 5. 가공된 목표 텍스트
     // Manager가 ObjectiveConfig와 ProgressData를 조합해 만들어줍니다.
     UPROPERTY(BlueprintReadOnly, Category = "Quest")
     TArray<FText> FormattedObjectives;
-    
-    // 6. 보상 정보 (UDA_QuestBase에서 가져옴)
-    // UI가 보상 아이콘 등을 표시할 수 있게 합니다.
-    //UPROPERTY(BlueprintReadOnly, Category = "Quest")
-    //EQuestReward RewardData;
 };
 
 /**
