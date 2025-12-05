@@ -3,6 +3,7 @@
 
 #include "Inventory/InventoryComponent.h"
 
+#include "Core/SaveGameSubsystem.h"
 #include "Inventory/Data/ItemData.h"
 #include "Inventory/Data/InventorySlot.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
@@ -37,7 +38,21 @@ void UInventoryComponent::GetSaveData(TArray<uint8>& OutData)
 	
 	Ar.ArIsSaveGame = true;
 
-	Serialize(Ar);
+	// Manual serialization to ensure FDataTableRowHandle properties are saved
+	int32 NumSlots = InventorySlots.Num();
+	Ar << NumSlots;
+
+	for (FInventorySlot& Slot : InventorySlots)
+	{
+		FString RowNameString = Slot.ItemDataHandle.RowName.ToString();
+		Ar << RowNameString;
+
+		FString AmountString = FString::FromInt(Slot.Amount);
+		Ar << AmountString;
+		
+		TObjectPtr<const UDataTable> DT = Slot.ItemDataHandle.DataTable;
+		Ar << DT;
+	}
 }
 
 void UInventoryComponent::LoadSaveData(const TArray<uint8>& InData)
@@ -49,8 +64,30 @@ void UInventoryComponent::LoadSaveData(const TArray<uint8>& InData)
 
 	Ar.ArIsSaveGame = true;
 
-	// Ar에서 읽어서 이 객체 변수에 덮어씌움
-	Serialize(Ar);
+	// Manual deserialization
+	int32 NumSlots = 0;
+	Ar << NumSlots;
+
+	InventorySlots.Empty(NumSlots);
+
+	for (int32 i = 0; i < NumSlots; ++i)
+	{
+		FInventorySlot NewSlot;
+		
+		FString RowNameString;
+		Ar << RowNameString;
+		NewSlot.ItemDataHandle.RowName = FName(*RowNameString);
+
+		FString AmountString;
+		Ar << AmountString;
+		NewSlot.Amount = FCString::Atoi(*AmountString);
+
+		UDataTable* DT = nullptr;
+		Ar << DT;
+		NewSlot.ItemDataHandle.DataTable = DT;
+
+		InventorySlots.Add(NewSlot);
+	}
 
 	OnInventoryUpdated.Broadcast();
 }
