@@ -17,4 +17,6 @@ class PROJECTAE_API UAEAbilitySystemComponent : public UAbilitySystemComponent
 public:
     void AbilityInputTagPressed(const FGameplayTag& InputTag);
     void AbilityInputTagReleased(const FGameplayTag& InputTag);
+
+	bool GetGameplayEffectDurationAndTimeRemainingFromTag(FGameplayTag GameplayEffectTag, float& OutDuration, float& OutTimeRemaining) const;
 };

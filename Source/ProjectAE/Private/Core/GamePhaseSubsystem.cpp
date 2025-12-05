@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Core/GamePhaseSubsystem.h"
@@ -9,6 +9,7 @@ void UGamePhaseSubsystem::RegisterLoadingTask(FName SystemName)
 {
     if (bIsMonitoring)
     {
+            // ì´ë¯¸ ëª¨ë‹ˆí„°ë§ì´ ì‹œì‘ëœ í›„ì— íƒœìŠ¤í¬ê°€ ë“±ë¡ë˜ì—ˆìŒì„ ê²½ê³ 
         UE_LOG(LogAECore, Warning, TEXT("Warning: Task [%s] registered AFTER monitoring started."), *SystemName.ToString());
     }
 
@@ -23,7 +24,7 @@ void UGamePhaseSubsystem::CompleteLoadingTask(FName SystemName)
         PendingLoadingTasks.Remove(SystemName);
         UE_LOG(LogAECore, Log, TEXT("[GamePhase] Task Completed: %s. Remaining: %d"), *SystemName.ToString(), PendingLoadingTasks.Num());
 
-        // ÀÛ¾÷ÀÌ ÇÏ³ª ³¡³¯ ¶§¸¶´Ù »óÅÂ Ã¼Å©
+            // ì‘ì—…ì´ í•˜ë‚˜ ëë‚  ë•Œë§ˆë‹¤ ìƒíƒœ ì²´í¬
         CheckLoadingState();
     }
 }
@@ -34,7 +35,7 @@ void UGamePhaseSubsystem::StartPhaseMonitoring()
 
     bIsMonitoring = true;
 
-    // ¸¸¾à µî·ÏµÈ ÅÂ½ºÅ©°¡ ÇÏ³ªµµ ¾ø¾ú°Å³ª, ÀÌ¹Ì ´Ù ³¡³­ »óÅÂÀÏ ¼ö ÀÖÀ¸¹Ç·Î Áï½Ã Ã¼Å©
+      // ë§Œì•½ ë“±ë¡ëœ íƒœìŠ¤í¬ê°€ í•˜ë‚˜ë„ ì—†ì—ˆê±°ë‚˜, ì´ë¯¸ ë‹¤ ëë‚œ ìƒíƒœì¼ ìˆ˜ ìˆìœ¼ë¯€ë¡œ ì¦‰ì‹œ ì²´í¬
     CheckLoadingState();
 }
 

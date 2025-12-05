@@ -20,3 +20,29 @@ void UAEAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& Inpu
 		this->RemoveLooseGameplayTag(InputTag);
 	}
 }
+
+bool UAEAbilitySystemComponent::GetGameplayEffectDurationAndTimeRemainingFromTag(FGameplayTag CooldownTag, float& OutDuration, float& OutTimeRemaining) const
+{
+    if (!CooldownTag.IsValid()) { return false; }
+
+    for (const FActiveGameplayEffectHandle& Handle : GetActiveGameplayEffects().GetAllActiveEffectHandles())
+    {
+        const FActiveGameplayEffect* ActiveEffect = GetActiveGameplayEffect(Handle);
+        if (!ActiveEffect) continue;
+		bool bHasTag = false;
+
+		const FGameplayTagContainer& GrantedTags = ActiveEffect->Spec.Def->GetGrantedTags();
+		if (GrantedTags.HasTag(CooldownTag))
+		{
+			bHasTag = true;
+		}
+
+        if (bHasTag)
+        {
+            OutDuration = ActiveEffect->GetDuration();
+            OutTimeRemaining = ActiveEffect->GetTimeRemaining(GetWorld()->GetTimeSeconds());
+            return true;
+        }
+    }
+    return false;
+}
