@@ -3,6 +3,7 @@
 
 #include "Inventory/InventoryComponent.h"
 
+#include "Engine/GameInstance.h"
 #include "Core/SaveGameSubsystem.h"
 #include "Inventory/Data/ItemData.h"
 #include "Inventory/Data/InventorySlot.h"
@@ -27,8 +28,42 @@ void UInventoryComponent::BeginPlay()
 	// ...
 	if (!bIsPlayerInventory) return;
 	
-	// TODO: 게임 인스턴스에서 인벤토리 데이터 받아오기
-	// OnInventoryUpdated.Broadcast();
+	// SaveGameSubsystem 에서 캐시된 데이터가 있다면 로드
+	if (UWorld* World = GetWorld())
+	{
+		if (UGameInstance* GI = World->GetGameInstance())
+		{
+			if (USaveGameSubsystem* SaveSys = GI->GetSubsystem<USaveGameSubsystem>())
+			{
+				TArray<uint8> CachedData;
+				if (SaveSys->GetInventoryFromCache(CachedData))
+				{
+					LoadSaveData(CachedData);
+				}
+			}
+		}
+	}
+}
+
+void UInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if (!bIsPlayerInventory) return;
+
+	// 현재 상태를 Subsystem 캐시에 백업
+	if (UWorld* World = GetWorld())
+	{
+		if (UGameInstance* GI = World->GetGameInstance())
+		{
+			if (USaveGameSubsystem* SaveSys = GI->GetSubsystem<USaveGameSubsystem>())
+			{
+				TArray<uint8> Data;
+				GetSaveData(Data);
+				SaveSys->SaveInventoryToCache(Data);
+			}
+		}
+	}
 }
 
 void UInventoryComponent::GetSaveData(TArray<uint8>& OutData)

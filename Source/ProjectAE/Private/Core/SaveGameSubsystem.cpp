@@ -21,16 +21,24 @@ void USaveGameSubsystem::SaveGame()
 	}
 
 	// 플레이어 인벤토리 세이브 로직
+	// 1. 현재 살아있는 플레이어가 있다면 캐시 최신화
 	ACharacter* Character = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
 	if (Character)
 	{
 		UInventoryComponent* InventoryComponent = Character->FindComponentByClass<UInventoryComponent>();
-		if (InventoryComponent)
+		if (InventoryComponent && InventoryComponent->bIsPlayerInventory)
 		{
-			InventoryComponent->GetSaveData(SaveInst->PlayerInventoryData);
-			UE_LOG(LogTemp, Warning, TEXT("SaveGameSubsystem : PlayerInventory GetSaveData."));
+			InventoryComponent->GetSaveData(PlayerInventoryCache);
+			UE_LOG(LogTemp, Warning, TEXT("SaveGameSubsystem : PlayerInventory Cache Updated from Live Actor."));
 		}
 	}
+
+	// 2. 캐시 데이터를 세이브 인스턴스에 기록
+	if (PlayerInventoryCache.Num() > 0)
+	{
+		SaveInst->PlayerInventoryData = PlayerInventoryCache;
+	}
+	
 	/* 추가 세이브 로직을 여기에 */
 
 	UGameplayStatics::AsyncSaveGameToSlot(SaveInst, FString("Save"), 0);
@@ -38,7 +46,10 @@ void USaveGameSubsystem::SaveGame()
 
 void USaveGameSubsystem::LoadGame()
 {
+	if (!UGameplayStatics::DoesSaveGameExist(FString("Save"), 0)) return;
+
 	UAESaveGame* LoadInst = Cast<UAESaveGame>(UGameplayStatics::LoadGameFromSlot(FString("Save"), 0));
+	if (!LoadInst) return;
 
 	UAEQuestSubSystem* QuestSys = UAEGloabalHelper::GetQuestSubsystem(GetWorld());
 	if (QuestSys)
@@ -46,16 +57,34 @@ void USaveGameSubsystem::LoadGame()
 		QuestSys->LoadSaveData(LoadInst->QuestSystemData);
 	}
 
+	// 캐시 로드
+	PlayerInventoryCache = LoadInst->PlayerInventoryData;
+	UE_LOG(LogTemp, Warning, TEXT("SaveGameSubsystem : PlayerInventory Cache Loaded from Disk."));
+
+	// 만약 현재 게임 중이라면 즉시 적용
 	ACharacter* Character = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
 	if (Character)
 	{
 		UInventoryComponent* InventoryComponent = Character->FindComponentByClass<UInventoryComponent>();
-		if (InventoryComponent)
+		if (InventoryComponent && InventoryComponent->bIsPlayerInventory)
 		{
-			InventoryComponent->LoadSaveData(LoadInst->PlayerInventoryData);
-			UE_LOG(LogTemp, Warning, TEXT("SaveGameSubsystem : PlayerInventory LoadSaveData."));
+			InventoryComponent->LoadSaveData(PlayerInventoryCache);
+			UE_LOG(LogTemp, Warning, TEXT("SaveGameSubsystem : PlayerInventory Live Actor Updated."));
 		}
 	}
 	
 	/* 추가 로드 로직을 여기에 */
+}
+
+void USaveGameSubsystem::SaveInventoryToCache(const TArray<uint8>& Data)
+{
+	PlayerInventoryCache = Data;
+}
+
+bool USaveGameSubsystem::GetInventoryFromCache(TArray<uint8>& OutData)
+{
+	if (PlayerInventoryCache.Num() == 0) return false;
+	
+	OutData = PlayerInventoryCache;
+	return true;
 }

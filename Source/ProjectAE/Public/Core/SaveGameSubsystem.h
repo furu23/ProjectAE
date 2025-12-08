@@ -26,4 +26,14 @@ public:
 	// 로드 게임 용도
 	UFUNCTION(BlueprintCallable)
 	void LoadGame();
+
+	// 인벤토리 캐시 저장
+	void SaveInventoryToCache(const TArray<uint8>& Data);
+
+	// 인벤토리 캐시 로드
+	bool GetInventoryFromCache(TArray<uint8>& OutData);
+
+private:
+	UPROPERTY()
+	TArray<uint8> PlayerInventoryCache;
 };
