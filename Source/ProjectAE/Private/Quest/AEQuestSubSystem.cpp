@@ -26,14 +26,33 @@ void UAEQuestSubSystem::CompleteQuestForID(const FGameplayTag& QuestID)
 	ClaimQuestReward(QuestID);
 }
 
+void UAEQuestSubSystem::PreLoadGame(const TArray<uint8>& InData)
+{
+	this->LoadSaveData(InData);
+
+	StartAsyncLoadData();
+}
+
 void UAEQuestSubSystem::OnQuestDataLoaded()
 {
 	Super::OnQuestDataLoaded();
 
-	// 초기화 완료 즉시 퀘스트 활성화
-	StartActiveQuests();
+	if (OnQuestEntryUpdatedDelegate.IsBound())
+	{
+		for (const auto& Pair : PlayerQuestHistory)
+		{
+			FQuestLogEntry Entry;
+			if (BuildQuestLogEntry(Pair.Key, Entry))
+			{
+				UE_LOG(LogTemp, Log, TEXT("[QuestSys] OnQuestDataLoaded: Load [%s] ID Quest and Updating [%d] Progress Type"), *Pair.Key.ToString(), static_cast<int32>(Entry.CurrentState));
+				OnQuestEntryUpdatedDelegate.Broadcast(Entry);
+			}
+		}
+	}
 
-	// 태스크 완료
 	UGamePhaseSubsystem* PhaseSys = GetWorld()->GetSubsystem<UGamePhaseSubsystem>(GetWorld());
-	PhaseSys->CompleteLoadingTask(TEXT("QuestSystem"));
+	if (PhaseSys)
+	{
+		PhaseSys->CompleteLoadingTask(TEXT("QuestSystem"));
+	}
 }

@@ -149,6 +149,12 @@ protected:
 
 
 
+	// **** DTO 생성 로직 ****
+
+	// UI 전달용 DTO를 빌드하는 함수
+	virtual bool BuildQuestLogEntry(const FGameplayTag& QuestID, FQuestLogEntry& OutEntry) const;
+
+
 private:
 	// **** Private 내부 상태 변화 함수 모음 ****
 
@@ -162,13 +168,6 @@ private:
 
 	// **** 태스크 버블링 용 내부 델리게이트 바인딩 함수 ****
 	void OnQuestRequestingWorldTasks(const TArray<TObjectPtr<UQuestTask>>& TasksToExecute);
-
-
-
-	// **** DTO 생성 로직 ****
-
-	// UI 전달용 DTO를 빌드하는 함수
-	virtual bool BuildQuestLogEntry(const FGameplayTag& QuestID, FQuestLogEntry& OutEntry) const;
 
 
 

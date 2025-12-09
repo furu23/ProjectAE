@@ -21,9 +21,11 @@ struct FQuestProgressData
 	GENERATED_BODY()
 	
 	// 현재 진행도의 단계
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, SaveGame, Category = "Quest")
 	EQuestProgress ProgressType;
 
 	// 진행도의 실제 진행상황
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, SaveGame, Category = "Quest")
 	TMap<FGameplayTag, int32> ObjectProgress; 
 };
 
