@@ -17,6 +17,12 @@ class PROJECTAE_API AAEHUD : public AHUD
 protected:
 	virtual void BeginPlay() override;
 	
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void OnWidgetOpened();
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void OnWidgetClosed();
+	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<class UAEGameHUDWidget> GameHUDWidget;
