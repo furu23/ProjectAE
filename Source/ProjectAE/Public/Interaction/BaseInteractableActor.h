@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/Interactable.h"
+#include "GameplayTagContainer.h"
 #include "BaseInteractableActor.generated.h"
 
 class UGameplayAbility;
@@ -45,4 +46,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact|Ability")
 	TSubclassOf<UGameplayAbility> GrantAbility;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact|Ability")
+	FGameplayTagContainer EventTags;
 };

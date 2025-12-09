@@ -430,8 +430,6 @@ void UQuestManagerSubSystem::OnQuestDataLoaded()
 
 	UE_LOG(LogQuestSystem, Verbose, TEXT("Caching complete. %d quests loaded."), ActiveQuestDACaches.Num());
 
-	// 임시!
-	SetupNewGameQuests();
 	StartActiveQuests();
 }
 

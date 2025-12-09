@@ -15,13 +15,10 @@ void UQuestMessageHelpers::BroadcastAIKilledEvent(UObject* WorldContextObject, A
 	FQuestMessage_Generic Message;
 	Message.InstigatorActor = InstigatorActor;
 	Message.TargetActor = TargetActor;
-	Message.Amount = 1;
+	Message.TargetTags = TargetTags;
 
-	// TargetActor에서 태그를 자동으로 가져와 채웁니다.
-	if (IGameplayTagAssetInterface* TagInterface = Cast<IGameplayTagAssetInterface>(TargetActor))
-	{
-		TagInterface->GetOwnedGameplayTags(Message.TargetTags);
-	}
+	// 기본값 한개
+	Message.Amount = 1;
 
 	// 메세지 보내기
 	FGameplayTag Channel = FGameplayTag::RequestGameplayTag(TEXT("Quest.Event.Kill"));
@@ -37,11 +34,6 @@ void UQuestMessageHelpers::BroadcastInteractEvent(UObject* WorldContextObject, A
 	Message.InstigatorActor = InstigatorActor;
 	Message.TargetActor = TargetActor;
 	Message.TargetTags = TargetTags;
-
-	if (IGameplayTagAssetInterface* TagInterface = Cast<IGameplayTagAssetInterface>(TargetActor))
-	{
-		TagInterface->GetOwnedGameplayTags(Message.TargetTags);
-	}
 
 	// 매세지 보내기
 	FGameplayTag Channel = FGameplayTag::RequestGameplayTag(TEXT("Quest.Event.Interact"));
@@ -59,11 +51,6 @@ void UQuestMessageHelpers::BroadcastLocationEvent(UObject* WorldContextObject, A
 	Message.InstigatorActor = InstiagtorActor;
 	Message.TargetActor = TargetActor;
 	Message.TargetTags = TargetTags;
-
-	if (IGameplayTagAssetInterface* TagInterface = Cast<IGameplayTagAssetInterface>(TargetActor))
-	{
-		TagInterface->GetOwnedGameplayTags(Message.TargetTags);
-	}
 
 	// 매세지 보내기
 	FGameplayTag Channel = FGameplayTag::RequestGameplayTag(TEXT("Quest.Event.Location"));

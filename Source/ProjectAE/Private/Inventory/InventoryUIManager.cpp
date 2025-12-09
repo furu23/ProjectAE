@@ -25,7 +25,7 @@ void UInventoryUIManager::BeginPlay()
 
 	// ...
 	PC = GetOwner<APlayerController>();
-	if (!PC)
+	if (!PC || !PC->GetPawn())
 	{
 		UE_LOG(LogTemp, Error, TEXT("InventoryUIManager must be attached to a PlayerController !"));
 		return;

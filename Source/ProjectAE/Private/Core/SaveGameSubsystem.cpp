@@ -70,7 +70,7 @@ void USaveGameSubsystem::LoadGame()
 	UAEQuestSubSystem* QuestSys = UAEGloabalHelper::GetQuestSubsystem(GetWorld());
 	if (QuestSys)
 	{
-		QuestSys->LoadSaveData(LoadInst->QuestSystemData);
+		QuestSys->PreLoadGame(LoadInst->QuestSystemData);
 	}
 
 	// 캐시 로드

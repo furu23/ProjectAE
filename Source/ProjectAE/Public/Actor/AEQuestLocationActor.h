@@ -31,6 +31,6 @@ protected:
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UBoxComponent> BoxComp;
 
-	UPROPERTY(EditDefaultsOnly, Category = "TargetTags")
+	UPROPERTY(EditInstanceOnly, Category = "TargetTags")
 	FGameplayTag QuestEventTag;
 };

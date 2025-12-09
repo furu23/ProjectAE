@@ -31,6 +31,8 @@ void UAEGameHUDWidget::ShowPlayerInventory()
 	
 	PlayerInventoryWidget->SetVisibility(ESlateVisibility::Visible);
 	PlayerInventoryWidget->RefreshInventory();
+	
+	OnWidgetOpened.Broadcast();
 }
 
 void UAEGameHUDWidget::HidePlayerInventory()
@@ -38,6 +40,8 @@ void UAEGameHUDWidget::HidePlayerInventory()
 	if (!PlayerInventoryWidget) return;
 	
 	PlayerInventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
+	
+	OnWidgetClosed.Broadcast();
 }
 
 void UAEGameHUDWidget::ShowChestInventory(class UInventoryComponent* ChestInventoryComponent)

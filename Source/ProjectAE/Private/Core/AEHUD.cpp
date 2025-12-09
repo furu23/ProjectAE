@@ -19,6 +19,9 @@ void AAEHUD::BeginPlay()
 	
 	GameHUDWidget->AddToViewport();
 	
+	GameHUDWidget->OnWidgetOpened.AddDynamic(this, &AAEHUD::OnWidgetOpened);
+	GameHUDWidget->OnWidgetClosed.AddDynamic(this, &AAEHUD::OnWidgetClosed);
+	
 	if (APlayerController* PC = GetOwningPlayerController())
 	{
 		if (UInventoryUIManager* Manager = PC->GetComponentByClass<UInventoryUIManager>())
@@ -26,5 +29,4 @@ void AAEHUD::BeginPlay()
 			Manager->SetGameHUDWidget(GameHUDWidget);
 		}
 	}
-	
 }

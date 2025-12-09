@@ -6,6 +6,10 @@
 #include "Blueprint/UserWidget.h"
 #include "AEGameHUDWidget.generated.h"
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWidgetOpened);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWidgetClosed);
+
 /**
  * 
  */
@@ -65,6 +69,12 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "UI|Quest")
 	void ToggleQuestWidget();
+	
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FOnWidgetOpened OnWidgetOpened;
+	
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FOnWidgetClosed OnWidgetClosed;
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
