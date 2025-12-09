@@ -84,7 +84,7 @@ protected:
 	void InitAbiltySystem();
 
 	// 클라이언트에서 플레이어 상태가 복제될 때 호출되는 함수 (어빌리티 시스템 초기화에 사용)
-	void OnRep_PlayerState() override;
+	// void OnRep_PlayerState() override;
 
 	// 어빌리티 시스템 컴포넌트 캐시
 	UPROPERTY(Transient)
@@ -107,6 +107,6 @@ protected:
 
 private:
 	// 캐릭터의 태그 목록 (예: Gunner, Enemy 등...)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character", meta = (AllowPrivateAccess = "true", ToolTip = "캐릭터의 태그 목록입니다. GMS 발송 시 사용."))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Character", meta = (AllowPrivateAccess = "true", ToolTip = "캐릭터의 태그 목록입니다. GMS 발송 시 사용."))
 	FGameplayTagContainer CharacterTag;
 };

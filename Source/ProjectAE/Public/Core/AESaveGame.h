@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
+#include "GameplayTagContainer.h"
 #include "AESaveGame.generated.h"
 
 /**
@@ -31,4 +32,8 @@ public:
     // 창고 데이터
     UPROPERTY(VisibleAnywhere, Category = "Save")
     TArray<uint8> WarehouseInventoryData;
+
+    // 각종 이벤트 저장
+    UPROPERTY(VisibleAnywhere, Category = "Save")
+    FGameplayTagContainer CompletedEvents;
 };

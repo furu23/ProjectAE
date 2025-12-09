@@ -122,9 +122,10 @@ void ABaseCharacter::InitAbiltySystem()
 	}
 }
 
+/*
 void ABaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
 	InitAbiltySystem();
-}
+}*/

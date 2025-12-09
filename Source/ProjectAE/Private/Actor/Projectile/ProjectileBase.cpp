@@ -90,11 +90,13 @@ void AProjectileBase::SpawnImpactHit(FVector Location, FVector Normal, EPhysical
     UNiagaraSystem* EffectToSpawn = FXInfoToSpawn->VisualEffect;
     USoundBase* SoundToSpawn = FXInfoToSpawn->SoundEffect;
 
-    if (!ensureMsgf(EffectToSpawn, TEXT("No Valid Spawnable Effect In Bullet"))) { return; }
+    if (EffectToSpawn)
+    {
+        UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, EffectToSpawn, Location, Normal.Rotation())->Activate();
+    }
 
-    UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, EffectToSpawn, Location, Normal.Rotation())->Activate();
-
-    if (!ensureMsgf(EffectToSpawn, TEXT("No Valid Spawnable Sound In Bullet"))) { return; }
-
-    UGameplayStatics::PlaySoundAtLocation(this, SoundToSpawn, Location);
+    if (SoundToSpawn)
+    {
+        UGameplayStatics::PlaySoundAtLocation(this, SoundToSpawn, Location);
+    }
 }
