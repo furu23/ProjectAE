@@ -20,15 +20,17 @@ class PROJECTAE_API AAEQuestLocationActor : public AActor
 public:
 	AAEQuestLocationActor();
 
-	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+	UFUNCTION()
+    void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 protected:
-	UPROPERTY(BlueprintReadWrite, Category = "Component")
+	virtual void BeginPlay() override;
+
+	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UBoxComponent> BoxComp;
 
 	UPROPERTY(EditDefaultsOnly, Category = "TargetTags")
-	FGameplayTagContainer ObjectiveTags;
-
-	bool bIsAlreadyTriggered = false;
-
+	FGameplayTag QuestEventTag;
 };

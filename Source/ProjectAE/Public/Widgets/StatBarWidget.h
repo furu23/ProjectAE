@@ -24,6 +24,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	void BindToASC(UAbilitySystemComponent* ASC);
 
+
+	// BP 확장을 위한 NVI 적용 함수들
+	UFUNCTION(BlueprintImplementableEvent, Category = "UI", meta = (DisplayName = "OnCurrentValueChanged"))
+	void K2_OnCurrentValueChanged(float NewValue, float OldValue);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "UI", meta = (DisplayName = "OnMaxValueChanged"))
+	void K2_OnMaxValueChanged(float NewValue, float OldValue);
+
+
 protected:
 	virtual void NativeConstruct() override;
 

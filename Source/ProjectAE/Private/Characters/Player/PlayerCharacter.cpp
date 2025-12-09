@@ -132,11 +132,6 @@ void APlayerCharacter::PossessedBy(AController* NewController)
 		// 기본 무기 장착 및 무기의 어빌리티 부여
 		WeaponComponent->EquipWeapon(DefaultWeapon);
 	}
-
-	// TODO: 변경 시 전파받아 상태 부여
-	#if UE_BUILD_DEVELOPMENT
-	CachedASC->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag("State.Area.InRaid"));
-	#endif
 }
 
 void APlayerCharacter::OnFocusChanged(AActor* NewFocusedActor)

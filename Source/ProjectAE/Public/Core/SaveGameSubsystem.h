@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "GameplayTagContainer.h"
 #include "SaveGameSubsystem.generated.h"
 
 /**
@@ -19,6 +20,10 @@ class PROJECTAE_API USaveGameSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
+	// 게임 새 시작시 필요할 경우
+	UFUNCTION(BlueprintCallable)
+	void NewGame();
+
 	// 세이브 게임 용도
 	UFUNCTION(BlueprintCallable)
 	void SaveGame();
@@ -27,13 +32,30 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void LoadGame();
 
+
+	// **** 인벤토리 관련 ****
+
 	// 인벤토리 캐시 저장
 	void SaveInventoryToCache(const TArray<uint8>& Data);
 
 	// 인벤토리 캐시 로드
 	bool GetInventoryFromCache(TArray<uint8>& OutData);
 
+
+	// **** 전역 이벤트 관련 ****
+	
+	// 태그가 이미 완료되었는지 확인
+	bool IsEventCompleted(const FGameplayTagContainer& EventTag) const;
+	bool IsEventCompleted(const FGameplayTag& EventTag) const;
+
+	// 사건 완료 처리
+	void MarkEventCompleted(const FGameplayTagContainer& EventTag);
+	void MarkEventCompleted(const FGameplayTag& EventTag);
+
 private:
 	UPROPERTY()
 	TArray<uint8> PlayerInventoryCache;
+
+	// 로드해둔 세이브 전역 이벤트
+	FGameplayTagContainer LoadedCompletedEvents;
 };

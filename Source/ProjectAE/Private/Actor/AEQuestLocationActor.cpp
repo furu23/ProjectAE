@@ -5,6 +5,9 @@
 #include "Characters/Player/PlayerCharacter.h"
 #include "QuestMessageHelpers.h"
 #include "Components/BoxComponent.h"
+#include "Core/SaveGameSubsystem.h"
+#include "GameplayTagContainer.h"
+#include "Kismet/GameplayStatics.h"
 
 AAEQuestLocationActor::AAEQuestLocationActor()
 {
@@ -12,17 +15,48 @@ AAEQuestLocationActor::AAEQuestLocationActor()
 	RootComponent = BoxComp;
 }
 
+void AAEQuestLocationActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	APlayerCharacter* Player = Cast<APlayerCharacter>(OtherActor);
+	if (!Player) { return; }
+
+	NotifyActorBeginOverlap(OtherActor);
+}
+
+void AAEQuestLocationActor::BeginPlay()
+{
+	UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(this);
+	if (GameInstance)
+	{
+		USaveGameSubsystem* SaveSys = GameInstance->GetSubsystem<USaveGameSubsystem>();
+		if (SaveSys && SaveSys->IsEventCompleted(QuestEventTag))
+		{
+			this->Destroy();
+			return;
+		}
+	}
+
+	BoxComp->OnComponentBeginOverlap.AddDynamic(this, &AAEQuestLocationActor::OnOverlapBegin);
+}
+
 void AAEQuestLocationActor::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
 
-	if (!bIsAlreadyTriggered)
+
+	APlayerCharacter* Player = Cast<APlayerCharacter>(OtherActor);
+	if (Player && QuestEventTag.IsValid())
 	{
-		APlayerCharacter* Player = Cast<APlayerCharacter>(OtherActor);
-		if (Player && ObjectiveTags.IsValid())
+		UQuestMessageHelpers::BroadcastLocationEvent(this, OtherActor, this, FGameplayTagContainer(QuestEventTag));
+
+		UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(this);
+		if (GameInstance)
 		{
-			UQuestMessageHelpers::BroadcastLocationEvent(this, OtherActor, this, ObjectiveTags);
-			bIsAlreadyTriggered = true;
+			USaveGameSubsystem* SaveSys = GameInstance->GetSubsystem<USaveGameSubsystem>();
+			if (SaveSys)
+			{
+				SaveSys->MarkEventCompleted(QuestEventTag);
+			}
 		}
 	}
 }

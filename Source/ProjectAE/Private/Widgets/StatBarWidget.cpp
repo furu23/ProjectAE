@@ -26,16 +26,12 @@ void UStatBarWidget::BindToASC(UAbilitySystemComponent* ASC)
     {
         ASC->GetGameplayAttributeValueChangeDelegate(CurrentAttribute)
             .AddUObject(this, &UStatBarWidget::OnCurrentValueChanged);
-
-        UE_LOG(LogTemp, Error, TEXT("StatUIBar: Cannot Find CurrentAttribute."))
     }
 
     if (bFoundMax)
     {
         ASC->GetGameplayAttributeValueChangeDelegate(MaxAttribute)
             .AddUObject(this, &UStatBarWidget::OnMaxValueChanged);
-
-        UE_LOG(LogTemp, Error, TEXT("StatUIBar: Cannot Find MaxAttribute."))
     }
 
     // 최초 UI 갱신
@@ -87,12 +83,16 @@ void UStatBarWidget::OnCurrentValueChanged(const FOnAttributeChangeData& Data)
     {
         OnValueBecomeZero();
     }
+
+    K2_OnCurrentValueChanged(Data.NewValue, Data.OldValue);
 }
 
 void UStatBarWidget::OnMaxValueChanged(const FOnAttributeChangeData& Data)
 {
     MaxValue = Data.NewValue;
     UpdateProgressBar();
+
+    K2_OnCurrentValueChanged(Data.NewValue, Data.OldValue);
 }
 
 void UStatBarWidget::UpdateProgressBar()

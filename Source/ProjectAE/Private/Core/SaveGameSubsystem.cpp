@@ -10,6 +10,19 @@
 #include "Quest/AEQuestSubSystem.h"
 
 
+void USaveGameSubsystem::NewGame()
+{
+	// 퀘스트 시스템 초기화
+	UAEQuestSubSystem* QuestSys = UAEGloabalHelper::GetQuestSubsystem(GetWorld());
+	if (QuestSys)
+	{
+		QuestSys->SetupNewGameQuests();
+	}
+
+	// 이벤트 배열 명시적 초기화
+	LoadedCompletedEvents = FGameplayTagContainer::EmptyContainer;
+}
+
 void USaveGameSubsystem::SaveGame()
 {
 	UAESaveGame* SaveInst = Cast<UAESaveGame>(UGameplayStatics::CreateSaveGameObject(UAESaveGame::StaticClass()));
@@ -40,6 +53,9 @@ void USaveGameSubsystem::SaveGame()
 	}
 	
 	/* 추가 세이브 로직을 여기에 */
+	
+	// 이벤트 항목 저장
+	SaveInst->CompletedEvents = LoadedCompletedEvents;
 
 	UGameplayStatics::AsyncSaveGameToSlot(SaveInst, FString("Save"), 0);
 }
@@ -74,6 +90,9 @@ void USaveGameSubsystem::LoadGame()
 	}
 	
 	/* 추가 로드 로직을 여기에 */
+
+	// 이베트 항목 로드
+	LoadedCompletedEvents = LoadInst->CompletedEvents;
 }
 
 void USaveGameSubsystem::SaveInventoryToCache(const TArray<uint8>& Data)
@@ -87,4 +106,38 @@ bool USaveGameSubsystem::GetInventoryFromCache(TArray<uint8>& OutData)
 	
 	OutData = PlayerInventoryCache;
 	return true;
+}
+
+bool USaveGameSubsystem::IsEventCompleted(const FGameplayTagContainer& EventTag) const
+{
+	if (EventTag.IsEmpty())
+	{
+		return false;
+	}
+
+	return LoadedCompletedEvents.HasAllExact(EventTag);
+}
+
+bool USaveGameSubsystem::IsEventCompleted(const FGameplayTag& EventTag) const
+{
+	if (EventTag.IsValid())
+	{
+		return false;
+	}
+
+	return LoadedCompletedEvents.HasTagExact(EventTag);
+}
+
+void USaveGameSubsystem::MarkEventCompleted(const FGameplayTagContainer& EventTag)
+{
+	if (EventTag.IsEmpty()) return;
+
+	LoadedCompletedEvents.AppendTags(EventTag);
+}
+
+void USaveGameSubsystem::MarkEventCompleted(const FGameplayTag& EventTag)
+{
+	if (EventTag.IsValid()) return;
+
+	LoadedCompletedEvents.AddTag(EventTag);
 }
