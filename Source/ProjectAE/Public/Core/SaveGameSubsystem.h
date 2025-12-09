@@ -45,9 +45,11 @@ public:
 	// **** 전역 이벤트 관련 ****
 	
 	// 태그가 이미 완료되었는지 확인
+	bool IsEventCompleted(const FGameplayTagContainer& EventTag) const;
 	bool IsEventCompleted(const FGameplayTag& EventTag) const;
 
 	// 사건 완료 처리
+	void MarkEventCompleted(const FGameplayTagContainer& EventTag);
 	void MarkEventCompleted(const FGameplayTag& EventTag);
 
 private:

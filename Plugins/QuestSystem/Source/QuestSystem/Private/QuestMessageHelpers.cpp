@@ -24,7 +24,7 @@ void UQuestMessageHelpers::BroadcastAIKilledEvent(UObject* WorldContextObject, A
 	}
 
 	// 메세지 보내기
-	FGameplayTag Channel = FGameplayTag::RequestGameplayTag(TEXT("Event.AI.Killed"));
+	FGameplayTag Channel = FGameplayTag::RequestGameplayTag(TEXT("Quest.Event.Kill"));
 	SendQuestMessage(WorldContextObject, Channel, Message);
 }
 

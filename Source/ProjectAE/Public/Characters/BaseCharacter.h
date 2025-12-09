@@ -105,7 +105,8 @@ protected:
 	TObjectPtr<UWidgetComponent> StatBarComp;
 
 
-private:
+	// **** 기타 ****
+
 	// 캐릭터의 태그 목록 (예: Gunner, Enemy 등...)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Character", meta = (AllowPrivateAccess = "true", ToolTip = "캐릭터의 태그 목록입니다. GMS 발송 시 사용."))
 	FGameplayTagContainer CharacterTag;

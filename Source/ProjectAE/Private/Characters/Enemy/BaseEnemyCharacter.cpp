@@ -6,6 +6,7 @@
 #include "AbilitySystem/AS_HealthSet.h"
 #include "AbilitySystem/HealthComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "QuestMessageHelpers.h"
 
 
 UAbilitySystemComponent* ABaseEnemyCharacter::GetAbilitySystemComponent() const
@@ -53,6 +54,8 @@ void ABaseEnemyCharacter::OnDeath_Implementation(AActor* Causer, AActor* Victim)
 {
 	GetMesh()->SetSimulatePhysics(true);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	UQuestMessageHelpers::BroadcastAIKilledEvent(this, Causer, Victim, FGameplayTagContainer(CharacterTag));
 }
 
 void ABaseEnemyCharacter::OnDamaged_Implementation(AActor* Causer, AActor* Victim)

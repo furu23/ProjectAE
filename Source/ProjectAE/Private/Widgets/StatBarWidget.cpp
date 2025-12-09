@@ -83,12 +83,16 @@ void UStatBarWidget::OnCurrentValueChanged(const FOnAttributeChangeData& Data)
     {
         OnValueBecomeZero();
     }
+
+    K2_OnCurrentValueChanged(Data.NewValue, Data.OldValue);
 }
 
 void UStatBarWidget::OnMaxValueChanged(const FOnAttributeChangeData& Data)
 {
     MaxValue = Data.NewValue;
     UpdateProgressBar();
+
+    K2_OnCurrentValueChanged(Data.NewValue, Data.OldValue);
 }
 
 void UStatBarWidget::UpdateProgressBar()

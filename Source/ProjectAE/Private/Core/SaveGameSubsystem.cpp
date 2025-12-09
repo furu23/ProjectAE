@@ -108,12 +108,36 @@ bool USaveGameSubsystem::GetInventoryFromCache(TArray<uint8>& OutData)
 	return true;
 }
 
+bool USaveGameSubsystem::IsEventCompleted(const FGameplayTagContainer& EventTag) const
+{
+	if (EventTag.IsEmpty())
+	{
+		return false;
+	}
+
+	return LoadedCompletedEvents.HasAllExact(EventTag);
+}
+
 bool USaveGameSubsystem::IsEventCompleted(const FGameplayTag& EventTag) const
 {
-	return LoadedCompletedEvents.HasTag(EventTag);
+	if (EventTag.IsValid())
+	{
+		return false;
+	}
+
+	return LoadedCompletedEvents.HasTagExact(EventTag);
+}
+
+void USaveGameSubsystem::MarkEventCompleted(const FGameplayTagContainer& EventTag)
+{
+	if (EventTag.IsEmpty()) return;
+
+	LoadedCompletedEvents.AppendTags(EventTag);
 }
 
 void USaveGameSubsystem::MarkEventCompleted(const FGameplayTag& EventTag)
 {
+	if (EventTag.IsValid()) return;
+
 	LoadedCompletedEvents.AddTag(EventTag);
 }
