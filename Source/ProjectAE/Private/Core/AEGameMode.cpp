@@ -3,6 +3,7 @@
 
 #include "Core/AEGameMode.h"
 #include "Core/GamePhaseSubsystem.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 
 void AAEGameMode::StartPlay()
 {
@@ -15,5 +16,43 @@ void AAEGameMode::StartPlay()
     if (PhaseTag.IsValid())
     {
         PhaseSys->SetGamePhase(PhaseTag);
+    }
+}
+
+void AAEGameMode::BeginPlay()
+{   
+    Super::BeginPlay();
+
+    // [핵심] 찾을 필요 없이, 그냥 "이 태그 들리면 나한테 알려줘"라고 등록만 함
+    UGameplayMessageSubsystem& GMS = UGameplayMessageSubsystem::Get(this);
+
+    ExtractionListenerHandle = GMS.RegisterListener<FQuestMessage_Generic>(
+        FGameplayTag::RequestGameplayTag("Quest.Event.Extraction"), // 탈출구에서 쏘는 태그
+        this,
+        &AAEGameMode::OnExtractionEvent
+    );
+}
+
+void AAEGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    if (ExtractionListenerHandle.IsValid())
+    {
+        ExtractionListenerHandle.Unregister();
+    }
+    Super::EndPlay(EndPlayReason);
+}
+
+
+void AAEGameMode::OnExtractionEvent(FGameplayTag Channel, const FQuestMessage_Generic& Payload)
+{
+    AActor* SuccessPlayer = Payload.InstigatorActor;
+
+    UE_LOG(LogTemp, Log, TEXT("GameMode: Extraction Confirmed for %s"), *SuccessPlayer->GetName());
+
+    // 처리가 끝나면 GamePhaseSubsystem에게 페이즈 전환 요청
+    UGamePhaseSubsystem* PhaseSys = GetWorld()->GetSubsystem<UGamePhaseSubsystem>();
+    if (PhaseSys)
+    {
+        PhaseSys->SetGamePhase(FGameplayTag::RequestGameplayTag("Game.Phase.PostGame"));
     }
 }

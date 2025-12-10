@@ -57,7 +57,7 @@ void USaveGameSubsystem::SaveGame()
 	// 이벤트 항목 저장
 	SaveInst->CompletedEvents = LoadedCompletedEvents;
 
-	UGameplayStatics::AsyncSaveGameToSlot(SaveInst, FString("Save"), 0);
+	UGameplayStatics::SaveGameToSlot(SaveInst, FString("Save"), 0);
 }
 
 void USaveGameSubsystem::LoadGame()
