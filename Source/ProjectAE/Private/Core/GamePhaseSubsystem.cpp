@@ -24,7 +24,7 @@ void UGamePhaseSubsystem::CompleteLoadingTask(FName SystemName)
         PendingLoadingTasks.Remove(SystemName);
         UE_LOG(LogAECore, Log, TEXT("[GamePhase] Task Completed: %s. Remaining: %d"), *SystemName.ToString(), PendingLoadingTasks.Num());
 
-            // 작업이 하나 끝날 때마다 상태 체크
+        // 작업이 하나 끝날 때마다 상태 체크
         CheckLoadingState();
     }
 }
@@ -32,10 +32,11 @@ void UGamePhaseSubsystem::CompleteLoadingTask(FName SystemName)
 void UGamePhaseSubsystem::StartPhaseMonitoring()
 {
     UE_LOG(LogAECore, Log, TEXT("[GamePhase] GameMode finished registration. Starting Monitoring..."));
+    OnGamePhaseChangeDelegate.Broadcast(FGameplayTag::RequestGameplayTag(TEXT("Game.Phase.Loading")));
 
     bIsMonitoring = true;
 
-      // 만약 등록된 태스크가 하나도 없었거나, 이미 다 끝난 상태일 수 있으므로 즉시 체크
+    // 만약 등록된 태스크가 하나도 없었거나, 이미 다 끝난 상태일 수 있으므로 즉시 체크
     CheckLoadingState();
 }
 
@@ -59,6 +60,9 @@ void UGamePhaseSubsystem::SetGamePhase(FGameplayTag NewPhase)
     if (CurrentPhase != NewPhase)
     {
         CurrentPhase = NewPhase;
+
+        // 식생 등을 생각한다면 추가로 기다릴 수 있습니다.
+
         OnGamePhaseChangeDelegate.Broadcast(NewPhase);
         UE_LOG(LogAECore, Log, TEXT("[GamePhase] Phase Changed to: %s"), *NewPhase.ToString());
     }

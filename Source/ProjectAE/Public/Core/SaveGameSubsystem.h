@@ -26,7 +26,7 @@ public:
 
 	// 세이브 게임 용도
 	UFUNCTION(BlueprintCallable)
-	void SaveGame();
+	void SaveGame(bool bSetAsyncLoad = false);
 
 	// 로드 게임 용도
 	UFUNCTION(BlueprintCallable)

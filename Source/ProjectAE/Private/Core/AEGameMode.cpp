@@ -27,7 +27,7 @@ void AAEGameMode::BeginPlay()
     UGameplayMessageSubsystem& GMS = UGameplayMessageSubsystem::Get(this);
 
     ExtractionListenerHandle = GMS.RegisterListener<FQuestMessage_Generic>(
-        FGameplayTag::RequestGameplayTag("Quest.Event.Extraction"), // 탈출구에서 쏘는 태그
+        FGameplayTag::RequestGameplayTag("Quest.Event.Extract"), // 탈출구에서 쏘는 태그
         this,
         &AAEGameMode::OnExtractionEvent
     );
