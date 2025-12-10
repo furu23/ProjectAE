@@ -242,52 +242,46 @@ float UAEGloabalHelper::GetMaxHealth(const AActor* Actor)
 	return 0.0f;
 }
 
-
-/*
-void UAEGloabalHelper::ApplyDamage(AActor* Instigator, AActor* Causer, AActor* Target, TSubclassOf<UGameplayEffect> DamageEffect, float DamageAmount)
+void UAEGloabalHelper::BroadcastExtractEvent(UObject* WorldContextObject, AActor* InstiagtorActor, AActor* TargetActor, FGameplayTagContainer TargetTags)
 {
-	if (!DamageEffect || !Target || DamageAmount <= 0.0f)
-	{
-		return;
-	}
+	if (!TargetActor) return;
 
-	UMyAbilitySystemComponent* TargetASC = GetAbilitySystemComponent(Target);
-	if (!TargetASC)
-	{
-		// ASC가 없는 대상에게는 데미지를 줄 수 없습니다. (GAS 기반이므로)
-		return;
-	}
+	// 메세지 생성
+	FQuestMessage_Generic Message;
+	Message.InstigatorActor = InstiagtorActor;
+	Message.TargetActor = TargetActor;
+	Message.TargetTags = TargetTags;
 
-	// 1. GameplayEffectContext 생성
-	// Instigator(가해자 컨트롤러)와 Causer(실제 데미지 원인, 예: 무기)를 설정합니다.
-	FGameplayEffectContextHandle ContextHandle = TargetASC->MakeEffectContext();
-	ContextHandle.AddInstigator(Instigator, Causer);
+	// 매세지 보내기
+	FGameplayTag Channel = FGameplayTag::RequestGameplayTag(TEXT("Quest.Event.Extract"));
 
-	// 2. GameplayEffectSpec 생성
-	// EffectSpec은 이펙트가 실제로 적용되기 전의 '설계도'입니다.
-	FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(DamageEffect, 1.0f, ContextHandle);
-	if (!SpecHandle.IsValid())
-	{
-		return;
-	}
+	SendQuestMessage(WorldContextObject, Channel, Message);
+}
 
-	// 3. SetByCaller를 사용하여 데미지 양을 GE로 전달
-	// (Damage GE는 "SetByCaller"로 "Damage"라는 태그의 값을 받도록 설정되어 있어야 함)
-	SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(TEXT("Data.Damage")), DamageAmount);
+void UAEGloabalHelper::BroadcastDeliverEvent(UObject* WorldContextObject, AActor* InstiagtorActor, AActor* TargetActor, FGameplayTagContainer TargetTags)
+{
+	if (!TargetActor) return;
 
-	// 4. 이펙트 적용
-	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-}*/
+	// 메세지 생성
+	FQuestMessage_Generic Message;
+	Message.InstigatorActor = InstiagtorActor;
+	Message.TargetActor = TargetActor;
+	Message.TargetTags = TargetTags;
 
-/*
-void UAEGloabalHelper::SendQuestMessage(const UObject* WorldContextObject, AActor* Instigator, FGameplayTagContainer TargetTags, AActor* TargetActor / *= nullptr * /,  int32 Amount / *= 1 * /)
+	// 매세지 보내기
+	FGameplayTag Channel = FGameplayTag::RequestGameplayTag(TEXT("Quest.Event.Deliver"));
+
+	SendQuestMessage(WorldContextObject, Channel, Message);
+}
+
+// --- Private 내부 래퍼 ---
+
+void UAEGloabalHelper::SendQuestMessage(UObject* WorldContextObject, FGameplayTag Channel, const FQuestMessage_Generic& MessageRef)
 {
 	UGameplayMessageSubsystem& GMS = UGameplayMessageSubsystem::Get(WorldContextObject);
 
-	FQuestMessage_Generic();
+	GMS.BroadcastMessage(Channel, MessageRef);
 }
-*/
-
 
 // ----------------------------------------------------------------------
 // 5. 유틸리티 및 디버그 헬퍼 (Utility & Debug)

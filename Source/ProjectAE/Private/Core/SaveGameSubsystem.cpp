@@ -23,7 +23,7 @@ void USaveGameSubsystem::NewGame()
 	LoadedCompletedEvents = FGameplayTagContainer::EmptyContainer;
 }
 
-void USaveGameSubsystem::SaveGame()
+void USaveGameSubsystem::SaveGame(bool bSetAsyncLoad)
 {
 	UAESaveGame* SaveInst = Cast<UAESaveGame>(UGameplayStatics::CreateSaveGameObject(UAESaveGame::StaticClass()));
 
@@ -57,7 +57,14 @@ void USaveGameSubsystem::SaveGame()
 	// 이벤트 항목 저장
 	SaveInst->CompletedEvents = LoadedCompletedEvents;
 
-	UGameplayStatics::AsyncSaveGameToSlot(SaveInst, FString("Save"), 0);
+	if (bSetAsyncLoad)
+	{
+		UGameplayStatics::AsyncSaveGameToSlot(SaveInst, FString("Save"), 0);
+	}
+	else
+	{
+		UGameplayStatics::SaveGameToSlot(SaveInst, FString("Save"), 0);
+	}
 }
 
 void USaveGameSubsystem::LoadGame()

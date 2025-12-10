@@ -64,6 +64,7 @@ protected:
 	TObjectPtr<UDA_QuestBase> Definition;
 
 	// 퀘스트의 하위 목표 객체 배열입니다.
+	UPROPERTY(VisibleInstanceOnly, Category = "Quest")
 	TArray<TObjectPtr<UQuestObjective>> Objectives;
 
 	// 퀘스트 서브시스템에 대한 캐싱입니다. 유효성 검사 필요.

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GameplayTagContainer.h"
+#include "QuestTypes.h"
 #include "AEGloabalHelper.generated.h"
 
 // --- 전방 선언 (Forward Declarations) ---
@@ -80,10 +81,6 @@ public:
  	UFUNCTION(BlueprintPure, Category = "ProjectAE|Subsystems", meta = (WorldContext = "WorldContextObject"))
  	static UAEQuestSubSystem* GetQuestSubsystem(const UObject* WorldContextObject);
 
- 	/** UWorldManagerSubsystem (GameInstance Subsystem)을 가져옵니다. */
-// 	UFUNCTION(BlueprintPure, Category = "MyGame|Subsystems", meta = (WorldContext = "WorldContextObject"))
-// 	static UWorldManagerSubsystem* GetUISubsystem(const UObject* WorldContextObject);
-
 
 	// ----------------------------------------------------------------------
 	// 3. GAS 및 컴포넌트 접근 헬퍼 (GAS & Component Accessors)
@@ -137,21 +134,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "ProjectAE|Combat")
 	static float GetMaxHealth(const AActor* Actor);
 
-	/** * 대상(Target)에게 데미지 GameplayEffect를 적용하는 편의 함수입니다.
-	 * @param Instigator 데미지를 유발한 액터 (컨트롤러)
-	 * @param Causer 데미지를 직접 발생시킨 액터 (무기, 발사체)
-	 * @param Target 데미지를 입는 액터
-	 * @param DamageEffect TSubclassOf<UGameplayEffect> 데미지 계산에 사용할 GE
-	 * @param DamageAmount 데미지 양 (GE에서 SetByCaller로 사용)
-	 * @note 추후 구현합니다.
-	 */
-// 	UFUNCTION(BlueprintCallable, Category = "ProjectAE|Combat")
-// 	static void ApplyDamage(AActor* Instigator, AActor* Causer, AActor* Target, TSubclassOf<class UGameplayEffect> DamageEffect, float DamageAmount);
+	/** 탈출 목표의 완료 메세지를 보냅니다. */
+	UFUNCTION(BlueprintCallable, Category = "ProjectAE|Quest", meta = (WorldContext = "WorldContextObject"))
+	static void BroadcastExtractEvent(UObject* WorldContextObject, AActor* InstiagtorActor, AActor* TargetActor, FGameplayTagContainer TargetTags);
 
-	/** GMS를 통해 퀘스트 시스템에 이벤트를 전송합니다. (예: 적 처치, 아이템 획득) */
- 	/*UFUNCTION(BlueprintCallable, Category = "ProjectAE|Quest", meta = (WorldContext = "WorldContextObject"))
- 	static void SendQuestMessage(const UObject* WorldContextObject, AActor* Instigator, FGameplayTagContainer TargetTags, AActor* TargetActor = nullptr, int32 Amount = 1);
-*/
+	/** 배달 목표의 완료 메세지를 보냅니다. */
+	UFUNCTION(BlueprintCallable, Category = "ProjectAE|Quest", meta = (WorldContext = "WorldContextObject"))
+	static void BroadcastDeliverEvent(UObject* WorldContextObject, AActor* InstiagtorActor, AActor* TargetActor, FGameplayTagContainer TargetTags);
+
 
 
 	// ----------------------------------------------------------------------
@@ -161,4 +151,10 @@ public:
 	/** (디버그용) 화면에 메시지를 출력합니다. (GEngine 사용) */
 	UFUNCTION(BlueprintCallable, Category = "ProjectAE|Debug")
 	static void PrintString(const FString& Message, float Duration = 5.0f, FColor Color = FColor::White, bool bPrintToLog = false);
+
+
+private:
+
+	/** 실질적인 메세지를 보내는 private 래퍼 함수입니다. */
+	static void SendQuestMessage(UObject* WorldContextObject, FGameplayTag Channel, const FQuestMessage_Generic& MessageRef);
 };
