@@ -1,8 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
-#include "QuestObjective_Extract.h"
 #include "ObjectiveConfig_Extract.h"
+#include "QuestObjective_Extract.h"
 #include "Objectives/QuestObjectiveConfig.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "QuestManagerSubSystem.h"
