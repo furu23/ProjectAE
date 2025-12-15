@@ -4,8 +4,10 @@
 #include "Quest/QuestDeliverComponent.h"
 
 #include "QuestTypes.h"
-#include "GameFramework/GameplayMessageSubsystem.h"
+#include "Characters/Player/PlayerCharacter.h"
+#include "Core/AEGloabalHelper.h"
 #include "Inventory/InventoryComponent.h"
+#include "Slate/SGameLayerManager.h"
 
 
 // Sets default values for this component's properties
@@ -28,8 +30,15 @@ bool UQuestDeliverComponent::ProcessDeliver(AActor* Caller)
 		return false;
 	}
 	
+	APlayerCharacter* Player = Cast<APlayerCharacter>(Caller);
+	if (!Player)
+	{
+		OnQuestDeliverFailed.Broadcast(FText::FromString(TEXT("Invalid Caller or Requirements")));
+		return false;
+	}
+	
 	// 인벤토리 확인 후 아이템 제거 로직
-	UInventoryComponent* PlayerInventory = Caller->FindComponentByClass<UInventoryComponent>();
+	UInventoryComponent* PlayerInventory = Player->GetInventoryComponent();
 	if (!PlayerInventory || !PlayerInventory->bIsPlayerInventory)
 	{
 		OnQuestDeliverFailed.Broadcast(FText::FromString(TEXT("Invalid PlayerInventory")));
@@ -65,12 +74,6 @@ void UQuestDeliverComponent::SendDeliverSuccessEvent(AActor* Caller)
 		UE_LOG(LogTemp, Warning, TEXT("UQuestDeliverComponent : Not Valid MessageListen or QuestEvent Tag"));
 		return;
 	}
-	
-	UGameplayMessageSubsystem& GMS = UGameplayMessageSubsystem::Get(this);
-	
-	FQuestMessage_Generic Message;
-	Message.TargetActor = Caller;
-	Message.TargetTags.AddTag(TargetQuestEventTag);
-	
-	GMS.BroadcastMessage(MessageListenTag, Message);
+
+	UAEGloabalHelper::BroadcastDeliverEvent(this, nullptr, Caller, TargetQuestEventTag);
 }

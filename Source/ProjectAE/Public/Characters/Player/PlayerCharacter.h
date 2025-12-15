@@ -103,4 +103,7 @@ protected:
 	// 기본 무기
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category ="Ability")
 	TObjectPtr<UAEWeaponDefinition> DefaultWeapon;
+
+public:
+	FORCEINLINE class UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 };

@@ -7,6 +7,10 @@
 #include "InventoryUIManager.generated.h"
 
 
+/**
+ * (구) 인벤토리 위젯-컴포넌트 연결용으로 만들었으나,
+ * 현재는 HUD가 위젯을 관리하고 본 컴포넌트는 인벤토리 관련 컴포넌트 간 통신/상태 제어를 담당한다.
+ */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTAE_API UInventoryUIManager : public UActorComponent
 {

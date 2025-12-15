@@ -28,7 +28,7 @@ protected:
 public:
 	/**
 	 * @brief 상호작용 시 호출되어 퀘스트 아이템 전달/완료 조건을 처리하는 함수
-	 * @param Caller 일반적으로 Player 
+	 * @param Caller 일반적으로 PlayerCharacter 
 	 */
 	UFUNCTION(BlueprintCallable)
 	bool ProcessDeliver(AActor* Caller);
@@ -47,7 +47,7 @@ public:
 	FOnQuestDeliverFailed OnQuestDeliverFailed;
 	
 	UPROPERTY(EditAnywhere, Category="Quest")
-	FGameplayTag TargetQuestEventTag;
+	FGameplayTagContainer TargetQuestEventTag;
 	
 	UPROPERTY(EditAnywhere, Category="Quest")
 	FGameplayTag MessageListenTag;

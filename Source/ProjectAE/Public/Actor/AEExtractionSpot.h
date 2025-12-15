@@ -32,6 +32,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Extraction", meta = (BlueprintPure = "true"))
 	FORCEINLINE APlayerCharacter* GetCurrentCharacterPtr() const { return CharacterPtr.Get(); }
 
+	UFUNCTION(BlueprintCallable, Category = "Extraction")
+	FORCEINLINE float GetTimeToExtract() const { return TimeToExtract; }
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
