@@ -12,3 +12,6 @@ Developed with Unreal Engine 5.4.4
 - Content/RadicalMike
 - Content/SFX_Pack
 - Content/StylizedProvencal
+
+### Plugins (엔진에 설치)
+- [Async Loading Screen](https://fab.com/s/7741aaefc33a)
