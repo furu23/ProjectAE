@@ -13,9 +13,9 @@ void AAEGameMode::StartPlay()
     UGamePhaseSubsystem* PhaseSys = GetWorld()->GetSubsystem<UGamePhaseSubsystem>();
 
     // 로비 상태 선언 및 방송
-    if (PhaseTag.IsValid())
+    if (PhaseSys)
     {
-        PhaseSys->SetGamePhase(PhaseTag);
+        PhaseSys->StartPhaseMonitoring();
     }
 }
 

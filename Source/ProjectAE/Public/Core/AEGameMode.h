@@ -26,9 +26,6 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	void OnExtractionEvent(FGameplayTag Channel, const FQuestMessage_Generic& Payload);
-	
-	UPROPERTY(EditDefaultsOnly, Category = "AECore", meta = (ToolTip = "현재 레벨의 태그입니다."))
-	FGameplayTag PhaseTag;
 
 private:
 	FGameplayMessageListenerHandle ExtractionListenerHandle;

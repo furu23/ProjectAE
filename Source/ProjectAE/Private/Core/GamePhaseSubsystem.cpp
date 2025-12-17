@@ -32,7 +32,7 @@ void UGamePhaseSubsystem::CompleteLoadingTask(FName SystemName)
 void UGamePhaseSubsystem::StartPhaseMonitoring()
 {
     UE_LOG(LogAECore, Log, TEXT("[GamePhase] GameMode finished registration. Starting Monitoring..."));
-    OnGamePhaseChangeDelegate.Broadcast(FGameplayTag::RequestGameplayTag(TEXT("Game.Phase.Loading")));
+    SetGamePhase(FGameplayTag::RequestGameplayTag("Game.Phase.Loading"));
 
     bIsMonitoring = true;
 
