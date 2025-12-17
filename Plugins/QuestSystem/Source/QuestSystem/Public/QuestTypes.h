@@ -104,3 +104,20 @@ struct FQuestMessage_Generic
 	UPROPERTY(BlueprintReadOnly, Category = "Quest|Message")
 	FText text;
 };
+
+/**
+ * @brief 퀘스트 시스템 알림 전용 메시지 구조체
+ * UI는 이 메시지를 받아서 토스트(Toast) 등을 띄우기만 하면 됩니다.
+ */
+USTRUCT(BlueprintType)
+struct FQuestNotificationMessage
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Quest|Notification")
+	FGameplayTag QuestID;
+
+	// 화면에 출력될 최종 텍스트 (예: "쥐 잡기 목표 완료 (1/3)")
+	UPROPERTY(BlueprintReadOnly, Category = "Quest|Notification")
+	FText NotificationText;
+};

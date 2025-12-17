@@ -5,7 +5,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/DecalComponent.h"
 #include "TimerManager.h"
-#include "Core/AEGloabalHelper.h"
+#include "Core/AEGlobalHelper.h"
 #include "Characters/Player/PlayerCharacter.h"
 #include "Core/GamePhaseSubsystem.h"
 
@@ -74,7 +74,7 @@ void AAEExtractionSpot::OnExtractionTimeEnded()
 
 	if (CharacterPtr.IsValid())
 	{
-		UAEGloabalHelper::BroadcastExtractEvent(
+		UAEGlobalHelper::BroadcastExtractEvent(
 			this,
 			CharacterPtr.Get(),
 			this,

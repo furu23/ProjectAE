@@ -14,6 +14,7 @@
 #if !UE_BUILD_SHIPPING
 #include "HAL/IConsoleManager.h"
 #endif
+#include "Reward/QuestReward.h"
 
 // ============ 공용 함수 ===============
 
@@ -239,9 +240,24 @@ void UQuestManagerSubSystem::ClaimQuestReward(const FGameplayTag& QuestID)
 
 void UQuestManagerSubSystem::GiveReward(const FGameplayTag& QuestID)
 {
-	// [TODO] : FRewardData 작성 필요 시, 구조 고민.
+	UDA_QuestBase* QuestDef = ActiveQuestDACaches.FindRef(QuestID);
+	if (!QuestDef)
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] GiveReward: Cannot find DA for [%s]"), *QuestID.ToString());
+		return;
+	}
 
-	// 현재 전략 패턴 느낌의 객체 반환과 타이트한 UObject 데이터 반환 두 가지 고려중
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] Giving Rewards for Quest [%s]..."), *QuestID.ToString());
+
+	// 정의된 모든 보상 객체의 GiveReward 실행
+	for (UQuestReward* Reward : QuestDef->QuestRewards)
+	{
+		if (Reward)
+		{
+			// Subsystem은 UObject이므로 this를 컨텍스트로 전달
+			Reward->GiveReward(this);
+		}
+	}
 }
 
 void UQuestManagerSubSystem::TryUnlockNextQuests(const FGameplayTag& QuestID)

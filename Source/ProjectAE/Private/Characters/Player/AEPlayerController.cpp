@@ -7,7 +7,7 @@
 #include "Widgets/AEGameHUDWidget.h"
 
 #if UE_BUILD_DEVELOPMENT
-#include "Core/AEGloabalHelper.h"
+#include "Core/AEGlobalHelper.h"
 #include "Quest/AEQuestSubSystem.h"
 #include "Core/SaveGameSubsystem.h"
 #endif
@@ -58,7 +58,7 @@ void AAEPlayerController::Cheat_AcceptQuest(const FString& QuestIDName)
 {
 	#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
 
-	UAEQuestSubSystem* QuestManager = UAEGloabalHelper::GetQuestSubsystem(this);
+	UAEQuestSubSystem* QuestManager = UAEGlobalHelper::GetQuestSubsystem(this);
 	if (ensureMsgf(QuestManager, TEXT("QuestManager is not valid")))
 	{
 		const FGameplayTag& QuestID = FGameplayTag::RequestGameplayTag(*QuestIDName);
@@ -73,7 +73,7 @@ void AAEPlayerController::Cheat_CompleteQuest(const FString& QuestIDName)
 {
 	#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
 
-	UAEQuestSubSystem* QuestManager = UAEGloabalHelper::GetQuestSubsystem(this);
+	UAEQuestSubSystem* QuestManager = UAEGlobalHelper::GetQuestSubsystem(this);
 	if (ensureMsgf(QuestManager, TEXT("QuestManager is not valid")))
 	{
 		const FGameplayTag& QuestID = FGameplayTag::RequestGameplayTag(*QuestIDName);

@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Core/AEGloabalHelper.h"
+#include "Core/AEGlobalHelper.h"
 
 // --- 필요한 엔진 헤더 ---
 #include "Engine/World.h"
@@ -27,13 +27,14 @@
 #include "Characters/AEPlayerState.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Quest/AEQuestSubSystem.h"
+#include "Core/SaveGameSubsystem.h"
 
 
 // ----------------------------------------------------------------------
 // 1. 프레임워크 접근 헬퍼 (Framework Accessors)
 // ----------------------------------------------------------------------
 
-AAEGameMode* UAEGloabalHelper::GetAEGameMode(const UObject* WorldContextObject)
+AAEGameMode* UAEGlobalHelper::GetAEGameMode(const UObject* WorldContextObject)
 {
 	// UGameplayStatics::GetGameMode를 사용하고 커스텀 클래스로 캐스팅합니다.
 	if (const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
@@ -55,7 +56,7 @@ AAEGameState* UAEGloabalHelper::GetMyGameState(const UObject* WorldContextObject
 }
 */
 
-AAEPlayerController* UAEGloabalHelper::GetAEPlayerController(const UObject* WorldContextObject)
+AAEPlayerController* UAEGlobalHelper::GetAEPlayerController(const UObject* WorldContextObject)
 {
 	// 로컬 플레이어(Index 0)의 컨트롤러를 가져옵니다.
 	if (const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
@@ -65,7 +66,7 @@ AAEPlayerController* UAEGloabalHelper::GetAEPlayerController(const UObject* Worl
 	return nullptr;
 }
 
-AAEPlayerState* UAEGloabalHelper::GetAEPlayerState(const UObject* WorldContextObject)
+AAEPlayerState* UAEGlobalHelper::GetAEPlayerState(const UObject* WorldContextObject)
 {
 	if (AAEPlayerController* PC = GetAEPlayerController(WorldContextObject))
 	{
@@ -75,7 +76,7 @@ AAEPlayerState* UAEGloabalHelper::GetAEPlayerState(const UObject* WorldContextOb
 }
 
 
-APlayerCharacter* UAEGloabalHelper::GetAECharacter(const UObject* WorldContextObject)
+APlayerCharacter* UAEGlobalHelper::GetAECharacter(const UObject* WorldContextObject)
 {
 	if (AAEPlayerController* PC = GetAEPlayerController(WorldContextObject))
 	{
@@ -84,7 +85,7 @@ APlayerCharacter* UAEGloabalHelper::GetAECharacter(const UObject* WorldContextOb
 	return nullptr;
 }
 
-AAEPlayerController* UAEGloabalHelper::GetOwningPlayerController(UObject* TargetObject)
+AAEPlayerController* UAEGlobalHelper::GetOwningPlayerController(UObject* TargetObject)
 {
 	if (!TargetObject)
 	{
@@ -125,7 +126,7 @@ AAEPlayerController* UAEGloabalHelper::GetOwningPlayerController(UObject* Target
 // 2. 서브시스템 접근 헬퍼 (Subsystem Accessors)
 // ----------------------------------------------------------------------
 
-UAEQuestSubSystem* UAEGloabalHelper::GetQuestSubsystem(const UObject* WorldContextObject)
+UAEQuestSubSystem* UAEGlobalHelper::GetQuestSubsystem(const UObject* WorldContextObject)
 {
 	const APlayerController* PC = GetAEPlayerController(WorldContextObject);
 	if (const ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
@@ -136,11 +137,21 @@ UAEQuestSubSystem* UAEGloabalHelper::GetQuestSubsystem(const UObject* WorldConte
 }
 
 
+USaveGameSubsystem* UAEGlobalHelper::GetSaveGameSubsystem(const UObject* WorldContextObject)
+{
+	UWorld* WorldObject = WorldContextObject->GetWorld();
+	if (!WorldObject || !WorldObject->GetGameInstance()) return nullptr;
+
+	USaveGameSubsystem* SaveSys = WorldObject->GetGameInstance()->GetSubsystem<USaveGameSubsystem>();
+	return SaveSys;
+}
+
+
 // ----------------------------------------------------------------------
 // 3. GAS 및 컴포넌트 접근 헬퍼 (GAS & Component Accessors)
 // ----------------------------------------------------------------------
 
-UAEAbilitySystemComponent* UAEGloabalHelper::GetAbilitySystemComponent(const AActor* Actor)
+UAEAbilitySystemComponent* UAEGlobalHelper::GetAbilitySystemComponent(const AActor* Actor)
 {
 	if (!IsValid(Actor))
 	{
@@ -185,7 +196,7 @@ UAEAbilitySystemComponent* UAEGloabalHelper::GetAbilitySystemComponent(const AAc
 	 return nullptr;
 }
 
-const UAS_BaseCombat* UAEGloabalHelper::GetBaseAttributeSet(const AActor* Actor)
+const UAS_BaseCombat* UAEGlobalHelper::GetBaseAttributeSet(const AActor* Actor)
 {
 	// ASC 헬퍼를 재사용합니다.
 	if (UAEAbilitySystemComponent* ASC = GetAbilitySystemComponent(Actor))
@@ -197,7 +208,7 @@ const UAS_BaseCombat* UAEGloabalHelper::GetBaseAttributeSet(const AActor* Actor)
 	return nullptr;
 }
 
-const UAS_HealthSet* UAEGloabalHelper::GetHealthAttributeSet(const AActor* Actor)
+const UAS_HealthSet* UAEGlobalHelper::GetHealthAttributeSet(const AActor* Actor)
 {
 	// ASC 헬퍼를 재사용합니다.
 	if (UAEAbilitySystemComponent* ASC = GetAbilitySystemComponent(Actor))
@@ -214,14 +225,14 @@ const UAS_HealthSet* UAEGloabalHelper::GetHealthAttributeSet(const AActor* Actor
 // 4. 게임플레이 로직 헬퍼 (Gameplay Logic Helpers)
 // ----------------------------------------------------------------------
 
-bool UAEGloabalHelper::IsAlive(const AActor* Actor)
+bool UAEGlobalHelper::IsAlive(const AActor* Actor)
 {
 	// GetHealth 헬퍼를 사용합니다.
 	// (0.0f 초과인지 확인)
 	return GetHealth(Actor) > 0.0f;
 }
 
-float UAEGloabalHelper::GetHealth(const AActor* Actor)
+float UAEGlobalHelper::GetHealth(const AActor* Actor)
 {
 	if (const UAS_HealthSet* AttributeSet = GetHealthAttributeSet(Actor))
 	{
@@ -233,7 +244,7 @@ float UAEGloabalHelper::GetHealth(const AActor* Actor)
 	return 0.0f;
 }
 
-float UAEGloabalHelper::GetMaxHealth(const AActor* Actor)
+float UAEGlobalHelper::GetMaxHealth(const AActor* Actor)
 {
 	if (const UAS_HealthSet* AttributeSet = GetHealthAttributeSet(Actor))
 	{
@@ -242,7 +253,7 @@ float UAEGloabalHelper::GetMaxHealth(const AActor* Actor)
 	return 0.0f;
 }
 
-void UAEGloabalHelper::BroadcastExtractEvent(UObject* WorldContextObject, AActor* InstiagtorActor, AActor* TargetActor, FGameplayTagContainer TargetTags)
+void UAEGlobalHelper::BroadcastExtractEvent(UObject* WorldContextObject, AActor* InstiagtorActor, AActor* TargetActor, FGameplayTagContainer TargetTags)
 {
 	if (!TargetActor) return;
 
@@ -258,7 +269,7 @@ void UAEGloabalHelper::BroadcastExtractEvent(UObject* WorldContextObject, AActor
 	SendQuestMessage(WorldContextObject, Channel, Message);
 }
 
-void UAEGloabalHelper::BroadcastDeliverEvent(UObject* WorldContextObject, AActor* InstiagtorActor, AActor* TargetActor, FGameplayTagContainer TargetTags)
+void UAEGlobalHelper::BroadcastDeliverEvent(UObject* WorldContextObject, AActor* InstiagtorActor, AActor* TargetActor, FGameplayTagContainer TargetTags)
 {
 	if (!TargetActor) return;
 
@@ -276,7 +287,7 @@ void UAEGloabalHelper::BroadcastDeliverEvent(UObject* WorldContextObject, AActor
 
 // --- Private 내부 래퍼 ---
 
-void UAEGloabalHelper::SendQuestMessage(UObject* WorldContextObject, FGameplayTag Channel, const FQuestMessage_Generic& MessageRef)
+void UAEGlobalHelper::SendQuestMessage(UObject* WorldContextObject, FGameplayTag Channel, const FQuestMessage_Generic& MessageRef)
 {
 	UGameplayMessageSubsystem& GMS = UGameplayMessageSubsystem::Get(WorldContextObject);
 
@@ -287,7 +298,7 @@ void UAEGloabalHelper::SendQuestMessage(UObject* WorldContextObject, FGameplayTa
 // 5. 유틸리티 및 디버그 헬퍼 (Utility & Debug)
 // ----------------------------------------------------------------------
 
-void UAEGloabalHelper::PrintString(const FString& Message, float Duration, FColor Color, bool bPrintToLog)
+void UAEGlobalHelper::PrintString(const FString& Message, float Duration, FColor Color, bool bPrintToLog)
 {
 	// GEngine이 유효한지 확인 (에디터/게임에서만 작동)
 	if (GEngine)

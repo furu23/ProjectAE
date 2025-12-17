@@ -3,6 +3,8 @@
 
 #include "Quest/AEQuestSubSystem.h"
 #include "Core/GamePhaseSubsystem.h"
+#include "Core/AEGlobalHelper.h"
+#include "Core/SaveGameSubsystem.h"
 
 void UAEQuestSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -24,6 +26,12 @@ void UAEQuestSubSystem::AcceptQuestForID(const FGameplayTag& QuestID)
 void UAEQuestSubSystem::CompleteQuestForID(const FGameplayTag& QuestID)
 {
 	ClaimQuestReward(QuestID);
+
+	USaveGameSubsystem* SaveSys = UAEGlobalHelper::GetSaveGameSubsystem(this);
+	if (SaveSys)
+	{
+		SaveSys->SaveGame(true);
+	}
 }
 
 void UAEQuestSubSystem::PreLoadGame(const TArray<uint8>& InData)

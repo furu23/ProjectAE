@@ -115,6 +115,35 @@ void UQuestObject::ForceCompleteQuestObj(const FGameplayTag& ObjectiveID)
 
 void UQuestObject::OnObjectiveCompleted(UQuestObjective* Objective)
 {
+	int32 CompletedCount = 0;
+	const int32 TotalCount = Objectives.Num();
+
+	for (const UQuestObjective* Obj : Objectives)
+	{
+		// IsComplete()는 Manager의 ProgressData를 조회하므로 최신 상태를 반영합니다.
+		if (Obj && Obj->IsComplete())
+		{
+			CompletedCount++;
+		}
+	}
+
+	FQuestNotificationMessage NotiMsg;
+	NotiMsg.QuestID = Definition->QuestID;
+
+	// 포맷: "{퀘스트이름} 목표 완료 ({현재}/{전체})"
+	// 예시: "마을의 평화 목표 완료 (2/3)"
+	NotiMsg.NotificationText = FText::Format(
+		NSLOCTEXT("Quest", "ObjectiveCountNotification", "{0} 목표 완료 ({1}/{2})"),
+		Definition->QuestName,
+		CompletedCount,
+		TotalCount
+	);
+
+	UGameplayMessageSubsystem& GMS = UGameplayMessageSubsystem::Get(this);
+	GMS.BroadcastMessage(FGameplayTag::RequestGameplayTag(TEXT("Quest.Event.UI.Notification")), NotiMsg);
+
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] Notification Broadcast: %s (%d/%d)"), *Definition->QuestName.ToString(), CompletedCount, TotalCount);
+
 	if (CheckQuestCompletion())
 	{
 		// ProgressData를 받아옵니다.

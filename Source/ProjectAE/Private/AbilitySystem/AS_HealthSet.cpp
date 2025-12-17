@@ -4,7 +4,7 @@
 #include "AbilitySystem/AS_HealthSet.h"
 #include "Net/UnrealNetwork.h"
 #include "GameplayEffectExtension.h"
-#include "Core/AEGloabalHelper.h"
+#include "Core/AEGlobalHelper.h"
 
 #define MINIMUM_MAXHEALTH 10.f
 
@@ -57,8 +57,6 @@ void UAS_HealthSet::PostAttributeChange(const FGameplayAttribute& Attribute, flo
             }
         }
     }
-
-    UAEGloabalHelper::PrintString(FString::Printf(TEXT("MaxHealth Changed: %f -> %f"), OldValue, NewValue));
 }
 
 void UAS_HealthSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)

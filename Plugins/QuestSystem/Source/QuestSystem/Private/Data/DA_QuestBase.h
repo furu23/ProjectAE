@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
+#include "Reward/QuestReward.h"
 #include "DA_QuestBase.generated.h"
 
 class UQuestObjectiveConfig;
@@ -42,9 +43,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "뉴 게임 시작 시, CanAccept 상태인 퀘스트 입니다."))
 	bool bIsStartingQuest = false;
 
-	// 퀘스트의 보상입니다.
-	// UPROPERTY(...)
-	// FRewardData RewardData;
+	// 퀘스트 보상입니다.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "퀘스트의 보상 객체입니다."))
+	TArray<TObjectPtr<UQuestReward>> QuestRewards;
 
 	// 퀘스트의 목표입니다.
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Objective", meta = (ToolTip = "퀘스트 목표의 설정에 대한 배열입니다."))

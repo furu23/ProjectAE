@@ -7,7 +7,7 @@
 #include "AbilitySystem/AEAbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
 #include "EnhancedInputComponent.h"
-#include "Core/AEGloabalHelper.h"
+#include "Core/AEGlobalHelper.h"
 #include "FX/AEAudioComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Widgets/StatBarContainerWidget.h"
@@ -102,7 +102,7 @@ void ABaseCharacter::RemoveLooseTagForDevelop(FGameplayTag Tag, const UObject* U
 
 void ABaseCharacter::InitAbiltySystem()
 {
-	UAbilitySystemComponent* FoundASC = UAEGloabalHelper::GetAbilitySystemComponent(this);
+	UAbilitySystemComponent* FoundASC = UAEGlobalHelper::GetAbilitySystemComponent(this);
 	if (ensure(FoundASC))
 	{
 		CachedASC = FoundASC;

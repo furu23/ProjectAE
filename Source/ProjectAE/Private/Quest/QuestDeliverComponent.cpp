@@ -5,7 +5,7 @@
 
 #include "QuestTypes.h"
 #include "Characters/Player/PlayerCharacter.h"
-#include "Core/AEGloabalHelper.h"
+#include "Core/AEGlobalHelper.h"
 #include "Inventory/InventoryComponent.h"
 #include "Slate/SGameLayerManager.h"
 
@@ -75,5 +75,5 @@ void UQuestDeliverComponent::SendDeliverSuccessEvent(AActor* Caller)
 		return;
 	}
 
-	UAEGloabalHelper::BroadcastDeliverEvent(this, nullptr, Caller, TargetQuestEventTag);
+	UAEGlobalHelper::BroadcastDeliverEvent(this, nullptr, Caller, TargetQuestEventTag);
 }

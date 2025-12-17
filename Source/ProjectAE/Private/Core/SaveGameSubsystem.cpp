@@ -4,7 +4,7 @@
 #include "Core/SaveGameSubsystem.h"
 #include "Core/AESaveGame.h"
 #include "Kismet/GameplayStatics.h"
-#include "Core/AEGloabalHelper.h"
+#include "Core/AEGlobalHelper.h"
 #include "GameFramework/Character.h"
 #include "Inventory/InventoryComponent.h"
 #include "Quest/AEQuestSubSystem.h"
@@ -13,7 +13,7 @@
 void USaveGameSubsystem::NewGame()
 {
 	// 퀘스트 시스템 초기화
-	UAEQuestSubSystem* QuestSys = UAEGloabalHelper::GetQuestSubsystem(GetWorld());
+	UAEQuestSubSystem* QuestSys = UAEGlobalHelper::GetQuestSubsystem(GetWorld());
 	if (QuestSys)
 	{
 		QuestSys->SetupNewGameQuests();
@@ -27,7 +27,7 @@ void USaveGameSubsystem::SaveGame(bool bSetAsyncLoad)
 {
 	UAESaveGame* SaveInst = Cast<UAESaveGame>(UGameplayStatics::CreateSaveGameObject(UAESaveGame::StaticClass()));
 
-	UAEQuestSubSystem* QuestSys = UAEGloabalHelper::GetQuestSubsystem(GetWorld());
+	UAEQuestSubSystem* QuestSys = UAEGlobalHelper::GetQuestSubsystem(GetWorld());
 	if (QuestSys)
 	{
 		QuestSys->GetSaveData(SaveInst->QuestSystemData);
@@ -74,7 +74,7 @@ void USaveGameSubsystem::LoadGame()
 	UAESaveGame* LoadInst = Cast<UAESaveGame>(UGameplayStatics::LoadGameFromSlot(FString("Save"), 0));
 	if (!LoadInst) return;
 
-	UAEQuestSubSystem* QuestSys = UAEGloabalHelper::GetQuestSubsystem(GetWorld());
+	UAEQuestSubSystem* QuestSys = UAEGlobalHelper::GetQuestSubsystem(GetWorld());
 	if (QuestSys)
 	{
 		QuestSys->PreLoadGame(LoadInst->QuestSystemData);
@@ -117,7 +117,7 @@ bool USaveGameSubsystem::GetInventoryFromCache(TArray<uint8>& OutData)
 
 bool USaveGameSubsystem::IsEventCompleted(const FGameplayTagContainer& EventTag) const
 {
-	if (EventTag.IsEmpty())
+	if (!EventTag.IsEmpty())
 	{
 		return false;
 	}
@@ -127,7 +127,7 @@ bool USaveGameSubsystem::IsEventCompleted(const FGameplayTagContainer& EventTag)
 
 bool USaveGameSubsystem::IsEventCompleted(const FGameplayTag& EventTag) const
 {
-	if (EventTag.IsValid())
+	if (!EventTag.IsValid())
 	{
 		return false;
 	}
@@ -137,14 +137,14 @@ bool USaveGameSubsystem::IsEventCompleted(const FGameplayTag& EventTag) const
 
 void USaveGameSubsystem::MarkEventCompleted(const FGameplayTagContainer& EventTag)
 {
-	if (EventTag.IsEmpty()) return;
+	if (!EventTag.IsEmpty()) return;
 
 	LoadedCompletedEvents.AppendTags(EventTag);
 }
 
 void USaveGameSubsystem::MarkEventCompleted(const FGameplayTag& EventTag)
 {
-	if (EventTag.IsValid()) return;
+	if (!EventTag.IsValid()) return;
 
 	LoadedCompletedEvents.AddTag(EventTag);
 }

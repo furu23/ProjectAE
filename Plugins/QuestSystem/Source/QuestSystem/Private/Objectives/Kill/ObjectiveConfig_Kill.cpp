@@ -2,11 +2,12 @@
 
 
 #include "ObjectiveConfig_Kill.h"
+#include "QuestObjective_Kill.h"
 
 UObjectiveConfig_Kill::UObjectiveConfig_Kill()
 {
 	// 안전한 기본값 하드코딩 정의
-	ObjectiveClass = UObjectiveConfig_Kill::StaticClass();
+	ObjectiveClass = UQuestObjective_Kill::StaticClass();
 
 	DescriptionFormat = NSLOCTEXT("Quest", "KillDefault", "[진행 중] 적 {Current} / {Target} 처치");
 	CompletedDescription = NSLOCTEXT("Quest", "KillComplete", "[완료] 적 처치 완료");

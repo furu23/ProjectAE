@@ -12,7 +12,7 @@
 #include "FX/Data/HitFeedback.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
-#include "Core/AEGloabalHelper.h"
+#include "Core/AEGlobalHelper.h"
 #include "AbilitySystem/AEAbilitySystemComponent.h"
 
 AProjectileBase::AProjectileBase()
@@ -59,7 +59,7 @@ void AProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UP
     SpawnImpactHit(Hit.Location, Hit.Normal, SurfaceType);
 
     // GAS 적용
-    UAEAbilitySystemComponent* TargetASC = UAEGloabalHelper::GetAbilitySystemComponent(OtherActor);
+    UAEAbilitySystemComponent* TargetASC = UAEGlobalHelper::GetAbilitySystemComponent(OtherActor);
 
     if (TargetASC && DamageEffectSpecHandle.IsValid())
     {

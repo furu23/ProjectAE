@@ -6,7 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GameplayTagContainer.h"
 #include "QuestTypes.h"
-#include "AEGloabalHelper.generated.h"
+#include "AEGlobalHelper.generated.h"
 
 // --- 전방 선언 (Forward Declarations) ---
 
@@ -35,7 +35,7 @@ struct FGameplayEffectContextHandle;
  * @note 
  */
 UCLASS()
-class PROJECTAE_API UAEGloabalHelper : public UBlueprintFunctionLibrary
+class PROJECTAE_API UAEGlobalHelper : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
@@ -77,10 +77,12 @@ public:
 	// ----------------------------------------------------------------------
 
 	/** UAEQuestSubSystem(Local Player Subsystem)을 가져옵니다. */
-
  	UFUNCTION(BlueprintPure, Category = "ProjectAE|Subsystems", meta = (WorldContext = "WorldContextObject"))
  	static UAEQuestSubSystem* GetQuestSubsystem(const UObject* WorldContextObject);
 
+	/** GetSaveGameSubsystem(Game Instance Subsystem)을 가져옵니다. */
+	UFUNCTION(BlueprintPure, Category = "ProjectAE|Subsystems", meta = (WorldContext = "WorldContextObject"))
+ 	static USaveGameSubsystem* GetSaveGameSubsystem(const UObject* WorldContextObject);
 
 	// ----------------------------------------------------------------------
 	// 3. GAS 및 컴포넌트 접근 헬퍼 (GAS & Component Accessors)
