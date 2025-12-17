@@ -17,6 +17,8 @@
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystem/HealthComponent.h"
 #include "Characters/Player/OcclusionFadeComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Widgets/StatBarWidget.h"
 
 
 APlayerCharacter::APlayerCharacter()
@@ -29,11 +31,15 @@ APlayerCharacter::APlayerCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 
+	StaminaWidgetComponent = CreateDefaultSubobject<UWidgetComponent>("StaminaWidgetComponent");
+	StaminaWidgetComponent->SetupAttachment(RootComponent);
+
 	WeaponComponent = CreateDefaultSubobject<UAEWeaponComponent>("WeaponComponent");
 
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>("HealthComponent");
 
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>("InteractionComponent");
+
 	
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("InventoryComponent");
 	InventoryComponent->bIsPlayerInventory = true;
@@ -131,6 +137,18 @@ void APlayerCharacter::PossessedBy(AController* NewController)
 
 		// 기본 무기 장착 및 무기의 어빌리티 부여
 		WeaponComponent->EquipWeapon(DefaultWeapon);
+
+		if (StaminaWidgetComponent)
+		{
+			StaminaWidgetComponent->InitWidget();
+
+			// 스테미나 위젯 바인드
+			UStatBarWidgetBase* StaminaWidget = Cast<UStatBarWidgetBase>(StaminaWidgetComponent->GetUserWidgetObject());
+			if (StaminaWidget)
+			{
+				StaminaWidget->BindToASC(CachedASC);
+			}
+		}
 	}
 }
 

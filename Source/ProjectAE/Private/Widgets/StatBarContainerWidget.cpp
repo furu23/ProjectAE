@@ -34,7 +34,7 @@ void UStatBarContainerWidget::NativeConstruct()
 			UWidget* ChildWidget = BarContainer->GetChildAt(i);
 
 			// 자식이 우리가 만든 'GenericStatBar'라면 배열에 추가
-			if (UStatBarWidget* Bar = Cast<UStatBarWidget>(ChildWidget))
+			if (UStatBarWidgetBase* Bar = Cast<UStatBarWidgetBase>(ChildWidget))
 			{
 				if (ensureMsgf(WeakASC.IsValid(), TEXT("InValid ASC in StatBarContainer. Is it Initialize Correctly?")))
 				{

@@ -7,7 +7,7 @@
 #include "StatBarContainerWidget.generated.h"
 
 class UAbilitySystemComponent;
-class UStatBarWidget;
+class UStatBarWidgetBase;
 
 /**
  * @brief 체력 바 위젯들을 관리하는 컨테이너 객체입니다.
@@ -34,7 +34,7 @@ protected:
 private:
 	// UPROPERTY()를 붙여야 가비지 컬렉션(GC)에서 안전합니다.
 	UPROPERTY()
-	TArray<TObjectPtr<UStatBarWidget>> StatBars;
+	TArray<TObjectPtr<UStatBarWidgetBase>> StatBars;
 
 	// ASC에 대한 약한 참조
 	TWeakObjectPtr<UAbilitySystemComponent> WeakASC;

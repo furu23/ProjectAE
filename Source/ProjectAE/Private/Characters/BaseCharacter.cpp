@@ -10,7 +10,7 @@
 #include "Core/AEGlobalHelper.h"
 #include "FX/AEAudioComponent.h"
 #include "Components/WidgetComponent.h"
-#include "Widgets/StatBarContainerWidget.h"
+#include "Widgets/StatBarWidget.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -113,11 +113,11 @@ void ABaseCharacter::InitAbiltySystem()
 	{
 		StatBarComp->InitWidget();
 
-		UStatBarContainerWidget* OverheadWidget = Cast<UStatBarContainerWidget>(StatBarComp->GetUserWidgetObject());
+		ULinearStatBarWidget* HealthStatBar = Cast<ULinearStatBarWidget>(StatBarComp->GetUserWidgetObject());
 
-		if (OverheadWidget)
+		if (HealthStatBar)
 		{
-			OverheadWidget->SetAbilitySystemComponent(CachedASC);
+			HealthStatBar->BindToASC(CachedASC);
 		}
 	}
 }
