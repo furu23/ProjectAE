@@ -52,6 +52,7 @@ void ABaseEnemyCharacter::PossessedBy(AController* NewController)
 
 void ABaseEnemyCharacter::OnDeath_Implementation(AActor* Causer, AActor* Victim)
 {
+	// TODO : Enemy 죽고 일정 타이머 이후 사라지게
 	GetMesh()->SetSimulatePhysics(true);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
