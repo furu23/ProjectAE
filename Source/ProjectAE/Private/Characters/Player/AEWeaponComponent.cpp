@@ -23,7 +23,7 @@ void UAEWeaponComponent::EquipWeapon(UAEWeaponDefinition* NewWeaponDef)
     {
         if (ASC)
         {
-            for (auto CurrentHandle : CurrentWeaponAbilityHandles)
+            for (FGameplayAbilitySpecHandle CurrentHandle : CurrentWeaponAbilityHandles)
             {
                 if (!CurrentHandle.IsValid())
                 {
@@ -57,7 +57,33 @@ void UAEWeaponComponent::EquipWeapon(UAEWeaponDefinition* NewWeaponDef)
     // 추가할 로직이 있다면 여기에
 }
 
-int32 UAEWeaponComponent::GetMaxAmmo()
+void UAEWeaponComponent::ReloadWeapon()
+{
+    const int32 OldAmmo = CurrentAmmo;
+
+    CurrentAmmo = GetMaxAmmo();
+
+    if (OnAmmoUseDelegate.IsBound())
+    {
+        OnAmmoUseDelegate.Broadcast(CurrentAmmo, OldAmmo);
+    }
+}
+
+bool UAEWeaponComponent::UseAmmo(int32 AmmoUseAmount)
+{
+    int32 NewAmmo = CurrentAmmo - AmmoUseAmount;
+    if (NewAmmo < 0) { return false; }
+
+
+	CurrentAmmo = NewAmmo;
+    if (OnAmmoUseDelegate.IsBound())
+    {
+        OnAmmoUseDelegate.Broadcast(GetCurrentAmmo(), GetCurrentAmmo() + AmmoUseAmount);
+    }
+    return true;
+}
+
+int32 UAEWeaponComponent::GetMaxAmmo() const
 {
     if (CurrentWeaponDef)
     {
