@@ -7,7 +7,7 @@
 #include "TimerManager.h"
 #include "Core/AEGlobalHelper.h"
 #include "Characters/Player/PlayerCharacter.h"
-#include "Core/GamePhaseSubsystem.h"
+
 
 // Sets default values
 AAEExtractionSpot::AAEExtractionSpot()
