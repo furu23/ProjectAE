@@ -35,6 +35,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interact")
 	void OnFocusChanged(AActor* NewFocusedActor);
 
+	FORCEINLINE class UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+
+	FORCEINLINE class UAEWeaponComponent* GetWeaponComponent() const { return WeaponComponent; }
+
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void Move(const FVector2D& MoveVector);
@@ -107,6 +111,5 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category ="Ability")
 	TObjectPtr<UAEWeaponDefinition> DefaultWeapon;
 
-public:
-	FORCEINLINE class UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+
 };
