@@ -5,6 +5,7 @@
 #include "Components/TextBlock.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameplayTagContainer.h"
+#include "Kismet/GameplayStatics.h"
 
 void UQuestNotificationWidget::NativeConstruct()
 {
@@ -35,6 +36,11 @@ void UQuestNotificationWidget::OnNotificationReceived(FGameplayTag Channel, cons
     if (Text_Notification)
     {
         Text_Notification->SetText(Payload.NotificationText);
+    }
+    
+    if (NotifySound)
+    {
+        UGameplayStatics::PlaySound2D(GetWorld(), NotifySound);
     }
 
     // 2. 애니메이션 재생 (처음부터 재생)

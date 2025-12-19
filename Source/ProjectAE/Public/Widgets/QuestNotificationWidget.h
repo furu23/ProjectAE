@@ -11,6 +11,7 @@
 
 class UTextBlock;
 class UWidgetAnimation;
+class USoundBase;
 
 /**
  * 퀘스트 알림 전용 위젯 베이스 클래스
@@ -30,6 +31,9 @@ protected:
     // 등장/퇴장 애니메이션
     UPROPERTY(meta = (BindWidgetAnim), Transient)
     TObjectPtr<UWidgetAnimation> Anim_PopUp;
+    
+    UPROPERTY(EditAnywhere, Category= "Sound")
+    TObjectPtr<USoundBase> NotifySound;
 
     // **** 초기화 및 GMS ****
     virtual void NativeConstruct() override;
