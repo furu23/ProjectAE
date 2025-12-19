@@ -24,14 +24,14 @@ public:
 	void InitializeWidget(UAEWeaponComponent* WeaponComp, UAbilitySystemComponent* ASC);
 
 protected:
-	// Äİ¹é ¹× ³»ºÎ non virtual ÇÔ¼ö
+	// ì½œë°± ë° ë‚´ë¶€ non virtual í•¨ìˆ˜
 	UFUNCTION()
 	void UpdateAmmoState(int32 NewValue, int32 OldValue);
 
 	void OnReloadStateChanged(FGameplayTag ReloadTag, int32 Level);
 
 
-	// NVI API ¼ø¼ö °¡»ó ÇÔ¼ö
+	// NVI API ìˆœìˆ˜ ê°€ìƒ í•¨ìˆ˜
 	virtual void NativeOnAmmoUpdated(int32 NewValue, int32 OldValue) {}
 
 	virtual void NativeOnBind() {}
@@ -41,7 +41,7 @@ protected:
 	virtual void OnReloadEnded() {};
 
 
-	// BP ÈÅ API ÇÔ¼öµé
+	// BP í›… API í•¨ìˆ˜ë“¤
 	UFUNCTION(BlueprintImplementableEvent, Category = "UI", meta = (DisplayName = "OnInitialized"))
 	void K2_OnInitialized(UAEWeaponComponent* WeaponComp, UAbilitySystemComponent* ASC);
 
