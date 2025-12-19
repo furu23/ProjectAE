@@ -61,6 +61,7 @@ protected:
 	// **** 초기화될 기본 프로퍼티 ****
 
 	// 이 퀘스트 런타임 객체의 설계도가 되는 UDA_QuestBase 객체에 대한 참조입니다.
+	UPROPERTY()
 	TObjectPtr<UDA_QuestBase> Definition;
 
 	// 퀘스트의 하위 목표 객체 배열입니다.
@@ -68,6 +69,7 @@ protected:
 	TArray<TObjectPtr<UQuestObjective>> Objectives;
 
 	// 퀘스트 서브시스템에 대한 캐싱입니다. 유효성 검사 필요.
+	UPROPERTY()
 	TObjectPtr<UQuestManagerSubSystem> CachedQuestSys;
 
 

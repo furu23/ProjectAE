@@ -25,16 +25,16 @@ void AAEQuestLocationActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, 
 
 void AAEQuestLocationActor::BeginPlay()
 {
-	UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(this);
-	if (GameInstance)
-	{
-		USaveGameSubsystem* SaveSys = GameInstance->GetSubsystem<USaveGameSubsystem>();
-		if (SaveSys && SaveSys->IsEventCompleted(QuestEventTag))
-		{
-			this->Destroy();
-			return;
-		}
-	}
+	// UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(this);
+	// if (GameInstance)
+	// {
+	// 	USaveGameSubsystem* SaveSys = GameInstance->GetSubsystem<USaveGameSubsystem>();
+	// 	if (SaveSys && SaveSys->IsEventCompleted(QuestEventTag))
+	// 	{
+	// 		this->Destroy();
+	// 		return;
+	// 	}
+	// }
 
 	BoxComp->OnComponentBeginOverlap.AddDynamic(this, &AAEQuestLocationActor::OnOverlapBegin);
 }
@@ -49,14 +49,14 @@ void AAEQuestLocationActor::NotifyActorBeginOverlap(AActor* OtherActor)
 	{
 		UQuestMessageHelpers::BroadcastLocationEvent(this, OtherActor, this, FGameplayTagContainer(QuestEventTag));
 
-		UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(this);
-		if (GameInstance)
-		{
-			USaveGameSubsystem* SaveSys = GameInstance->GetSubsystem<USaveGameSubsystem>();
-			if (SaveSys)
-			{
-				SaveSys->MarkEventCompleted(QuestEventTag);
-			}
-		}
+		// UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(this);
+		// if (GameInstance)
+		// {
+		// 	USaveGameSubsystem* SaveSys = GameInstance->GetSubsystem<USaveGameSubsystem>();
+		// 	if (SaveSys)
+		// 	{
+		// 		SaveSys->MarkEventCompleted(QuestEventTag);
+		// 	}
+		// }
 	}
 }
