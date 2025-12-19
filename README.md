@@ -10,7 +10,6 @@ Developed with Unreal Engine 5.4.4
 - Content/Fab
 - Content/ModSci_Engineer
 - Content/RadicalMike
-- Content/SFX_Pack
 - Content/StylizedProvencal
 
 ### Plugins (엔진에 설치)
