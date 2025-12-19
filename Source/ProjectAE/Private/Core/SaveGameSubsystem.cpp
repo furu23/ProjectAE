@@ -8,7 +8,15 @@
 #include "GameFramework/Character.h"
 #include "Inventory/InventoryComponent.h"
 #include "Quest/AEQuestSubSystem.h"
+#include "Core/AEConfigSaveGame.h"
 
+
+void USaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+
+	LoadGlobalSettings();
+}
 
 void USaveGameSubsystem::NewGame()
 {
@@ -100,6 +108,60 @@ void USaveGameSubsystem::LoadGame()
 
 	// 이베트 항목 로드
 	LoadedCompletedEvents = LoadInst->CompletedEvents;
+}
+
+void USaveGameSubsystem::LoadGlobalSettings()
+{
+	if (UGameplayStatics::DoesSaveGameExist(GlobalOptionSlotName, 0))
+	{
+		UAEConfigSaveGame* LoadObj = Cast<UAEConfigSaveGame>(UGameplayStatics::LoadGameFromSlot(GlobalOptionSlotName, 0));
+		if (LoadObj)
+		{
+			CachedVolumeData = LoadObj->VolumeSettings;
+
+			// 필요 시 볼륨 조절을 여기서
+		}
+	}
+	else
+	{
+		// 저장된 게 없으면 기본값으로 초기화
+		CachedVolumeData.Init(1.0f, 4);
+	}
+}
+
+void USaveGameSubsystem::SaveGlobalSettings()
+{
+	UAEConfigSaveGame* SaveObj = Cast<UAEConfigSaveGame>(UGameplayStatics::CreateSaveGameObject(UAEConfigSaveGame::StaticClass()));
+	if (SaveObj)
+	{
+		SaveObj->VolumeSettings = CachedVolumeData;
+		UGameplayStatics::SaveGameToSlot(SaveObj, GlobalOptionSlotName, 0);
+	}
+}
+
+void USaveGameSubsystem::SetVolume(EVolumType Type, float NewVolume)
+{
+	int32 Index = (int32)Type;
+	if (CachedVolumeData.IsValidIndex(Index))
+	{
+		CachedVolumeData[Index] = NewVolume;
+
+		// TODO: SoundMixClass 등에 실제 볼륨 적용
+
+		SaveGlobalSettings();
+	}
+}
+
+float USaveGameSubsystem::GetVolume(EVolumType Type) const
+{
+	int32 Index = static_cast<int32>(Type);
+
+	if (CachedVolumeData.IsValidIndex(Index))
+	{
+		return CachedVolumeData[Index];
+	}
+
+	return 1.0f;
 }
 
 void USaveGameSubsystem::SaveInventoryToCache(const TArray<uint8>& Data)
