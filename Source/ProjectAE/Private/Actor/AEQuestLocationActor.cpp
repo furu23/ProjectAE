@@ -5,9 +5,7 @@
 #include "Characters/Player/PlayerCharacter.h"
 #include "QuestMessageHelpers.h"
 #include "Components/BoxComponent.h"
-#include "Core/SaveGameSubsystem.h"
 #include "GameplayTagContainer.h"
-#include "Kismet/GameplayStatics.h"
 
 AAEQuestLocationActor::AAEQuestLocationActor()
 {

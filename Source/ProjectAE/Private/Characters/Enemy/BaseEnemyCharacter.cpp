@@ -54,10 +54,10 @@ void ABaseEnemyCharacter::PossessedBy(AController* NewController)
 void ABaseEnemyCharacter::OnDeath_Implementation(AActor* Causer, AActor* Victim)
 {
 	// 1) 컨트롤러 분리 및 이동 정지
-	if (AController* C = GetController())
+	if (AController* APC = GetController())
 	{
 		// AI나 플레이어 제어 해제
-		C->UnPossess();
+		APC->Destroyed();
 	}
 	DetachFromControllerPendingDestroy();
 

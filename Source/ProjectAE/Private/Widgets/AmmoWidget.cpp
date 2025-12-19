@@ -5,7 +5,6 @@
 #include "Characters/Player/AEWeaponComponent.h"
 #include "Components/TextBlock.h"
 #include "Components/ProgressBar.h"
-#include "Animation/WidgetAnimation.h"
 #include "Components/Image.h"
 
 void UAmmoWidgetBase::InitializeWidget(UAEWeaponComponent* WeaponComp, UAbilitySystemComponent* ASC)

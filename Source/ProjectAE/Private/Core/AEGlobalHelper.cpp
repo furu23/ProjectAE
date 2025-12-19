@@ -6,7 +6,6 @@
 // --- 필요한 엔진 헤더 ---
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
-#include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"

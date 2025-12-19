@@ -7,7 +7,6 @@
 #include "Characters/Player/PlayerCharacter.h"
 #include "Core/AEGlobalHelper.h"
 #include "Inventory/InventoryComponent.h"
-#include "Slate/SGameLayerManager.h"
 
 
 // Sets default values for this component's properties

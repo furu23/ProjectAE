@@ -4,12 +4,11 @@
 #include "Actor/AELootItem.h"
 #include "Components/BoxComponent.h"
 #include "Characters/Player/PlayerCharacter.h"
-#include "AbilitySystem/AS_BaseCombat.h"
 #include "AbilitySystemComponent.h"
 
 AAELootItem::AAELootItem()
 {
-	CreateDefaultSubobject<UBoxComponent>(TEXT("LootCollisionBox"));
+	LootCollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("LootCollisionBox"));
 	SetRootComponent(LootCollisionBox);
 }
 
@@ -23,22 +22,25 @@ void AAELootItem::BeginPlay()
 
 void AAELootItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (ensure(!BioHealEffectClass)) return;
+	if (!ensure(BioHealEffectClass)) return;
 
-	if (OtherActor && (OtherActor != this) && OtherComp)
+	if (OtherActor && (OtherActor != this))
 	{
 		APlayerCharacter* PlayerChar = Cast<APlayerCharacter>(OtherActor);
 		if (PlayerChar)
 		{
+			
 			UAbilitySystemComponent* ASC = PlayerChar->GetASC();
 			if (ASC)
 			{
+				
 				FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
 				EffectContext.AddSourceObject(this);
 				
 				const FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(BioHealEffectClass, 1.0f, EffectContext);
 				if (SpecHandle.IsValid())
 				{
+					
 					SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.BioHealAmount")), HealAmount);
 				}
 

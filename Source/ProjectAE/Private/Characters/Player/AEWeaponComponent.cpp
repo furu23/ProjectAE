@@ -6,7 +6,6 @@
 #include "Characters/Player/PlayerCharacter.h"
 #include "Characters/Player/Data/AEWeaponDefinition.h"
 #include "ProjectAE/ProjectAE.h"
-#include "AbilitySystem/AEAbilitySystemComponent.h"
 
 void UAEWeaponComponent::EquipWeapon(UAEWeaponDefinition* NewWeaponDef)
 {

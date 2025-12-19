@@ -13,7 +13,6 @@
 #include "Inventory/InventoryComponent.h"
 #include "GameplayTagContainer.h"
 #include "Characters/Player/AEWeaponComponent.h"
-#include "ProjectAE/ProjectAE.h"
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystem/HealthComponent.h"
 #include "Characters/Player/OcclusionFadeComponent.h"

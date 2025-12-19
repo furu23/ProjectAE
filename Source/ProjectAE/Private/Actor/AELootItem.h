@@ -17,6 +17,9 @@ class AAELootItem : public AActor
 public:
 	AAELootItem();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loot")
+	TObjectPtr<UBoxComponent> LootCollisionBox;
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -25,8 +28,6 @@ protected:
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
 		const FHitResult& SweepResult);
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Loot")
-	TObjectPtr<UBoxComponent> LootCollisionBox;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Loot|GAS")
 	TSubclassOf<UGameplayEffect> BioHealEffectClass;
