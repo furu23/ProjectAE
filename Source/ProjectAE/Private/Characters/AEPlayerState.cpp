@@ -22,7 +22,18 @@ AAEPlayerState::AAEPlayerState()
 	BaseSet = CreateDefaultSubobject<UAS_BaseCombat>("AttributeSet");
 	HealthSet = CreateDefaultSubobject<UAS_HealthSet>("HealthSet");
 
+
 	// AttributeSet 등록
 	ASC->AddAttributeSetSubobject<UAS_BaseCombat>(BaseSet);
 	ASC->AddAttributeSetSubobject<UAS_HealthSet>(HealthSet);
+}
+
+void AAEPlayerState::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (BioStarvationClass)
+	{
+		BaseSet->BioStarvationClass = BioStarvationClass;
+	}
 }

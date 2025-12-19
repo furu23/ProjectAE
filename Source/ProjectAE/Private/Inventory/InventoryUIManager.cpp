@@ -3,9 +3,7 @@
 
 #include "Inventory/InventoryUIManager.h"
 
-#include "Blueprint/UserWidget.h"
 #include "Inventory/InventoryComponent.h"
-#include "Inventory/Widgets/InventoryWidget.h"
 #include "Widgets/AEGameHUDWidget.h"
 
 

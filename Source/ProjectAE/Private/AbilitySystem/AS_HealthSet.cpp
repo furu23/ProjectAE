@@ -4,7 +4,6 @@
 #include "AbilitySystem/AS_HealthSet.h"
 #include "Net/UnrealNetwork.h"
 #include "GameplayEffectExtension.h"
-#include "Core/AEGlobalHelper.h"
 
 #define MINIMUM_MAXHEALTH 10.f
 

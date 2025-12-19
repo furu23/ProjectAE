@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/DragDropOperation.h"
-#include "Inventory/InventoryComponent.h"
 #include "InventoryDragDropOperation.generated.h"
 
 /**

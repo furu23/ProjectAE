@@ -2,15 +2,13 @@
 
 
 #include "Characters/BaseCharacter.h"
-#include "AbilitySystem/Data/AbilityInputConfig.h"
-#include "Characters/AEPlayerState.h"
 #include "AbilitySystem/AEAbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
-#include "EnhancedInputComponent.h"
 #include "Core/AEGlobalHelper.h"
-#include "FX/AEAudioComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Widgets/StatBarWidget.h"
+#include "AbilitySystem/AS_BaseCombat.h"
+#include "AbilitySystemComponent.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()

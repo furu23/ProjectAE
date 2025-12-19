@@ -3,9 +3,7 @@
 
 #include "QuestMessageHelpers.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
-#include "GameplayTagAssetInterface.h"
 #include "QuestTypes.h"
-#include "QuestSystem.h"
 
 void UQuestMessageHelpers::BroadcastAIKilledEvent(UObject* WorldContextObject, AActor* InstigatorActor, AActor* TargetActor, FGameplayTagContainer TargetTags)
 {

@@ -7,6 +7,8 @@
 #include "AbilitySystemComponent.h"
 #include "AS_BaseCombat.generated.h"
 
+class UGameplayEffect;
+
 
 // Attribute 관리를 위한 함수 생성용 매크로
 #define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
@@ -59,6 +61,13 @@ public:
     UPROPERTY(BlueprintReadOnly, Category = "Attributes"/*, ReplicatedUsing = "OnRep_MaxBio"*/)
     FGameplayAttributeData MaxBio;
     ATTRIBUTE_ACCESSORS(UAS_BaseCombat, MaxBio);
+
+    // 적용할 바이오 데미지 GE UClass
+    UPROPERTY()
+    TSubclassOf<UGameplayEffect> BioStarvationClass = nullptr;
+
+    // 적용된 굶주림 디버프의 핸들을 저장할 변수
+    FActiveGameplayEffectHandle StarvationDebuffHandle;
 
     // 기본 전투 관련 속성입니다.
 

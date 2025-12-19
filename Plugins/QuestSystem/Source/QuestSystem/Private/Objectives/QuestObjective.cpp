@@ -3,7 +3,6 @@
 
 #include "Objectives/QuestObjective.h"
 #include "Objectives/QuestObjectiveConfig.h"
-#include "GameFramework/GameplayMessageSubsystem.h"
 #include "QuestManagerSubSystem.h"
 #include "QuestSystem.h"
 

@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "QuestTypes.h"
 #include "Delegates/DelegateCombinations.h"
 #include "QuestObject.generated.h"

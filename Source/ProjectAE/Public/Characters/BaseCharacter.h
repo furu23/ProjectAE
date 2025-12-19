@@ -11,6 +11,7 @@ class UAbilitySystemComponent;
 class UHitFeedback;
 class UAEAudioComponent;
 class UWidgetComponent;
+class UGameplayEffect;
 
 UCLASS()
 class PROJECTAE_API ABaseCharacter : public ACharacter

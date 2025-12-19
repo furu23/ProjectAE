@@ -10,6 +10,7 @@
 class UAEAbilitySystemComponent;
 class UAS_HealthSet;
 class UHealthComponent;
+class AActor;
 
 /**
  * 
@@ -46,4 +47,8 @@ protected:
 
 	// 체력 어트리뷰트
 	TObjectPtr<UAS_HealthSet> HealthSet;
+
+	// OnDeath에서 스폰할 바이오 아이템 클래스
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character")
+	TSubclassOf<AActor> BioItemClass;
 };

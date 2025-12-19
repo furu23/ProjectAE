@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/TriggerVolume.h"
 #include "GameplayTagContainer.h"
 #include "AEQuestLocationActor.generated.h"
 
