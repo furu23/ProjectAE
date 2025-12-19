@@ -22,7 +22,7 @@ struct FQuestProgressData
 	
 	// 현재 진행도의 단계
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, SaveGame, Category = "Quest")
-	EQuestProgress ProgressType;
+	EQuestProgress ProgressType = EQuestProgress::None;
 
 	// 진행도의 실제 진행상황
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, SaveGame, Category = "Quest")
