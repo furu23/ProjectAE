@@ -84,6 +84,7 @@ protected:
 	const UQuestObjectiveConfig* ObjectiveConfig;
 
 	// 진행도 포인터 반환을 위한 퀘스트 시스템 캐시
+	UPROPERTY()
 	TObjectPtr<UQuestManagerSubSystem> CachedQuestSys;
 
 	// 이미 완료 함수가 호출되었는 지를 확인하는 bool 프로퍼티
