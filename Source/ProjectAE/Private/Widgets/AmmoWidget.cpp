@@ -98,6 +98,8 @@ void UAmmoWidget::NativeOnBind()
     {
         Text_MaxAmmo->SetText(FText::AsNumber(MaxAmmo));
     }
+
+    UpdateVisuals();
 }
 
 void UAmmoWidget::NativeOnAmmoUpdated(int32 NewValue, int32 OldValue)

@@ -7,6 +7,8 @@
 #include "Core/AEGlobalHelper.h"
 #include "Components/WidgetComponent.h"
 #include "Widgets/StatBarWidget.h"
+#include "AbilitySystem/AS_BaseCombat.h"
+#include "AbilitySystemComponent.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()

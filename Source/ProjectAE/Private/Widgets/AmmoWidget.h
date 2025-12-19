@@ -20,6 +20,7 @@ class UAmmoWidgetBase : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable)
 	void InitializeWidget(UAEWeaponComponent* WeaponComp, UAbilitySystemComponent* ASC);
 
 protected:

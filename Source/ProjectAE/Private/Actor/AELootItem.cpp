@@ -10,10 +10,15 @@ AAELootItem::AAELootItem()
 {
 	LootCollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("LootCollisionBox"));
 	SetRootComponent(LootCollisionBox);
+
+	LootCollisionBox->SetCollisionProfileName(TEXT("Trigger"));
+	LootCollisionBox->SetGenerateOverlapEvents(true);
 }
 
 void AAELootItem::BeginPlay()
 {
+	Super::BeginPlay();
+
 	if (LootCollisionBox)
 	{
 		LootCollisionBox->OnComponentBeginOverlap.AddDynamic(this, &AAELootItem::OnOverlapBegin);
@@ -46,7 +51,7 @@ void AAELootItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 
 				ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data, ASC);
 
-				Destroy();
+				this->Destroy();
 			}
 		}
 	}

@@ -10,6 +10,7 @@
 class UAEAbilitySystemComponent;
 class UAS_BaseCombat;
 class UAS_HealthSet;
+class UGameplayEffect;
 
 /**
  * 
@@ -26,6 +27,9 @@ public:
 	AAEPlayerState();
 
 protected:
+
+	virtual void BeginPlay() override;
+
 	UPROPERTY()
 	TObjectPtr<UAEAbilitySystemComponent> ASC;
 
@@ -34,4 +38,7 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UAS_HealthSet> HealthSet;
+
+	UPROPERTY(EditAnywhere, Category = "GAS")
+	TSubclassOf<UGameplayEffect> BioStarvationClass; 
 };
