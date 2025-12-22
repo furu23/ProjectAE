@@ -33,5 +33,5 @@ protected:
 	TSubclassOf<UGameplayEffect> BioHealEffectClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Loot")
-	float HealAmount = 10.f;
+	float HealAmount = 5.f;
 };
