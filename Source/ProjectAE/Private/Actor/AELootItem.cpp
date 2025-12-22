@@ -43,7 +43,7 @@ void AAELootItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 				float CurrentBioValue = ASC->GetGameplayAttributeValue(UAS_BaseCombat::GetBioAttribute(), bFoundAttribute);
 				if (!bFoundAttribute) return;
 				
-				float CurrentBioMaxValue = ASC->GetGameplayAttributeValue(UAS_BaseCombat::GetBioAttribute(), bFoundAttribute);
+				float CurrentBioMaxValue = ASC->GetGameplayAttributeValue(UAS_BaseCombat::GetMaxBioAttribute(), bFoundAttribute);
 				if (!bFoundAttribute) return;
 				
 				FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
