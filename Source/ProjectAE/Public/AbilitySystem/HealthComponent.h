@@ -9,6 +9,7 @@
 #include "HealthComponent.generated.h"
 
 class UAbilitySystemComponent;
+class UGameplayEffect;
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDeathSignature, AActor*, Causer, AActor*, Victim);
@@ -55,6 +56,12 @@ protected:
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
 
 	virtual void OnMaxHealthAttributeChanged(const FOnAttributeChangeData& Data);
+
+	UPROPERTY(EditDefaultsOnly, Category = "Health|Config")
+	float InitialHealthValue = 100.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Health|Config")
+	TSubclassOf<UGameplayEffect> DefineEffectClass;
 
 private:
 	// 사망 여부

@@ -58,7 +58,7 @@ void UAS_BaseCombat::PostGameplayEffectExecute(const struct FGameplayEffectModCa
 		{
 			if (!StarvationDebuffHandle.IsValid())
 			{
-				FGameplayEffectContextHandle ContextHandle;
+				FGameplayEffectContextHandle ContextHandle = TargetASC->MakeEffectContext();
 				ContextHandle.AddSourceObject(this);
 
 				FGameplayEffectSpecHandle Spec = TargetASC->MakeOutgoingSpec(BioStarvationClass, 1, ContextHandle);

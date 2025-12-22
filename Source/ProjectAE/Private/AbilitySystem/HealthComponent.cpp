@@ -7,6 +7,7 @@
 #include "AbilitySystem/AS_HealthSet.h"
 #include "QuestMessageHelpers.h"
 #include "GameplayEffectExtension.h"
+#include "../../../../Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Public/GameplayEffect.h"
 
 // Sets default values for this component's properties
 UHealthComponent::UHealthComponent()
@@ -34,6 +35,21 @@ bool UHealthComponent::TryInitAbilitySystem(UAbilitySystemComponent* InASC)
 		 {
 			CachedASC->GetGameplayAttributeValueChangeDelegate(UAS_HealthSet::GetHealthAttribute()).AddUObject(this, &UHealthComponent::OnHealthAttributeChanged);
 			CachedASC->GetGameplayAttributeValueChangeDelegate(UAS_HealthSet::GetMaxHealthAttribute()).AddUObject(this, &UHealthComponent::OnMaxHealthAttributeChanged);
+
+			if (DefineEffectClass)
+			{
+				FGameplayEffectContextHandle EffectHandle = InASC->MakeEffectContext();
+				EffectHandle.AddSourceObject(this);
+				EffectHandle.AddInstigator(GetOwner(), GetOwner());
+
+				FGameplayEffectSpecHandle Spec = InASC->MakeOutgoingSpec(DefineEffectClass, 1, EffectHandle);
+				if (!ensureMsgf(Spec.IsValid(), TEXT("Critical Error For MakeOutGoingSpec On HealthComp."))) return false;
+
+				Spec.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(TEXT("Data.Health")), InitialHealthValue);
+
+				InASC->ApplyGameplayEffectSpecToTarget(*Spec.Data, InASC);
+			}
+
 			return true;
 		 }
 	}
