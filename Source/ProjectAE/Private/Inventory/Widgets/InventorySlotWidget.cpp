@@ -10,6 +10,7 @@
 #include "Inventory/Data/ItemData.h"
 #include "Inventory/Data/InventoryDragDropOperation.h"
 #include "Inventory/Data/InventorySlot.h"
+#include "Inventory/InventoryComponent.h"
 
 
 void UInventorySlotWidget::NativeConstruct()
