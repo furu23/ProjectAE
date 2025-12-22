@@ -45,6 +45,7 @@ protected:
 
 	// 그리기를 구현하기 위한 순수 가상 함수
 	virtual void UpdateVisuals(float DisplayValue, float MaxStatValue) PURE_VIRTUAL(UStatBarWidgetBase::UpdateVisuals, );
+
 	// BP 확장을 위한 NVI 적용 함수들
 	UFUNCTION(BlueprintImplementableEvent, Category = "UI", meta = (DisplayName = "OnCurrentValueChanged"))
 	void K2_OnCurrentValueChanged(float NewValue, float OldValue);
