@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Data/DA_QuestBase.h"
+#include "Data/QuestData.h"
 #include "QuestSystem.h"
 
-FPrimaryAssetId UDA_QuestBase::GetPrimaryAssetId() const
+FPrimaryAssetId UQuestObjectConfig::GetPrimaryAssetId() const
 {
 	if (HasAnyFlags(RF_ClassDefaultObject))
 	{

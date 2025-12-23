@@ -3,12 +3,12 @@
 
 #include "QuestObject.h"
 #include "QuestManagerSubSystem.h"
-#include "Data/DA_QuestBase.h"
+#include "Data/QuestData.h"
 #include "Objectives/QuestObjectiveConfig.h"
 #include "Objectives/QuestObjective.h"
 #include "QuestSystem.h"
 
-void UQuestObject::Initialize(UDA_QuestBase* DefRef, UQuestManagerSubSystem* Manager)
+void UQuestObject::Initialize(UQuestObjectConfig* DefRef, UQuestManagerSubSystem* Manager)
 {
 	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] Object Initialize"), *this->GetFName().ToString());
 	// 값 초기화

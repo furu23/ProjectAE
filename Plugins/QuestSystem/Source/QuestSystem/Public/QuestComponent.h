@@ -1,16 +1,10 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "Subsystems/LocalPlayerSubsystem.h"
-#include "GameplayTagContainer.h"
-#include "QuestTypes.h"
+#include "Components/ActorComponent.h"
 #include "Delegates/DelegateCombinations.h"
-#include "Logging/LogMacros.h"
-#include "Task/QuestTask.h"
-#include "QuestManagerSubSystem.generated.h"
-
+#include "QuestTypes.h"
+#include "QuestComponent.generated.h"
 
 // 전방 선언
 
@@ -26,23 +20,22 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestEntryUpdatedSignature, const
 DECLARE_DELEGATE_OneParam(FOnQuestTaskBubbleSignature, const TArray<TObjectPtr<UQuestTask>>&);
 
 
-/**
- * @brief In-Raid 레벨 및 로비(창고) 레벨에서 모두 퀘스트를 관리하고 추적할 수 있도록 관리하는 서브시스템입니다.
- * @note 데이터와 이벤트 주도의 방식으로 설계되었으며. 코드의 수정보다는 실제 Quest 행동에 대한 로직은 Gameplay Ability에서, 데이터는 DA에서 변경을 시도해주시길 바랍니다.
- */
-UCLASS(Abstract)
-class QUESTSYSTEM_API UQuestManagerSubSystem : public ULocalPlayerSubsystem
+
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+class QUESTSYSTEM_API UQuestComponent : public UActorComponent
 {
 	GENERATED_BODY()
 	
 public:
 	// **** 초기화 관련 ****
 
-	// 초기화 함수
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	UQuestComponent();
 
-	// 종료
-	virtual void Deinitialize() override;
+	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 
 	// **** 기능을 위한 공용 API 함수 ****
@@ -51,6 +44,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Quest", meta = (BlueprintPure = "false", ToolTip = "첫 생성 시 모든 DTO 객체를 빌드하고 보냅니다."))
     TArray<FQuestLogEntry> GetQuestLogEntries() const;
 
+	// 활성화된 퀘스트 객체를 QuestID로 검색합니다
+	UFUNCTION(BlueprintCallable, Category = "Quest", meta = (ToolTip = "현재 활성화된 퀘스트 객체를 QuestID로 검색합니다."))
+	const UQuestObject* FindActiveQuest(const FGameplayTag& QuestID) const;
+	
 
 
 	// **** 기능을 위한 공용 델리게이트 ****
@@ -58,9 +55,6 @@ public:
 	// UI 에 사용될 Entry 단일 객체를 가져오는 델리게이트
     UPROPERTY(BlueprintAssignable, Category = "Quest|Events", meta = (ToolTip = "단일 객체를 업데이트 하는 델리게이트입니다."))
     FOnQuestEntryUpdatedSignature OnQuestEntryUpdatedDelegate;
-
-	// 목표 객체에서 월드 태스크에 요청이 들어왔을 때
-	FOnQuestTaskBubbleSignature OnQuestTaskBubbleUpDelegate;
 
 	
 
@@ -90,18 +84,33 @@ public:
 	virtual void SetupNewGameQuests();
 
 
+
+	// **** Blueprint Hooks ****
+
+	UPROPERTY(BlueprintImplementableEvent, Category = "Quest|Events", meta = (ToolTip = "퀘스트 상태가 변경되었을 때 호출되는 이벤트입니다."))
+	void K2_NotifyQuestUpdate(const FGameplayTag& QuestID);
+
+	UPROPERTY(BlueprintImplementableEvent, Category = "Quest|Events", meta = (ToolTip = "퀘스트가 수락되었을 때 호출되는 이벤트입니다."))
+	void K2_OnQuestAccepted(const FGameplayTag & QuestID);
+
+	UPROPERTY(BlueprintImplementableEvent, Category = "Quest|Events", meta = (ToolTip = "퀘스트 보상이 수령되었을 때 호출되는 이벤트입니다."))
+	void K2_OnQuestRewardClaimed(const FGameplayTag& QuestID);
+
+
 protected:
 	// 모든 퀘스트들의 추적을 로드 및 저장
-	UPROPERTY(SaveGame)
-	TMap<FGameplayTag, FQuestProgressData> PlayerQuestHistory;
-
-	// PlayerQuestHistoty를 기반으로 빌드되는 설계도 객체 캐시들 (현재 전부 로드되어 있는 설계입니다 많은 퀘스트 사용 시 변용을 요합니다)
-	UPROPERTY(Transient)
-	TMap<FGameplayTag, TObjectPtr<UQuestObjectConfig>> ActiveQuestDACaches;
+	UPROPERTY(Replicated, SaveGame)
+	FQuestFastArray PlayerQuestHistory;
 
 	// 현재 활성화된 퀘스트 오브젝트들
 	UPROPERTY(Transient)
-	TMap<FGameplayTag, TObjectPtr<UQuestObject>> ActiveQuests;
+	TArray<TObjectPtr<UQuestObject>> ActiveQuests;
+
+	// 로드 시 전체 퀘스트 불변 데이터를 저장해두는 캐시
+	UPROPERTY(Transient)
+    TMap<FGameplayTag, FQuestTableRow> QuestMetadataCache;
+
+
 
 
 
@@ -171,12 +180,6 @@ private:
 
 
 
-	// **** 특수한 상황을 위한 로드 핸들링 ****
-
-	TSharedPtr<FStreamableHandle> LoadHandle;
-
-
-
 	// ========= DEVELOPMENT-ONLY =========
 
 	// **** 개발자용 private 디버깅 함수 ****
@@ -193,4 +196,4 @@ private:
 	TArray<IConsoleObject*> ConsoleCommands;
 #endif
 
-};
+}

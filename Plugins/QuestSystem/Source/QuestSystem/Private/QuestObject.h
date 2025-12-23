@@ -7,7 +7,7 @@
 #include "Delegates/DelegateCombinations.h"
 #include "QuestObject.generated.h"
 
-class UDA_QuestBase;
+class UQuestObjectConfig;
 class UQuestManagerSubSystem;
 class UQuestObjective;
 class UQuestTask;
@@ -32,10 +32,15 @@ public:
 	FOnRequestWorldTasksSignature OnRequestWorldTasksDelegate;
 
 
+	// **** 유틸리티 함수 ****
+
+	FORCEINLINE const FGameplayTag& GetQuestID() const { return Definition ? Definition->QuestID : FGameplayTag::EmptyTag; }
+
+
 	// **** 상위 객체 호출 함수 ****
 
 	// 퀘스트 런타임 객체를 초기화합니다.
-	virtual void Initialize(UDA_QuestBase* DefRef, UQuestManagerSubSystem* Manager);
+	virtual void Initialize(UQuestObjectConfig* DefRef, UQuestManagerSubSystem* Manager);
 
 	// Objective 배열을 순회하며 활성화 시킵니다. 델리게이트에 OnObjectCompleted 함수를 바인드합니다.
 	virtual void Activate(UObject* WorldContext);
@@ -61,7 +66,7 @@ protected:
 
 	// 이 퀘스트 런타임 객체의 설계도가 되는 UDA_QuestBase 객체에 대한 참조입니다.
 	UPROPERTY()
-	TObjectPtr<UDA_QuestBase> Definition;
+	TObjectPtr<UQuestObjectConfig> Definition;
 
 	// 퀘스트의 하위 목표 객체 배열입니다.
 	UPROPERTY(VisibleInstanceOnly, Category = "Quest")
