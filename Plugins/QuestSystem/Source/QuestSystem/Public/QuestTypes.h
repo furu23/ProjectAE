@@ -161,12 +161,7 @@ public:
 	// **** FFastArraySerializer 인터페이스 재정의 ****
 
 	// 클라이언트에서 복제 완료 후 호출되는 함수
-	void PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize)
-	{
-		RebuildCache();
-	}
-
-	void PostReplicatedChange(const TArrayView<int32> ChangedIndices, int32 FinalSize)
+	void PostReplicatedReceive(const FFastArraySerializer::FPostReplicatedReceiveParameters& Parameters)
 	{
 		RebuildCache();
 	}
@@ -220,7 +215,7 @@ public:
 	 * @param InQuestID 찾고자 하는 퀘스트의 GameplayTag ID
 	 * @return FQuestProgressData* 해당 퀘스트의 진행 데이터 포인터 (없으면 nullptr)
 	 */
-	FQuestProgressData* Find(FGameplayTag InQuestID)
+	const FQuestProgressData* Find(FGameplayTag InQuestID)
 	{
 		if (!InQuestID.IsValid()) return nullptr;
 
@@ -251,6 +246,18 @@ public:
 		}
 		return nullptr;
 	}
+
+	bool Contains(FGameplayTag InQuestID)
+	{
+		return Find(InQuestID) != nullptr;
+	}
+
+	bool IsEmpty() const
+	{
+		return QuestProgressItems.Num() == 0;
+	}
+
+	bool Update
 
 
 	// **** 마이그레이션 함수 ****
@@ -290,7 +297,7 @@ public:
 
 private:
 	// 캐시 재구축 함수
-	void RebuildCache()
+	void RebuildCache() const
 	{
 		QuestIndexMap.Empty(QuestProgressItems.Num());
 		for (int32 i = 0; i < QuestProgressItems.Num(); ++i)

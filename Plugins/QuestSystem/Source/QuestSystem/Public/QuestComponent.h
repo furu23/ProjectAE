@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Delegates/DelegateCombinations.h"
+#include "GameplayTagContainer.h"
+#include "Engine/DataTable.h"
 #include "QuestTypes.h"
 #include "QuestComponent.generated.h"
 
@@ -47,6 +49,10 @@ public:
 	// 활성화된 퀘스트 객체를 QuestID로 검색합니다
 	UFUNCTION(BlueprintCallable, Category = "Quest", meta = (ToolTip = "현재 활성화된 퀘스트 객체를 QuestID로 검색합니다."))
 	const UQuestObject* FindActiveQuest(const FGameplayTag& QuestID) const;
+
+	// QuestID에 해당되는 FQuestProgressData의 값을 질의하고 받습니다
+	FQuestProgressData* QueryProgressDataForQuestID(const FGameplayTag& QuestID);
+
 	
 
 
@@ -71,9 +77,6 @@ public:
 
 
 	// **** 내부 시스템용 쿼리 함수 *****
-
-	// QuestID에 해당되는 FQuestProgressData의 값을 질의하고 받습니다
-	FQuestProgressData* QueryProgressDataForQuestID(const FGameplayTag& QuestID);
 
 
 	
@@ -112,12 +115,9 @@ protected:
 
 
 
-
-
 	// **** 하위클래스 전용 상태 변경 알림 함수 ****
 
 	virtual void NotifyQuestUpdate(const FGameplayTag& QuestID);
-	// **** 퀘스트 상태 추적 프로퍼티 ****
 
 
 

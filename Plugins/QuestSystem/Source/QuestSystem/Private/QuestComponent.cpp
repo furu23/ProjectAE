@@ -1,8 +1,8 @@
-﻿#include "QuestManagerSubSystem.h"
+﻿#include "QuestComponent.h"
 #include "QuestSystem.h"
 #include "QuestTypes.h"
 #include "QuestObject.h"
-#include "Data/QuestData.h"
+#include "Data/QuestObjectConfig.h"
 #include "Objectives/QuestObjectiveConfig.h"
 
 #include "GameplayTagContainer.h"
@@ -227,6 +227,23 @@ void UQuestComponent::SetupNewGameQuests()
 
 void UQuestComponent::AcceptQuest(const FGameplayTag& QuestID)
 {
+	if (!QuestID.IsValid()) return;
+
+	FQuestProgressData* ExistingData = PlayerQuestHistory.Find(QuestID);
+	if (ExistingData)
+	{
+		if (ExistingData->ProgressType != EQuestProgress::CanAccept)
+		{
+			UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] AcceptQuest: [%s] ID has not validate data"), *QuestID.GetTagName().ToString());
+			return;
+		}
+	}
+	else
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] AcceptQuest: [%s] ID has not validate data"), *QuestID.GetTagName().ToString());
+		return;
+	}
+
 	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] AcceptQuest: [%s] Id is Accepting Now..."), *QuestID.GetTagName().ToString());
 	if (ActiveQuests.Contains(QuestID))
 	{
@@ -235,7 +252,7 @@ void UQuestComponent::AcceptQuest(const FGameplayTag& QuestID)
 	}
 
 	// 퀘스트를 수락하고 진행 상태로 변경합니다.
-	PlayerQuestHistory.Emplace(QuestID, EQuestProgress::InProgress);
+	PlayerQuestHistory.Find
 
 	LoadAndActivateQuest(QuestID);
 }
