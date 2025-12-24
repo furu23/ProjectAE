@@ -35,6 +35,7 @@ public:
 	// **** 유틸리티 함수 ****
 
 	FORCEINLINE const FGameplayTag& GetQuestID() const { return Definition ? Definition->QuestID : FGameplayTag::EmptyTag; }
+	FORCEINLINE const UQuestObjectConfig* GetQuestDefinition() const { return Definition; }
 
 
 	// **** 상위 객체 호출 함수 ****
@@ -49,7 +50,7 @@ public:
 	virtual void DeActivate();
 
 	// 퀘스트가 완료되었는지 확인합니다.
-	virtual bool CheckQuestCompletion();
+	virtual bool CheckQuestCompletion() const;
 
 #if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
 

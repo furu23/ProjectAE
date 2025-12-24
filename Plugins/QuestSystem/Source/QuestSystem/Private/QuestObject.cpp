@@ -65,7 +65,7 @@ void UQuestObject::DeActivate()
 	Objectives.Empty();
 }
 
-bool UQuestObject::CheckQuestCompletion()
+bool UQuestObject::CheckQuestCompletion() const
 {
 	for (UQuestObjective* Objective : Objectives)
 	{

@@ -10,6 +10,7 @@
 
 
 class UQuestObjectiveConfig;
+class UQuestAction;
 
 
 USTRUCT(BlueprintType)

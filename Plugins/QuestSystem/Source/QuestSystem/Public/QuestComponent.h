@@ -50,8 +50,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Quest", meta = (ToolTip = "현재 활성화된 퀘스트 객체를 QuestID로 검색합니다."))
 	const UQuestObject* FindActiveQuest(const FGameplayTag& QuestID) const;
 
+	UFUNCTION(BlueprintCallable, Category = "Quest", meta = (ToolTip = "현재 QuestID의 퀘스트 객체가 활성화되어있는지 검색합니다."))
+	bool HasActiveQuest(const FGameplayTag& QuestID) const;
+
 	// QuestID에 해당되는 FQuestProgressData의 값을 질의하고 받습니다
-	FQuestProgressData* QueryProgressDataForQuestID(const FGameplayTag& QuestID);
+	const FQuestProgressData* QueryProgressDataForQuestID(const FGameplayTag& QuestID) const;
 
 	
 
@@ -151,10 +154,10 @@ protected:
 	// **** 데이터 비동기 로드 관련 ****
 
 	// 초기화 시점에 에셋 로드 작업을 시작합니다.
-	virtual void StartAsyncLoadData();
+	virtual void LoadAndActivateQuest(const FGameplayTag& QuestID);
 
-	// 비동기 로드를 실행하고 받을 콜백 함수
-	virtual void OnQuestDataLoaded();
+	// 비동기 로드를 실행하고 콜백에서 호출될 함수
+	virtual void OnQuestDataLoaded(const FGameplayTag& QuestID);
 
 
 
@@ -168,7 +171,7 @@ private:
 	// **** Private 내부 상태 변화 함수 모음 ****
 
 	// 퀘스트를 활성화 상태로 변경
-	void LoadAndActivateQuest(const FGameplayTag& QuestID);
+	void StartActivateQuest(const FGameplayTag& QuestID);
 
 	// 퀘스트를 비활성화 상태로 변경하고 파괴
 	void DeactivateAndDestroyQuest(const FGameplayTag& QuestID);
@@ -178,7 +181,8 @@ private:
 	// **** 태스크 버블링 용 내부 델리게이트 바인딩 함수 ****
 	void OnQuestRequestingWorldTasks(const TArray<TObjectPtr<UQuestTask>>& TasksToExecute);
 
-
+	// 로드 감시용 핸들
+	TMap<FGameplayTag, TSharedPtr<FStreamableHandle>> LoadHandles;
 
 	// ========= DEVELOPMENT-ONLY =========
 
