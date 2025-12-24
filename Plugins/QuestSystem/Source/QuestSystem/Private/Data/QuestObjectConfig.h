@@ -6,6 +6,7 @@
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
 #include "Reward/QuestReward.h"
+#include "Object/QuestObject.h"
 #include "QuestObjectConfig.generated.h"
 
 
@@ -37,32 +38,19 @@ class QUESTSYSTEM_API UQuestObjectConfig : public UPrimaryDataAsset
 	GENERATED_BODY()
 	
 public:
-	/* 이사 예정! */
+	// **** 기본 속성 ****
 
-	// 각 퀘스트의 고유한 ID입니다.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "이 퀘스트가 사용할 런타임 객체 클래스입니다. (기본값 = 일반적으로 이미 정의된 안전한 클래스)"))
+	TSubclassOf<UQuestObject> QuestObjectClass = UQuestObject::StaticClass();
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "각 퀘스트의 고유한 ID입니다."))
 	FGameplayTag QuestID;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "퀘스트 설명입니다."))
+    FText Description;
 
-	// 선행 퀘스트들의 ID 태그를 담아둔 태그 컨테이너입니다.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (DisplayName = "PrerequisiteQuest(선행퀘스트)", ToolTip = "선행 퀘스트들의 ID를 담는 태그 컨테이너입니다."))
-	FGameplayTagContainer PrerequisiteQuests;
-
-	// 퀘스트 이름입니다.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "인게임에 보여질 퀘스트 이름입니다."))
-	FText QuestName;
-
-	// 퀘스트 설명입니다.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "인게임에 보여지는 퀘스트 설명입니다."))
-	FText Description;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "뉴 게임 시작 시, CanAccept 상태인 퀘스트 입니다."))
-	bool bIsStartingQuest = false;
-
-	/* ---  */
-
-	// 각 퀘스트의 고유한 ID입니다.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "각 퀘스트의 고유한 ID입니다."))
-	FGameplayTag QuestID;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "퀘스트 아이콘입니다."))
+	TSoftObjectPtr<UTexture2D> Icon;
 
 
 	// **** 퀘스트 정책 설정들 ****

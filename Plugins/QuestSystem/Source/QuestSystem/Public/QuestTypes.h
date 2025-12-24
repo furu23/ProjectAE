@@ -43,23 +43,22 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="UI")
     FText QuestName;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="UI")
-    FText Description;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="UI")
-    TSoftObjectPtr<UTexture2D> Icon;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="System")
-    FGameplayTagContainer PrerequisiteQuests;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "System")
+	FGameplayTagContainer PrerequisiteQuests;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="System")
     EQuestType QuestType; // Main, Side, Daily...
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "System")
-	int32 Priority = 0;
+	uint8 Priority = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dev")
-	FText DevComment;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Policy")
+	bool bIsStartingQuest = false;
+
+#if WITH_EDITORONLY_DATA
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dev")
+    FText DevComment;
+#endif
 };
 
 
@@ -101,14 +100,15 @@ private:
 	// 퀘스트 고유 ID
 	UPROPERTY(SaveGame)
 	FGameplayTag QuestID = FGameplayTag::EmptyTag;
+
+	// 진행도의 실제 진행상황
+	UPROPERTY(SaveGame)
+	TArray<FQuestObjectiveData> Objectives;
 	
 	// 현재 진행도의 단계
 	UPROPERTY(SaveGame)
 	EQuestProgress ProgressType = EQuestProgress::None;
 
-	// 진행도의 실제 진행상황
-	UPROPERTY(SaveGame)
-	TArray<FQuestObjectiveData> Objectives;
 
 
 
@@ -240,7 +240,6 @@ public:
 
 
 
-
 USTRUCT(BlueprintType)
 struct FQuestFastArray : public FFastArraySerializer
 {
@@ -330,6 +329,7 @@ public:
 		return QuestProgressItems;
 	}
 
+	// 공용 API
 	FORCEINLINE int32 Num() const 
 	{
 		return QuestProgressItems.Num();
@@ -339,6 +339,16 @@ public:
 	{
 		return QuestProgressItems.Num() == 0;
 	}
+
+	FORCEINLINE void Empty()
+	{
+		QuestProgressItems.Empty();
+		MarkArrayDirty();
+
+		// 캐시 리빌드는 InitializeFromSaveData에서 진행하므로
+		bCacheDirtyFlag = false;
+	}
+
 
 	// 범위 기반 for 지원
 	auto begin() { return QuestProgressItems.begin(); }
@@ -466,32 +476,55 @@ public:
 	}
 
 
-	// **** 마이그레이션 함수 ****
-	
 	// **** 초기화 및 마이그레이션 통합 함수 ****
 	void InitializeFromSaveData(const TSet<FGameplayTag>& ValidQuestTags)
 	{
-		bool bAnyChanged = false;
+		// 데이터 변경 체크 플래그
+		bool bStructureChanged = false;
 
+		// 기존 데이터 정리 및 마이그레이션
 		for (int32 i = QuestProgressItems.Num() - 1; i >= 0; --i)
 		{
 			if (!ValidQuestTags.Contains(QuestProgressItems[i].GetQuestID()))
 			{
 				QuestProgressItems.RemoveAt(i);
-				bAnyChanged = true;
+				bStructureChanged = true;
 				continue;
 			}
 
 			if (QuestProgressItems[i].MigrateToLatest())
 			{
-				MarkItemDirty(QuestProgressItems[i]); // 개별 아이템 변경 알림
-				bAnyChanged = true;
+				MarkItemDirty(QuestProgressItems[i]);
 			}
 		}
 
-		RebuildCache();
+		// 구조가 변경되었으면 캐시 재구축
+		if (bStructureChanged)
+		{
+			RebuildCache();
+		}
 
-		if (bAnyChanged)
+		// 누락된 퀘스트 데이터 추가
+		bool bAddedNew = false;
+		for (const FGameplayTag& ValidTag : ValidQuestTags)
+		{
+			
+			if (!QuestIndexMap.Contains(ValidTag))
+			{
+				QuestProgressItems.Emplace(ValidTag, EQuestProgress::NotStarted);
+				bAddedNew = true;
+			}
+		}
+
+		// 새로운 항목이 추가되었으면 캐시 재구축
+		if (bAddedNew)
+		{
+			RebuildCache();
+			bStructureChanged = true;
+		}
+
+		// 배열 구조가 변경되었으면 MarkArrayDirty 호출
+		if (bStructureChanged)
 		{
 			MarkArrayDirty();
 		}

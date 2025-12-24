@@ -16,188 +16,239 @@ class IConsoleObject;
 struct FStreamableHandle;
 
 
-// 델리게이트 선언
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestEntryUpdatedSignature, const FQuestLogEntry&, UpdatedEntry);
-DECLARE_DELEGATE_OneParam(FOnQuestTaskBubbleSignature, const TArray<TObjectPtr<UQuestTask>>&);
-
-
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class QUESTSYSTEM_API UQuestComponent : public UActorComponent
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
 public:
-	// **** 초기화 관련 ****
+    UQuestComponent();
 
-	UQuestComponent();
-
-	virtual void BeginPlay() override;
-
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-
-	// **** 기능을 위한 공용 API 함수 ****
-
-	// UI 초기화 시, 퀘스트 목록을 생성
-    UFUNCTION(BlueprintCallable, Category = "Quest", meta = (BlueprintPure = "false", ToolTip = "첫 생성 시 모든 DTO 객체를 빌드하고 보냅니다."))
-    TArray<FQuestLogEntry> GetQuestLogEntries() const;
-
-	// 활성화된 퀘스트 객체를 QuestID로 검색합니다
-	UFUNCTION(BlueprintCallable, Category = "Quest", meta = (ToolTip = "현재 활성화된 퀘스트 객체를 QuestID로 검색합니다."))
-	const UQuestObject* FindActiveQuest(const FGameplayTag& QuestID) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Quest", meta = (ToolTip = "현재 QuestID의 퀘스트 객체가 활성화되어있는지 검색합니다."))
-	bool HasActiveQuest(const FGameplayTag& QuestID) const;
-
-	// QuestID에 해당되는 FQuestProgressData의 값을 질의하고 받습니다
-	const FQuestProgressData* QueryProgressDataForQuestID(const FGameplayTag& QuestID) const;
-
-	
-
-
-	// **** 기능을 위한 공용 델리게이트 ****
-
-	// UI 에 사용될 Entry 단일 객체를 가져오는 델리게이트
-    UPROPERTY(BlueprintAssignable, Category = "Quest|Events", meta = (ToolTip = "단일 객체를 업데이트 하는 델리게이트입니다."))
-    FOnQuestEntryUpdatedSignature OnQuestEntryUpdatedDelegate;
-
-	
-
-	// **** 저장 및 로드용 공용 API ****
-
-	// 저장 시 PlayerQuestHistory 만을 저장합니다
-	UFUNCTION(BlueprintCallable, Category = "Quest", meta = (ToolTip = "퀘스트 시스템에 필요한 저장 정보를 직렬화 해 저장합니다."))
-	void GetSaveData(TArray<uint8>& OutData);
-
-	// PlayerQuestHistory 를 복구합니다
-	UFUNCTION(BlueprintCallable, Category = "Quest", meta = (ToolTip = "퀘스트 시스템에 필요한 직렬화된 저장 정보를 로드합니다."))
-	void LoadSaveData(const TArray<uint8>& InData);
-
-
-
-	// **** 내부 시스템용 쿼리 함수 *****
-
-
-	
-	// **** 새 게임 시작 시 호출될 기본 초기화 함수 ****
-
-	// NewGame 시에 호출되는 PlayerQuestHistory 초기 상태 전이 함수입니다
-	UFUNCTION(BlueprintCallable, Category = "Quest", meta = (ToolTip = "새 게임 시작 시 호출되어야 하는 함수입니다."))
-	virtual void SetupNewGameQuests();
-
-
-
-	// **** Blueprint Hooks ****
-
-	UPROPERTY(BlueprintImplementableEvent, Category = "Quest|Events", meta = (ToolTip = "퀘스트 상태가 변경되었을 때 호출되는 이벤트입니다."))
-	void K2_NotifyQuestUpdate(const FGameplayTag& QuestID);
-
-	UPROPERTY(BlueprintImplementableEvent, Category = "Quest|Events", meta = (ToolTip = "퀘스트가 수락되었을 때 호출되는 이벤트입니다."))
-	void K2_OnQuestAccepted(const FGameplayTag & QuestID);
-
-	UPROPERTY(BlueprintImplementableEvent, Category = "Quest|Events", meta = (ToolTip = "퀘스트 보상이 수령되었을 때 호출되는 이벤트입니다."))
-	void K2_OnQuestRewardClaimed(const FGameplayTag& QuestID);
-
+    // =================================================================
+    // 1. Core Framework (생명주기 및 리플리케이션)
+    // =================================================================
+#pragma region Core Framework
+public:
+    virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
-	// 모든 퀘스트들의 추적을 로드 및 저장
-	UPROPERTY(Replicated, SaveGame)
-	FQuestFastArray PlayerQuestHistory;
+    // 초기화 상태 플래그
+    bool bIsInitialized = false;
+    bool bQuestsAreActive = false;
+    bool bHasLoadedQuestMetadata = false;
+    bool bIsDataLoadedFromSave = false;
+#pragma endregion
 
-	// 현재 활성화된 퀘스트 오브젝트들
-	UPROPERTY(Transient)
-	TArray<TObjectPtr<UQuestObject>> ActiveQuests;
 
-	// 로드 시 전체 퀘스트 불변 데이터를 저장해두는 캐시
-	UPROPERTY(Transient)
+    // =================================================================
+    // 2. Data & State (저장되는 데이터와 설정)
+    // =================================================================
+#pragma region Data and Config
+protected:
+    // [Replicated] 퀘스트 기록 (서버->클라 동기화 핵심)
+    UPROPERTY(Replicated, SaveGame)
+    FQuestFastArray PlayerQuestHistory;
+
+    // [Transient] 현재 활성화된 퀘스트 객체 인스턴스
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UQuestObject>> ActiveQuests;
+
+    // [Config] 퀘스트 데이터 테이블
+    UPROPERTY(EditDefaultsOnly, Category = "Quest|Config")
+    TObjectPtr<UDataTable> QuestMetadataTable;
+
+    // [Cache] 메타데이터 캐시
+    UPROPERTY(Transient)
     TMap<FGameplayTag, FQuestTableRow> QuestMetadataCache;
+#pragma endregion
 
 
+    // =================================================================
+    // 3. Public Queries (UI 및 외부 시스템 조회용 - const 위주)
+    // =================================================================
+#pragma region Public Queries
+public:
+    /** * @brief UI 초기화용. 가벼운 요약 정보 목록을 반환합니다. (동기)
+     * PlayerQuestHistory + QuestMetadataCache 조합
+     */
+    UFUNCTION(BlueprintCallable, Category = "Quest|UI")
+    TArray<FQuestLogEntry> GetQuestListSummary() const;
 
-	// **** 하위클래스 전용 상태 변경 알림 함수 ****
+    /**
+     * @brief 상세 정보를 요청합니다. (비동기)
+     * 완료된 퀘스트라면 DA를 로드하고, 진행 중이라면 ActiveQuests에서 정보를 가져옵니다.
+     */
+    UFUNCTION(BlueprintCallable, Category = "Quest|UI")
+    void RequestQuestDetail(FGameplayTag QuestID);
 
-	virtual void NotifyQuestUpdate(const FGameplayTag& QuestID);
+    // 특정 퀘스트 상태 조회
+    UFUNCTION(BlueprintCallable, Category = "Quest|Query")
+    bool HasActiveQuest(const FGameplayTag& QuestID) const;
 
+	// 특정 퀘스트 오브젝트 조회
+    UFUNCTION(BlueprintCallable, Category = "Quest|Query")
+    const UQuestObject* FindActiveQuest(const FGameplayTag& QuestID) const;
 
+	// 특정 퀘스트 진행 데이터 조회
+    const FQuestProgressData* QueryProgressDataForQuestID(const FGameplayTag& QuestID) const;
 
+    // 상세 로딩 완료 시 UI에 알릴 델리게이트 (1:1 콜백용 델리게이트 정의 필요)
+    // FOnQuestDetailLoaded OnQuestDetailLoaded;
 
-	// **** 퀘스트 플로우 관련 ****
-
-	// 퀘스트 수락 함수
-	virtual void AcceptQuest(const FGameplayTag& QuestID);
-	
-	// 퀘스트 보상 함수
-	virtual void ClaimQuestReward(const FGameplayTag& QuestID);
-
-	// 내부에서 호출될 실제 보상 수령 함수
-	virtual void GiveReward(const FGameplayTag& QuestID);
-
-	// 후속 퀘스트의 상태 변경을 검사하고 실행하는 함수
-	virtual void TryUnlockNextQuests(const FGameplayTag& QuestID);
-
-
-
-	// **** 활성화 퀘스트 관련 ****
-
-	// 첫 초기화 시에, 현재 InProgress 상태인 ActiveQuests 배열을 채움
-	virtual void StartActiveQuests();
-
-	// 필요 시, 현재 ActiveQuests 배열을 전부 비활성화하고 비움
-	virtual void StopActiveQuests();
-
-
-
-	// **** 데이터 비동기 로드 관련 ****
-
-	// 초기화 시점에 에셋 로드 작업을 시작합니다.
-	virtual void LoadAndActivateQuest(const FGameplayTag& QuestID);
-
-	// 비동기 로드를 실행하고 콜백에서 호출될 함수
-	virtual void OnQuestDataLoaded(const FGameplayTag& QuestID);
+    // UPROPERTY(BlueprintAssignable, Category = "Quest|Event")
+    // FOnQuestEntryUpdatedSignature OnQuestNotified;
+#pragma endregion
 
 
+    // =================================================================
+    // 4. Quest Flow Actions Network (RPC 및 진입점)
+    // =================================================================
+#pragma region Quest Flow Actions
+public:
+    // 외부에서 호출하는 진입점 (여기서 로컬 체크 후 Server RPC 호출)
+    UFUNCTION(BlueprintCallable, Category = "Quest|Action")
+    void RequestAcceptQuest(const FGameplayTag& QuestID);
+    UFUNCTION(BlueprintCallable, Category = "Quest|Action")
+    void RequestClaimReward(const FGameplayTag& QuestID);
+    UFUNCTION(BlueprintCallable, Category = "Quest|Action")
+    void RequestAbandonQuest(const FGameplayTag& QuestID);
 
-	// **** DTO 생성 로직 ****
+protected:
+    // --- Network RPCs ---
+    UFUNCTION(Server, Reliable, WithValidation)
+    void Server_AcceptQuest(const FGameplayTag& QuestID);
+    UFUNCTION(Server, Reliable, WithValidation)
+    void Server_ClaimReward(const FGameplayTag& QuestID);
+    UFUNCTION(Server, Reliable, WithValidation)
+    void Server_AbandonQuest(const FGameplayTag& QuestID);
+#pragma endregion
 
-	// UI 전달용 DTO를 빌드하는 함수
-	virtual bool BuildQuestLogEntry(const FGameplayTag& QuestID, FQuestLogEntry& OutEntry) const;
+
+    // =================================================================
+	// 4.1. Quest Flow Actions Logic (수락, 진행, 보상)
+    // =================================================================
+#pragma region Quest Flow Actions Logic
+protected:
+	// --- NVI Driver ---
+	void Internal_AcceptQuest(const FGameplayTag& QuestID);
+	void Internal_ClaimQuestReward(const FGameplayTag& QuestID);
+	void Internal_AbandonQuest(const FGameplayTag& QuestID);
+
+	// --- Validation ---
+	bool CanAcceptQuest(const FGameplayTag& QuestID) const;
+	bool CanClaimQuestReward(const FGameplayTag& QuestID) const;
+	bool CanAbandonQuest(const FGameplayTag& QuestID) const;
+
+	virtual bool CanAccpetQuest_Native(const FGameplayTag& QuestID) const;
+	virtual bool CanClaimQuestReward_Native(const FGameplayTag& QuestID) const;
+	virtual bool CanAbandonQuest_Native(const FGameplayTag& QuestID) const;
+
+	// --- Virtual Implementations ---
+	virtual void OnPreAcceptQuest(const FGameplayTag& QuestID);
+	virtual void OnPreClaimQuestReward(const FGameplayTag& QuestID);
+	virtual void OnPreAbandonQuest(const FGameplayTag& QuestID);
+
+	virtual void OnPostAcceptQuest(const FGameplayTag& QuestID);
+	virtual void OnPostClaimQuestReward(const FGameplayTag& QuestID);
+	virtual void OnPostAbandonQuest(const FGameplayTag& QuestID);
+
+	// --- Core Logic ---
+	void AcceptQuest(const FGameplayTag& QuestID);
+	void ClaimQuestReward(const FGameplayTag& QuestID);
+    void AbandonQuest(const FGameplayTag& QuestID);
+
+       
+	// --- Client RPCs ---
+	UFUNCTION(Client, Reliable)
+	virtual void Client_AcceptQuest(const FGameplayTag& QuestID);
+	UFUNCTION(Client, Reliable)
+	virtual void Client_ClaimQuestReward(const FGameplayTag& QuestID);
+    UFUNCTION(Client, Reliable)
+	virtual void Client_AbandonQuest(const FGameplayTag& QuestID);
 
 
-private:
-	// **** Private 내부 상태 변화 함수 모음 ****
+	// --- Helpers ---
+	// 보상 지급 처리
+	void GiveReward(const FGameplayTag& QuestID);
+	// 후행 퀘스트 상태 전이 확인
+    void TryUnlockNextQuests(const FGameplayTag& QuestID);
+#pragma endregion
 
-	// 퀘스트를 활성화 상태로 변경
+
+    // =================================================================
+	// 5. System Logic Flow (저장 및 초기화, 비동기 로드)
+    // =================================================================
+#pragma region System Logic (Save & Async Load)
+public:
+    UFUNCTION(BlueprintCallable, Category = "Quest|Save")
+    void GetSaveData(TArray<uint8>& OutData) const;
+
+    UFUNCTION(BlueprintCallable, Category = "Quest|Save")
+    void LoadSaveData(const TArray<uint8>& InData);
+
+protected:
+	// --- Initialization ---
+    // 저장 데이터로부터 퀘스트 데이터 준비
+    void PrepareQuestData();
+     
+    // 메타데이터 테이블 로드
+    void LoadQuestMetadataTable();
+
+    // 비동기 에셋 로드
+    void LoadAndActivateQuest(const FGameplayTag& QuestID);
+    void OnQuestDataLoaded(const FGameplayTag& QuestID);
+    
+	// 활성화된 퀘스트 복원
+	void RestoreActiveQuest();
+
+	// 모든 활성 퀘스트 중지
+	void StopActiveQuests();
+
+	// --- Quest Activation / Deactivation ---
+	// 퀘스트 활성화 흐름
 	void StartActivateQuest(const FGameplayTag& QuestID);
-
-	// 퀘스트를 비활성화 상태로 변경하고 파괴
 	void DeactivateAndDestroyQuest(const FGameplayTag& QuestID);
 
+private:
+    TMap<FGameplayTag, TSharedPtr<FStreamableHandle>> LoadHandles;
+#pragma endregion
 
 
-	// **** 태스크 버블링 용 내부 델리게이트 바인딩 함수 ****
-	void OnQuestRequestingWorldTasks(const TArray<TObjectPtr<UQuestTask>>& TasksToExecute);
+    // =================================================================
+    // 6. Blueprint Hooks (이벤트)
+    // =================================================================
+#pragma region Blueprint Hooks
+protected:
+	UPROPERTY(BlueprintImplementableEvent, Category = "Quest|Events", meta = (DisplayName = "OnQuestAccepted"))
+    void K2_OnQuestAccepted(const FGameplayTag & QuestID);
+	UPROPERTY(BlueprintImplementableEvent, Category = "Quest|Events", meta = (DisplayName = "OnQuestRewardClaimed"))
+    void K2_OnQuestRewardClaimed(const FGameplayTag& QuestID);
+	UPROPERTY(BlueprintImplementableEvent, Category = "Quest|Events", meta = (DisplayName = "OnQuestAbandoned"))
+	void K2_OnQuestAbandoned(const FGameplayTag& QuestID);
 
-	// 로드 감시용 핸들
-	TMap<FGameplayTag, TSharedPtr<FStreamableHandle>> LoadHandles;
+	UPROPERTY(BlueprintImplementableEvent, Category = "Quest|Events", meta = (DisplayName = "CanAcceptQuest"))
+	bool K2_CanAcceptQuest(const FGameplayTag& QuestID) const;
+	UPROPERTY(BlueprintImplementableEvent, Category = "Quest|Events", meta = (DisplayName = "CanClaimQuestReward"))
+	bool K2_CanClaimQuestReward(const FGameplayTag& QuestID) const;
+	UPROPERTY(BlueprintImplementableEvent, Category = "Quest|Events", meta = (DisplayName = "CanAbandonQuest"))
+	bool K2_CanAbandonQuest(const FGameplayTag& QuestID) const;
+#pragma endregion
 
-	// ========= DEVELOPMENT-ONLY =========
 
-	// **** 개발자용 private 디버깅 함수 ****
-
+    // =================================================================
+    // 7. Debug Tools
+    // =================================================================
+#pragma endregion
 #if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
-
-	void Cheat_SetupNewGameQuests();
-	void Cheat_ForceCompleteQuest(const FString& QuestID);
-	void Cheat_ForceCompleteQuestObj(const FString& QuestID, const FString& ObjectiveID);
-
-	void Console_ForceCompleteQuest(const TArray<FString>& Args);
-	void Console_ForceCompleteQuestObj(const TArray<FString>& Args);
-
-	TArray<IConsoleObject*> ConsoleCommands;
+#pragma region Debug Tools
+private:
+    void Cheat_ForceCompleteQuest(const FString& QuestID);
+    void Cheat_ForceCompleteQuestObj(const FString& QuestID, const FString& ObjectiveID);
+    void Console_ForceCompleteQuest(const TArray<FString>& Args);
+    void Console_ForceCompleteQuestObj(const TArray<FString>& Args);
+    TArray<IConsoleObject*> ConsoleCommands;
+#pragma endregion
 #endif
-
-}
+};
