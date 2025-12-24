@@ -128,6 +128,8 @@ AAEPlayerController* UAEGlobalHelper::GetOwningPlayerController(UObject* TargetO
 UAEQuestSubSystem* UAEGlobalHelper::GetQuestSubsystem(const UObject* WorldContextObject)
 {
 	const APlayerController* PC = GetAEPlayerController(WorldContextObject);
+	if (!PC) return nullptr;
+	
 	if (const ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
 	{
 		return LocalPlayer->GetSubsystem<UAEQuestSubSystem>();
