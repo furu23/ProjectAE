@@ -1,8 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Data/QuestData.h"
+#include "Data/QuestObjectConfig.h"
 #include "QuestSystem.h"
+
+#if WITH_EDITOR
+#include "Objectives/QuestObjectiveConfig.h"
+#endif
 
 FPrimaryAssetId UQuestObjectConfig::GetPrimaryAssetId() const
 {

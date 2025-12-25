@@ -15,16 +15,322 @@
 #include "HAL/IConsoleManager.h"
 #endif
 
+// ================================================================
+// FQuestFastArray
+// 
+// 퀘스트 진행도 데이터를 빠르게 동기화하기 위한 패스트 배열 시리얼라이저 구현체입니다.
+// ================================================================
 
+
+// ----------------------------------------------------------------
+// Interface: FastArraySerializer
+// ----------------------------------------------------------------
+#pragma region Interface: FastArraySerializer
+
+void FQuestFastArray::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)
+{
+	bCacheDirtyFlag = true;
+}
+
+void FQuestFastArray::PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize)
+{
+	bCacheDirtyFlag = true;
+}
+
+bool FQuestFastArray::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
+{
+	return FFastArraySerializer::FastArrayDeltaSerialize<FQuestProgressData, FQuestFastArray>(QuestProgressItems, DeltaParms, *this);
+}
+#pragma endregion
+
+
+// ----------------------------------------------------------------
+// Server-Side Operations
+// ----------------------------------------------------------------
+#pragma region Server-Side Operations
+
+bool FQuestFastArray::UpdateProgressData(FQuestProgressData& InData)
+{
+	const FGameplayTag& InputKey = InData.GetQuestID();
+
+	if (!InputKey.IsValid()) return false;
+
+	if (bCacheDirtyFlag)
+	{
+		RebuildCache();
+	}
+
+	// 인덱스가 필요하므로
+	if (const int32* IdxPtr = QuestIndexMap.Find(InputKey))
+	{
+		int32 Idx = *IdxPtr;
+		if (QuestProgressItems.IsValidIndex(Idx))
+		{
+			if (QuestProgressItems[Idx].GetQuestID() != InputKey)
+			{
+				UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for ProgressData Update in Quest ID [%s]"), *InputKey.ToString());
+				return false;
+			}
+
+			FQuestProgressData& TargetItem = QuestProgressItems[Idx];
+
+			if (InData.GetProgressDataVersion() != QUEST_DATA_CURRENT_VERSION)
+			{
+				InData.MigrateToLatest();
+			}
+
+			if (TargetItem.GetProgressDataVersion() != QUEST_DATA_CURRENT_VERSION)
+			{
+				TargetItem.MigrateToLatest();
+			}
+
+			TargetItem.UpdateProgress(InData.GetProgressType());
+			TargetItem.UpdateAllObjectives(InData.GetObjectives());
+
+			MarkItemDirty(QuestProgressItems[Idx]);
+
+			return true;
+		}
+	}
+	else
+	{
+		AddItem(InData);
+		return true;
+	}
+}
+
+bool FQuestFastArray::UpdateProgressData(const FGameplayTag& QuestID, EQuestProgress ProgressType)
+{
+	if (!QuestID.IsValid()) return false;
+
+	if (ProgressType == EQuestProgress::None) return false;
+
+	FQuestProgressData* FindProgressData = Internal_Find(QuestID);
+	if (!FindProgressData)
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for ProgressData Update in Quest ID [%s]"), *QuestID.ToString());
+		return false;
+	}
+
+	FindProgressData->UpdateProgress(ProgressType);
+	MarkItemDirty(*FindProgressData);
+
+	return true;
+}
+
+bool FQuestFastArray::UpdateProgressData(const FGameplayTag& QuestID, const FGameplayTag& ObjID, int32 NewValue)
+{
+	if (!QuestID.IsValid() || !ObjID.IsValid()) return false;
+
+	FQuestProgressData* FindProgressData = Internal_Find(QuestID);
+	if (!FindProgressData)
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for ProgressData Update in Quest ID [%s]"), *QuestID.ToString());
+		return false;
+	}
+
+	if (!FindProgressData->UpdateObjective(ObjID, NewValue))
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for ProgressData Update in Objective ID [%s]"), *ObjID.ToString());
+		return false;
+	}
+
+	MarkItemDirty(*FindProgressData);
+
+	return true;
+}
+
+bool FQuestFastArray::UpdateProgressData(const FGameplayTag& QuestID, const FGameplayTag& ObjID, EQuestProgress ProgressType, int32 NewValue)
+{
+	if (!QuestID.IsValid() || !ObjID.IsValid()) return false;
+
+	FQuestProgressData* FindProgressData = Internal_Find(QuestID);
+	if (!FindProgressData)
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for ProgressData Update in Quest ID [%s]"), *QuestID.ToString());
+		return false;
+	}
+
+	if (!FindProgressData->UpdateObjective(ObjID, NewValue))
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for ProgressData Update in Objective ID [%s]"), *ObjID.ToString());
+		return false;
+	}
+
+	FindProgressData->UpdateProgress(ProgressType);
+	MarkItemDirty(*FindProgressData);
+
+	return true;
+}
+
+void FQuestFastArray::InitializeFromSaveData(const TSet<FGameplayTag>& ValidQuestTags)
+{
+	// 데이터 변경 체크 플래그
+	bool bStructureChanged = false;
+
+	// 기존 데이터 정리 및 마이그레이션
+	for (int32 i = QuestProgressItems.Num() - 1; i >= 0; --i)
+	{
+		if (!ValidQuestTags.Contains(QuestProgressItems[i].GetQuestID()))
+		{
+			QuestProgressItems.RemoveAt(i);
+			bStructureChanged = true;
+			continue;
+		}
+
+		if (QuestProgressItems[i].MigrateToLatest())
+		{
+			MarkItemDirty(QuestProgressItems[i]);
+		}
+	}
+
+	// 구조가 변경되었으면 캐시 재구축
+	if (bStructureChanged)
+	{
+		RebuildCache();
+	}
+
+	// 누락된 퀘스트 데이터 추가
+	bool bAddedNew = false;
+	for (const FGameplayTag& ValidTag : ValidQuestTags)
+	{
+
+		if (!QuestIndexMap.Contains(ValidTag))
+		{
+			QuestProgressItems.Emplace(ValidTag, EQuestProgress::NotStarted);
+			bAddedNew = true;
+		}
+	}
+
+	// 새로운 항목이 추가되었으면 캐시 재구축
+	if (bAddedNew)
+	{
+		RebuildCache();
+		bStructureChanged = true;
+	}
+
+	// 배열 구조가 변경되었으면 MarkArrayDirty 호출
+	if (bStructureChanged)
+	{
+		MarkArrayDirty();
+	}
+}
+
+void FQuestFastArray::AddItem(const FQuestProgressData& NewItem)
+{
+	FQuestProgressData& Item = QuestProgressItems.Add_GetRef(NewItem);
+	MarkItemDirty(Item);
+
+	bCacheDirtyFlag = true;
+}
+
+bool FQuestFastArray::RemoveItem(const FGameplayTag& InQuestID)
+{
+	if (bCacheDirtyFlag)
+	{
+		RebuildCache();
+	}
+
+	// 캐시를 통해 빠르게 찾음
+	if (const int32* IdxPtr = QuestIndexMap.Find(InQuestID))
+	{
+		int32 Idx = *IdxPtr;
+		if (QuestProgressItems.IsValidIndex(Idx) && QuestProgressItems[Idx].GetQuestID() == InQuestID)
+		{
+			MarkItemDirty(QuestProgressItems[Idx]);
+			QuestProgressItems.RemoveAt(Idx);
+			MarkArrayDirty();
+
+			bCacheDirtyFlag = true;
+
+			return true;
+		}
+	}
+	return false;
+}
+#pragma endregion
+
+
+// ----------------------------------------------------------------
+// Public API
+// ----------------------------------------------------------------
+#pragma region Public API
+void FQuestFastArray::Empty()
+{
+	QuestProgressItems.Empty();
+	MarkArrayDirty();
+
+	// 캐시 리빌드는 InitializeFromSaveData에서 진행하므로
+	bCacheDirtyFlag = false;
+}
+#pragma endregion
+
+
+// ----------------------------------------------------------------
+// Internal Implementation
+// ----------------------------------------------------------------
+#pragma region Internal Implementation
+const FQuestProgressData* FQuestFastArray::Internal_Find(const FGameplayTag& InQuestID) const
+{
+	if (!InQuestID.IsValid()) return nullptr;
+
+	if (QuestProgressItems.Num() <= LinearSearchThreshold)
+	{
+		return QuestProgressItems.FindByKey(InQuestID);
+	}
+
+
+	if (bCacheDirtyFlag)
+	{
+		RebuildCache();
+	}
+
+	if (const int32* IdxPtr = QuestIndexMap.Find(InQuestID))
+	{
+		if (QuestProgressItems.IsValidIndex(*IdxPtr) && QuestProgressItems[*IdxPtr].GetQuestID() == InQuestID)
+		{
+			return &QuestProgressItems[*IdxPtr];
+		}
+	}
+
+	return nullptr;
+}
+
+FQuestProgressData* FQuestFastArray::Internal_Find(const FGameplayTag& InQuestID)
+{
+	if (!InQuestID.IsValid()) return nullptr;
+
+	const FQuestProgressData* Result = const_cast<const FQuestFastArray*>(this)->Internal_Find(InQuestID);
+	return const_cast<FQuestProgressData*>(Result);
+}
+
+void FQuestFastArray::RebuildCache() const
+{
+	QuestIndexMap.Empty(QuestProgressItems.Num());
+	for (int32 i = 0; i < QuestProgressItems.Num(); ++i)
+	{
+		QuestIndexMap.Add(QuestProgressItems[i].GetQuestID(), i);
+	}
+
+	bCacheDirtyFlag = false;
+}
+#pragma endregion
+
+
+
+// ================================================================
+// UQuestComponent
+// 
+// 퀘스트 시스템의 핵심 컴포넌트 클래스입니다.
+// ================================================================
 UQuestComponent::UQuestComponent()
 {
 
 }
 
-// =================================================================
+// ----------------------------------------------------------------
 // Core Framework
-// =================================================================
-
+// ----------------------------------------------------------------
 #pragma region Core Framework
 void UQuestComponent::BeginPlay()
 {
@@ -96,24 +402,23 @@ void UQuestComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(UQuestComponent, PlayerQuestHistory, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(UQuestComponent, QuestProgressList, COND_OwnerOnly);
 }
 #pragma endregion
 
 
 
-// =================================================================
+// ----------------------------------------------------------------
 // Public Queries
-// =================================================================
-
+// ----------------------------------------------------------------
 #pragma region Public Queries
 /*
 TArray<FQuestLogEntry> UQuestComponent::GetQuestLogEntries() const
 {
 	TArray<FQuestLogEntry> LogEntries;
 
-	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] GetQuestLogEntries: [%d] in PlayerQuestHistory..."), PlayerQuestHistory.Num());
-	for (const FQuestProgressData ProgressData : PlayerQuestHistory)
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] GetQuestLogEntries: [%d] in QuestProgressList..."), QuestProgressList.Num());
+	for (const FQuestProgressData ProgressData : QuestProgressList)
 	{
 		FQuestLogEntry Entry;
 		if (BuildQuestLogEntry(ProgressData.QuestID, Entry))
@@ -161,61 +466,56 @@ const FQuestProgressData* UQuestComponent::QueryProgressDataForQuestID(const FGa
 		return nullptr;
 	}
 
-	return PlayerQuestHistory.Find(QuestID);
+	return QuestProgressList.Find(QuestID);
 }
 #pragma endregion
 
 
-// =================================================================
+// ----------------------------------------------------------------
 // Quest Flow Control
-// =================================================================
-
+// ----------------------------------------------------------------
 #pragma region Quest Flow Actions: Accept Quest
 void UQuestComponent::RequestAcceptQuest(const FGameplayTag& QuestID)
 {
-
+	if (GetOwnerRole() < ROLE_Authority)
+	{
+		Server_AcceptQuest(QuestID);
+	}
+	else
+	{
+		Internal_AcceptQuest(QuestID);
+	}
 }
 
 void UQuestComponent::Server_AcceptQuest_Implementation(const FGameplayTag& QuestID)
 {
-
+	Internal_AcceptQuest(QuestID);
 }
 
 bool UQuestComponent::Server_AcceptQuest_Validate(const FGameplayTag& QuestID)
 {
+	if (!ValidateAcceptQuest(QuestID))
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] Server_AcceptQuest_Validate: Validation failed for QuestID [%s]"), *QuestID.GetTagName().ToString());
+		return false;
+	}
+
 	return true;
 }
 
 void UQuestComponent::Internal_AcceptQuest(const FGameplayTag& QuestID)
 {
+	if (!ValidateAcceptQuest(QuestID)) return;
 
-}
+	// 이미 활성화된 퀘스트인지 검사
+	if (HasActiveQuest(QuestID))
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] RequestAcceptQuest: QuestID [%s] is already active"), *QuestID.GetTagName().ToString());
+		return;
+	}
 
-bool UQuestComponent::CanAcceptQuest(const FGameplayTag& QuestID) const
-{
-
-}
-
-bool UQuestComponent::CanAccpetQuest_Native(const FGameplayTag& QuestID) const
-{
-
-}
-
-void UQuestComponent::OnPreAcceptQuest(const FGameplayTag& QuestID)
-{
-
-}
-
-void UQuestComponent::OnPostAcceptQuest(const FGameplayTag& QuestID)
-{
-
-}
-
-void UQuestComponent::AcceptQuest(const FGameplayTag& QuestID)
-{
-	if (!QuestID.IsValid()) return;
-
-	const FQuestProgressData* ExistingData = PlayerQuestHistory.Find(QuestID);
+	// 진행 상태 검사
+	const FQuestProgressData* ExistingData = QuestProgressList.Find(QuestID);
 	if (ExistingData)
 	{
 		if (ExistingData->GetProgressType() != EQuestProgress::CanAccept)
@@ -230,22 +530,45 @@ void UQuestComponent::AcceptQuest(const FGameplayTag& QuestID)
 		return;
 	}
 
-	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] AcceptQuest: [%s] Id is Accepting Now..."), *QuestID.GetTagName().ToString());
-	if (HasActiveQuest(QuestID))
+	// 실제 수락 처리
+	AcceptQuest(QuestID);
+
+
+	// BP 이벤트 방생
+	K2_OnQuestAccepted(QuestID);
+	// RPC, 클라이언트 알림
+	Client_AcceptQuest(QuestID);
+}
+
+bool UQuestComponent::ValidateAcceptQuest(const FGameplayTag& QuestID) const
+{
+	if (!QuestID.IsValid())
 	{
-		UE_LOG(LogQuestSystem, Warning, TEXT("Quest is already active!"));
-		return;
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] RequestAcceptQuest: Invalid QuestID"));
+		return false;
 	}
 
-	// 퀘스트를 수락하고 진행 상태로 변경합니다.
-	PlayerQuestHistory.UpdateProgressData(QuestID, EQuestProgress::InProgress);
+	if (!QuestMetadataCache.Contains(QuestID))
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] RequestAcceptQuest: QuestID [%s] not found in Metadata Cache"), *QuestID.GetTagName().ToString());
+		return false;
+	}
 
+	return true;
+}
+
+void UQuestComponent::AcceptQuest(const FGameplayTag& QuestID)
+{
+	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] AcceptQuest: [%s] Id is Accepting Now..."), *QuestID.GetTagName().ToString());
+
+	// 퀘스트를 수락하고 진행 상태로 변경합니다.
+	QuestProgressList.UpdateProgressData(QuestID, EQuestProgress::InProgress);
 	LoadAndActivateQuest(QuestID);
 }
 
 void UQuestComponent::Client_AcceptQuest_Implementation(const FGameplayTag& QuestID)
 {
-
+	// TODO: 알림 브로드캐스트 or QuestAction 실행
 }
 #pragma endregion
 
@@ -293,7 +616,7 @@ void UQuestComponent::OnPostClaimQuestReward(const FGameplayTag& QuestID)
 void UQuestComponent::ClaimQuestReward(const FGameplayTag& QuestID)
 {
 	// 퀘스트가 보상 대기 상태인지 검사
-	const FQuestProgressData* CurrentQuestData = PlayerQuestHistory.Find(QuestID);
+	const FQuestProgressData* CurrentQuestData = QuestProgressList.Find(QuestID);
 	if (!CurrentQuestData || CurrentQuestData->GetProgressType() != EQuestProgress::Completed_PendingTurnIn)
 	{
 		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] ClaimQuestReward: [%s] ID has not validate data"), *QuestID.GetTagName().ToString());
@@ -301,7 +624,7 @@ void UQuestComponent::ClaimQuestReward(const FGameplayTag& QuestID)
 	}
 
 	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] ClaimQuestReward: Complete Quest for [%s] ID"), *QuestID.GetTagName().ToString());
-	PlayerQuestHistory.UpdateProgressData(QuestID, EQuestProgress::Complete_Final);
+	QuestProgressList.UpdateProgressData(QuestID, EQuestProgress::Complete_Final);
 
 	FQuestLogEntry UpdatedEntry;
 	if (BuildQuestLogEntry(QuestID, UpdatedEntry))
@@ -422,7 +745,7 @@ void UQuestComponent::TryUnlockNextQuests(const FGameplayTag& QuestID)
 		{
 			if (!NextID.IsValid()) continue;
 
-			FQuestProgressData* ExistingData = PlayerQuestHistory.Find(NextID);
+			FQuestProgressData* ExistingData = QuestProgressList.Find(NextID);
 			if (ExistingData)
 			{
 				if (ExistingData->ProgressType != EQuestProgress::None &&
@@ -440,7 +763,7 @@ void UQuestComponent::TryUnlockNextQuests(const FGameplayTag& QuestID)
 			bool bAllPrereqsMet = true;
 			for (const FGameplayTag& PrereqID : Prerequisites)
 			{
-				const FQuestProgressData* PrereqHistory = PlayerQuestHistory.Find(PrereqID);
+				const FQuestProgressData* PrereqHistory = QuestProgressList.Find(PrereqID);
 
 				// 기록이 아예 없거나, 최종 완료 상태가 아니라면 탈락
 				if (!PrereqHistory || PrereqHistory->ProgressType != EQuestProgress::Complete_Final)
@@ -452,7 +775,7 @@ void UQuestComponent::TryUnlockNextQuests(const FGameplayTag& QuestID)
 
 			if (bAllPrereqsMet)
 			{
-				FQuestProgressData* NewQuestData = PlayerQuestHistory.Find(NextID);
+				FQuestProgressData* NewQuestData = QuestProgressList.Find(NextID);
 				if (NewQuestData)
 				{
 					if (NewQuestData->ProgressType == EQuestProgress::NotStarted)
@@ -476,10 +799,9 @@ void UQuestComponent::TryUnlockNextQuests(const FGameplayTag& QuestID)
 #pragma endregion
 
 
-// =================================================================
+// ----------------------------------------------------------------
 // Save & Load
-// =================================================================
-
+// ----------------------------------------------------------------
 #pragma region Save & Load
 void UQuestComponent::GetSaveData(TArray<uint8>& OutData) const
 {
@@ -536,7 +858,7 @@ void UQuestComponent::PrepareQuestData()
 	}
 
 	// 진행도 초기화
-	PlayerQuestHistory.InitializeFromSaveData(ValidQuestTags);
+	QuestProgressList.InitializeFromSaveData(ValidQuestTags);
 }
 
 void UQuestComponent::LoadQuestMetadataTable()
@@ -628,7 +950,13 @@ void UQuestComponent::StartActivateQuest(const FGameplayTag& QuestID)
 	UQuestObjectConfig* QuestData = Cast<UQuestObjectConfig>(AssetManager.GetPrimaryAssetObject(AssetID));
 
 	// 새로운 UQuestObject를 생성하고 초기화
-	UQuestObject* NewQuestObject = NewObject<UQuestObject>(this);
+	if (!QuestData->QuestObjectClass)
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("QuestObjectClass is NULL in DataAsset [%s]!"), *QuestData->GetName());
+		return;
+	}
+	UQuestObject* NewQuestObject = NewObject<UQuestObject>(this, QuestData->QuestObjectClass);
+
 	NewQuestObject->Initialize(QuestData, this);
 
 	NewQuestObject->OnQuestObjectChangedDelegate.BindUObject(this, &UQuestComponent::NotifyQuestUpdate);
@@ -637,7 +965,6 @@ void UQuestComponent::StartActivateQuest(const FGameplayTag& QuestID)
 	NewQuestObject->Activate();
 
 	ActiveQuests.Add(NewQuestObject);
-
 	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] StartActivateQuest: Quest [%s] is activated completely"), *QuestID.ToString());
 }
 
@@ -672,7 +999,7 @@ void UQuestComponent::RestoreActiveQuest()
 {
 	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] Quests Are Now Active"));
 
-	for (const FQuestProgressData& QuestData : PlayerQuestHistory)
+	for (const FQuestProgressData& QuestData : QuestProgressList)
 	{
 		if (QuestData.IsActiveState())
 		{
@@ -693,10 +1020,9 @@ void UQuestComponent::StopActiveQuests()
 #pragma endregion
 
 
-// =================================================================
+// ----------------------------------------------------------------
 // Legacy Support & DTO Builders
-// =================================================================
-
+// ----------------------------------------------------------------
 # pragma region Legacy Support
 /*
 void UQuestComponent::NotifyQuestUpdate(const FGameplayTag& QuestID)
@@ -718,7 +1044,7 @@ void UQuestComponent::NotifyQuestUpdate(const FGameplayTag& QuestID)
 	const UQuestObject* CurrentObject = FindActiveQuest(QuestID);
 	if (CurrentObject)
 	{
-		if (const FQuestProgressData* CurrentProgressData = PlayerQuestHistory.Find(QuestID))
+		if (const FQuestProgressData* CurrentProgressData = QuestProgressList.Find(QuestID))
 		{
 			if (CurrentObject->CheckQuestCompletion() ||
 				CurrentProgressData->GetProgressType() == EQuestProgress::Completed_PendingTurnIn)
@@ -742,7 +1068,7 @@ bool UQuestComponent::BuildQuestLogEntry(const FGameplayTag& QuestID, FQuestLogE
 		return false;
 	}
 
-	const FQuestProgressData* ProgressData = PlayerQuestHistory.Find(QuestID);
+	const FQuestProgressData* ProgressData = QuestProgressList.Find(QuestID);
 	if (!ProgressData)
 	{
 		return false;
@@ -781,10 +1107,9 @@ bool UQuestComponent::BuildQuestLogEntry(const FGameplayTag& QuestID, FQuestLogE
 #pragma endregion
 
 
-// =================================================================
+// ----------------------------------------------------------------
 // Debug Tools
-// =================================================================
-
+// ----------------------------------------------------------------
 #pragma region Debug Tools
 #if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
 void UQuestComponent::Cheat_ForceCompleteQuest(const FString& QuestID)

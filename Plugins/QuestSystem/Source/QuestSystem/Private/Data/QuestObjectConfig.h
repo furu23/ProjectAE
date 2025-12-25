@@ -5,13 +5,12 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
-#include "Reward/QuestReward.h"
-#include "Object/QuestObject.h"
 #include "QuestObjectConfig.generated.h"
 
 
 class UQuestObjectiveConfig;
 class UQuestAction;
+class UQuestObject;
 
 
 USTRUCT(BlueprintType)
@@ -43,14 +42,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "이 퀘스트가 사용할 런타임 객체 클래스입니다. (기본값 = 일반적으로 이미 정의된 안전한 클래스)"))
 	TSubclassOf<UQuestObject> QuestObjectClass = UQuestObject::StaticClass();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "각 퀘스트의 고유한 ID입니다."))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ID", meta = (ToolTip = "각 퀘스트의 고유한 ID입니다."))
 	FGameplayTag QuestID;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "퀘스트 설명입니다."))
-    FText Description;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "퀘스트 아이콘입니다."))
-	TSoftObjectPtr<UTexture2D> Icon;
 
 
 	// **** 퀘스트 정책 설정들 ****
@@ -106,6 +99,12 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Objective", meta = (ToolTip = "퀘스트 실패 조건 목표의 설정에 대한 배열입니다."))
     TArray<TObjectPtr<UQuestObjectiveConfig>> FailConditions;
+
+
+	// **** 자동화 캐시 데이터 ****
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BakedData")
+    TMap<FGameplayTag, FText> CachedObjectiveFormats;
 
 
 	// Primary Asset ID를 반환합니다.

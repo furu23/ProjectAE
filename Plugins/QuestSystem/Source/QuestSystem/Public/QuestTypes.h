@@ -43,6 +43,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="UI")
     FText QuestName;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "퀘스트 설명입니다."))
+    FText Description;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base", meta = (ToolTip = "퀘스트 아이콘입니다."))
+	TSoftObjectPtr<UTexture2D> Icon;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "System")
 	FGameplayTagContainer PrerequisiteQuests;
 
@@ -74,14 +80,15 @@ public:
 	explicit FQuestObjectiveData(const FGameplayTag& ObjectiveID, int32 Count) : ObjectiveID(ObjectiveID), Count(Count) {}
 
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, SaveGame)
+    UPROPERTY(SaveGame)
     FGameplayTag ObjectiveID;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, SaveGame)
+    UPROPERTY(SaveGame)
     int32 Count = 0;
 
     bool operator==(const FGameplayTag& Tag) const { return ObjectiveID == Tag; }
 };
+
 
 USTRUCT(BlueprintType)
 struct FQuestProgressData : public FFastArraySerializerItem
@@ -133,6 +140,12 @@ public:
 		if (Version == QUEST_DATA_CURRENT_VERSION) return false;
 
 		// 예: if (Version < 1) { ... 구버전 데이터 변환 ... }
+		if (Version < 1)
+		{
+			// 버전 1 마이그레이션 로직 (예시)
+			// bCacheDirtyFlag = true; // 예시: 캐시 재구축이 필요함을 표시
+			// 현재는 변경 사항이 없으므로 아무 작업도 하지 않습니다.
+		}
 
 		Version = QUEST_DATA_CURRENT_VERSION;
 		return true;
@@ -239,366 +252,33 @@ public:
 };
 
 
-
 USTRUCT(BlueprintType)
-struct FQuestFastArray : public FFastArraySerializer
+struct FQuestContext
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	// 선형 검색을 사용할 임계값 (변경 자유)
-	static constexpr int32 LinearSearchThreshold = 50;
-
-
-private:
-	UPROPERTY(SaveGame)
-	TArray<FQuestProgressData> QuestProgressItems;
-
-	// 퀘스트 ID -> 인덱스 매핑 캐시
-	UPROPERTY(Transient)
-	mutable TMap<FGameplayTag, int32> QuestIndexMap;
-
-	UPROPERTY(Transient)
-	mutable bool bCacheDirtyFlag = true;
-
-public:
-	// **** FFastArraySerializer 인터페이스 재정의 ****
-
-	// 클라이언트에서 복제 완료 후 호출되는 함수
-	void PostReplicatedReceive(const FFastArraySerializer::FPostReplicatedReceiveParameters& Parameters)
-	{
-		bCacheDirtyFlag = true;
-	}
-
-	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
-	{
-		return FFastArraySerializer::FastArrayDeltaSerialize<FQuestProgressData, FQuestFastArray>(QuestProgressItems, DeltaParms, *this);
-	}
-
-
-	// **** 서버 전용 ****
-
-
-	// 서버 전용 함수입니다. 권위 있는 쪽에서만 호출되어야 합니다.
-	void AddItem(const FQuestProgressData& NewItem)
-	{
-		FQuestProgressData& Item = QuestProgressItems.Add_GetRef(NewItem);
-		MarkItemDirty(Item);
-
-		bCacheDirtyFlag = true;
-	}
-
-	// 서버 전용 함수입니다. 권위 있는 쪽에서만 호출되어야 합니다.
-	bool RemoveItem(const FGameplayTag& InQuestID)
-	{
-		if (bCacheDirtyFlag)
-		{
-			RebuildCache();
-		}
-
-		// 캐시를 통해 빠르게 찾음
-		if (const int32* IdxPtr = QuestIndexMap.Find(InQuestID))
-		{
-			int32 Idx = *IdxPtr;
-			if (QuestProgressItems.IsValidIndex(Idx) && QuestProgressItems[Idx].GetQuestID() == InQuestID)
-			{
-				MarkItemDirty(QuestProgressItems[Idx]);
-				QuestProgressItems.RemoveAt(Idx);
-				MarkArrayDirty();
-
-				bCacheDirtyFlag = true;
-
-				return true;
-			}
-		}
-		return false;
-	}
-
-
-	// **** 공용 API 함수 ****
-
-
-	// 게터
-	FORCEINLINE const FQuestProgressData* Find(const FGameplayTag& QuestID) const
-	{
-		return Internal_Find(QuestID);
-	}
-
-	FORCEINLINE const TArray<FQuestProgressData>& GetItems() const
-	{
-		return QuestProgressItems;
-	}
-
-	// 공용 API
-	FORCEINLINE int32 Num() const 
-	{
-		return QuestProgressItems.Num();
-	}
-
-	FORCEINLINE bool IsEmpty() const
-	{
-		return QuestProgressItems.Num() == 0;
-	}
-
-	FORCEINLINE void Empty()
-	{
-		QuestProgressItems.Empty();
-		MarkArrayDirty();
-
-		// 캐시 리빌드는 InitializeFromSaveData에서 진행하므로
-		bCacheDirtyFlag = false;
-	}
-
-
-	// 범위 기반 for 지원
-	auto begin() { return QuestProgressItems.begin(); }
-	auto end() { return QuestProgressItems.end(); }
-
-	auto begin() const { return QuestProgressItems.begin(); }
-	auto end() const { return QuestProgressItems.end(); }
-
-	 
-	// 진행도를 업데이트 하는 함수 (서버 전용)
-	bool UpdateProgressData(FQuestProgressData& InData)
-	{
-		const FGameplayTag& InputKey = InData.GetQuestID();
-
-		if (!InputKey.IsValid()) return false;
-
-		if (bCacheDirtyFlag)
-		{
-			RebuildCache();
-		}
-
-		// 인덱스가 필요하므로
-		if (const int32* IdxPtr = QuestIndexMap.Find(InputKey))
-		{
-			int32 Idx = *IdxPtr;
-			if (QuestProgressItems.IsValidIndex(Idx))
-			{
-				if (QuestProgressItems[Idx].GetQuestID() != InputKey)
-				{
-					UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for ProgressData Update in Quest ID [%s]"), *InputKey.ToString());
-					return false;
-				}
-
-				FQuestProgressData& TargetItem = QuestProgressItems[Idx];
-
-				if (InData.GetProgressDataVersion() != QUEST_DATA_CURRENT_VERSION)
-				{
-					InData.MigrateToLatest();
-				}
-
-				if (TargetItem.GetProgressDataVersion() != QUEST_DATA_CURRENT_VERSION)
-				{
-					TargetItem.MigrateToLatest();
-				}
-
-				TargetItem.UpdateProgress(InData.GetProgressType());
-				TargetItem.UpdateAllObjectives(InData.GetObjectives());
-
-				MarkItemDirty(QuestProgressItems[Idx]);
-
-				return true;
-			}
-		}
-		else
-		{
-			AddItem(InData);
-			return true;
-		}
-	}
-	
-	// 진행도 타입만 업데이트
-	bool UpdateProgressData(const FGameplayTag& QuestID, EQuestProgress ProgressType)
-	{
-		if (!QuestID.IsValid()) return false;
-
-		if (ProgressType == EQuestProgress::None) return false;
-
-		FQuestProgressData* FindProgressData = Internal_Find(QuestID);
-		if (!FindProgressData)
-		{
-			UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for ProgressData Update in Quest ID [%s]"), *QuestID.ToString());
-			return false;
-		}
-
-		FindProgressData->UpdateProgress(ProgressType);
-		MarkItemDirty(*FindProgressData);
-
-		return true;
-	}
-
-	// 진행도 데이터만 업데이트
-	bool UpdateProgressData(const FGameplayTag& QuestID, const FGameplayTag& ObjID, int32 NewValue)
-	{
-		if (!QuestID.IsValid() || !ObjID.IsValid()) return false;
-
-		FQuestProgressData* FindProgressData = Internal_Find(QuestID);
-		if (!FindProgressData)
-		{
-			UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for ProgressData Update in Quest ID [%s]"), *QuestID.ToString());
-			return false;
-		}
-
-		if (!FindProgressData->UpdateObjective(ObjID, NewValue))
-		{
-			UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for ProgressData Update in Objective ID [%s]"), *ObjID.ToString());
-			return false;
-		}
-
-		MarkItemDirty(*FindProgressData);
-
-		return true;
-	}
-
-	bool UpdateProgressData(const FGameplayTag& QuestID, const FGameplayTag& ObjID, EQuestProgress ProgressType, int32 NewValue)
-	{
-		if (!QuestID.IsValid() || !ObjID.IsValid()) return false;
-
-		FQuestProgressData* FindProgressData = Internal_Find(QuestID);
-		if (!FindProgressData)
-		{
-			UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for ProgressData Update in Quest ID [%s]"), *QuestID.ToString());
-			return false;
-		}
-
-		if (!FindProgressData->UpdateObjective(ObjID, NewValue))
-		{
-			UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for ProgressData Update in Objective ID [%s]"), *ObjID.ToString());
-			return false;
-		}
-
-		FindProgressData->UpdateProgress(ProgressType);
-		MarkItemDirty(*FindProgressData);
-
-		return true;
-	}
-
-
-	// **** 초기화 및 마이그레이션 통합 함수 ****
-	void InitializeFromSaveData(const TSet<FGameplayTag>& ValidQuestTags)
-	{
-		// 데이터 변경 체크 플래그
-		bool bStructureChanged = false;
-
-		// 기존 데이터 정리 및 마이그레이션
-		for (int32 i = QuestProgressItems.Num() - 1; i >= 0; --i)
-		{
-			if (!ValidQuestTags.Contains(QuestProgressItems[i].GetQuestID()))
-			{
-				QuestProgressItems.RemoveAt(i);
-				bStructureChanged = true;
-				continue;
-			}
-
-			if (QuestProgressItems[i].MigrateToLatest())
-			{
-				MarkItemDirty(QuestProgressItems[i]);
-			}
-		}
-
-		// 구조가 변경되었으면 캐시 재구축
-		if (bStructureChanged)
-		{
-			RebuildCache();
-		}
-
-		// 누락된 퀘스트 데이터 추가
-		bool bAddedNew = false;
-		for (const FGameplayTag& ValidTag : ValidQuestTags)
-		{
-			
-			if (!QuestIndexMap.Contains(ValidTag))
-			{
-				QuestProgressItems.Emplace(ValidTag, EQuestProgress::NotStarted);
-				bAddedNew = true;
-			}
-		}
-
-		// 새로운 항목이 추가되었으면 캐시 재구축
-		if (bAddedNew)
-		{
-			RebuildCache();
-			bStructureChanged = true;
-		}
-
-		// 배열 구조가 변경되었으면 MarkArrayDirty 호출
-		if (bStructureChanged)
-		{
-			MarkArrayDirty();
-		}
-	}
-
-
-private:
-	/**
-	 * @brief QuestID에 해당되는 FQuestProgressData의 값을 질의하고 받습니다
-	 *
-	 * @note 내부적으로 선형 검색과 맵 검색을 혼합하여 최적의 성능을 도모합니다.
-	 *
-	 * @param InQuestID 찾고자 하는 퀘스트의 GameplayTag ID
-	 * @return FQuestProgressData* 해당 퀘스트의 진행 데이터 포인터 (없으면 nullptr)
-	 */
-	const FQuestProgressData* Internal_Find(const FGameplayTag& InQuestID) const
-	{
-		if (!InQuestID.IsValid()) return nullptr;
-
-		if (QuestProgressItems.Num() <= LinearSearchThreshold)
-		{
-			return QuestProgressItems.FindByKey(InQuestID);
-		}
-
-
-		if (bCacheDirtyFlag)
-		{
-			RebuildCache();
-		}
-
-		if (const int32* IdxPtr = QuestIndexMap.Find(InQuestID))
-		{
-			if (QuestProgressItems.IsValidIndex(*IdxPtr) && QuestProgressItems[*IdxPtr].GetQuestID() == InQuestID)
-			{
-				return &QuestProgressItems[*IdxPtr];
-			}
-		}
-
-		return nullptr;
-	}
-
-	// Effective C++ 패턴을 적용한 const_cast 패턴
-	// 외부 공용 함수에 const를 적용해 더 안전하고 생산성 있는 구현이 가능
-	FQuestProgressData* Internal_Find(const FGameplayTag& InQuestID)
-	{
-		if (!InQuestID.IsValid()) return nullptr;
-
-		const FQuestProgressData* Result = const_cast<const FQuestFastArray*>(this)->Internal_Find(InQuestID);
-		return const_cast<FQuestProgressData*>(Result);
-	}
-
-
-
-	// 캐시 재구축 함수
-	void RebuildCache() const
-	{
-		QuestIndexMap.Empty(QuestProgressItems.Num());
-		for (int32 i = 0; i < QuestProgressItems.Num(); ++i)
-		{
-			QuestIndexMap.Add(QuestProgressItems[i].GetQuestID(), i);
-		}
-
-		bCacheDirtyFlag = false;
-	}
-};
-
-// FFastArraySerializer 특수화
-template<>
-struct TStructOpsTypeTraits<FQuestFastArray> : public TStructOpsTypeTraitsBase2<FQuestFastArray>
-{
-	enum
-	{
-		WithNetDeltaSerializer = true,
-	};
+    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    TObjectPtr<AActor> Instigator = nullptr;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    TObjectPtr<UObject> TargetObject = nullptr;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    FGameplayTagContainer TargetTags;
+
+    // [옵션] 사건의 수치 (데미지 양, 획득 개수 등)
+    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    int32 Amount = 1;
+
+    // [옵션] 추가 정보 (무엇으로 죽였나? 장소는 어디인가?)
+    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    FGameplayTagContainer ContextTags;
+
+    // 생성자 (편의용)
+    FQuestContext() {}
+    FQuestContext(AActor* InInstigator, UObject* InTarget) 
+        : Instigator(InInstigator), TargetObject(InTarget) {}
 };
 
 
@@ -649,49 +329,65 @@ public:
     TArray<FText> FormattedObjectives;
 };
 
+
 /**
- * @brief GMS를 통해 전송될 퀘스트 관련 '표준 이벤트 메시지'입니다.
- * "택배 상자" 역할을 하며, 이벤트에 대한 핵심 정보를 담습니다.
+ * @brief 퀘스트 액션 실행 시 전달되는 컨텍스트 정보 구조체
+ * @note 네트워크 직렬화가 가능하도록 설계되었습니다.
  */
 USTRUCT(BlueprintType)
-struct FQuestMessage_Generic
+struct FQuestActionContext
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
-	/**
-	 * @brief 이 이벤트를 발생시킨 주체입니다.
-	 * 예: 퀘스트를 진행 중인 플레이어, 퀘스트 AI 등
-	 */
-	UPROPERTY(BlueprintReadOnly, Category = "Quest|Message")
-	TObjectPtr<AActor> InstigatorActor = nullptr;
+public:
+    FQuestActionContext()
+        : Instigator(nullptr), TargetActor(nullptr), Amount(0), Location(FVector::ZeroVector), PolicyFlags(0) {}
 
-	/**
-	 * @brief 이 이벤트의 대상이 된 액터입니다.
-	 * 예: 방금 죽은 AI, 방금 수집한 아이템 액터, 방금 진입한 구역(트리거)
-	 */
-	UPROPERTY(BlueprintReadOnly, Category = "Quest|Message")
-	TObjectPtr<AActor> TargetActor = nullptr;
+    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    TWeakObjectPtr<AActor> Instigator; 
 
-	/**
-	 * @brief 대상(TargetActor)의 핵심 태그 컨테이너입니다.
-	 * QuestObjective가 이 태그를 자신의 Config와 비교합니다.
-	 * 예: "AI.Enemy.Zombie", "Item.Quest.Letter", "Zone.Dormitory.301"
-	 */
-	UPROPERTY(BlueprintReadOnly, Category = "Quest|Message")
-	FGameplayTagContainer TargetTags;
+    UPROPERTY(BlueprintReadWrite, Category = "Context")
+	TWeakObjectPtr<AActor> TargetActor;
 
-	/**
-	 * @brief 이벤트와 관련된 수량입니다.
-	 * 예: 아이템 5개 수집, 100 데미지 등
-	 */
-	UPROPERTY(BlueprintReadOnly, Category = "Quest|Message")
-	int32 Amount = 0;
-	
-	/**
-	 * @brief 함께 보낼 텍스트입니다. (필요 시만 사용)
-	 */
-	UPROPERTY(BlueprintReadOnly, Category = "Quest|Message")
-	FText text;
+    UPROPERTY(BlueprintReadWrite, Category = "Context")
+	TWeakObjectPtr<UObject> SourceObject;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Context")
+    FGameplayTagContainer TargetTag;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    FGameplayTag EventTag;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    int32 Amount;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    FVector_NetQuantize10 Location; 
+
+    UPROPERTY(BlueprintReadWrite, Category = "Context")
+    uint8 PolicyFlags;
+
+	AActor* GetInstigator() const { return Instigator.Get(); }
+	AActor* GetTargetActor() const { return TargetActor.Get(); }
+    
+    bool HasPolicy(uint8 FlagToCheck) const { return (PolicyFlags & FlagToCheck) != 0; }
+    void AddPolicy(uint8 FlagToAdd) { PolicyFlags |= FlagToAdd; }
+	void RemovePolicy(uint8 FlagToRemove) { PolicyFlags &= ~FlagToRemove; }
+
+	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess);
+};
+
+/**
+ * 템플릿 특수화, 언리얼 엔진에게 이 구조체가 커스텀 NetSerialize를 사용한다고 알림
+ */
+template<>
+struct TStructOpsTypeTraits<FQuestActionContext> : public TStructOpsTypeTraitsBase2<FQuestActionContext>
+{
+	enum
+	{
+		WithNetSerializer = true,
+		WithCopy = true
+	};
 };
 
 /**

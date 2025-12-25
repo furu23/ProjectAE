@@ -47,7 +47,7 @@ void UAEQuestSubSystem::OnQuestDataLoaded()
 
 	if (OnQuestEntryUpdatedDelegate.IsBound())
 	{
-		for (const auto& Pair : PlayerQuestHistory)
+		for (const auto& Pair : QuestProgressList)
 		{
 			FQuestLogEntry Entry;
 			if (BuildQuestLogEntry(Pair.Key, Entry))

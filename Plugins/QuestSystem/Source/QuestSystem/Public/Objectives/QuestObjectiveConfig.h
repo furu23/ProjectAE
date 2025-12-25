@@ -24,15 +24,8 @@ public:
 	UPROPERTY(EditInstanceOnly, Category = "Objective", meta = (ToopTip = "FQuestProgressData 의 TMap 에 Key 값이 됩니다."))
 	FGameplayTag ObjectiveID;
 
-	UPROPERTY(EditInstanceOnly, Category = "Objective", meta = (ToolTip = "True 로 설정하면 이 퀘스트 목표가 활성화될 때 월드 시스템에 태스크를 보내도록 트리거합니다."))
-	bool bNotifyWorldSystemOnActivation = false;
-
 	UPROPERTY(EditInstanceOnly, Category = "Objective", meta = (ToolTip = "이 객체가 반환할 런타임 객체 클래스입니다. (기본값 = 일반적으로 이미 정의된 안전한 클래스)"))
 	TSubclassOf<UQuestObjective> ObjectiveClass;
-
-	UPROPERTY(EditInstanceOnly, Instanced, Category = "Objective",
-		meta = (EditCondition = "bNotifyWorldSystemOnActivation", ToolTip = "이 퀘스트가 활성화될 때 월드 시스템에 보낼 태스크들의 배열입니다."))
-	TArray<TObjectPtr<UQuestTask>> TaskOnActivation;
 
 	// 이 퀘스트가 사용할 런타임 객체, QuestObjective를 반환합니다. ex) QuestObjective_Kill::StaticClass();
 	TSubclassOf<UQuestObjective> GetQuestObjectiveClass() const;

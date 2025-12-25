@@ -16,6 +16,116 @@ class IConsoleObject;
 struct FStreamableHandle;
 
 
+
+USTRUCT(BlueprintType)
+struct FQuestFastArray : public FFastArraySerializer
+{
+	GENERATED_BODY()
+
+public:
+	// 선형 검색을 사용할 임계값 (변경 자유)
+	static constexpr int32 LinearSearchThreshold = 50;
+
+
+private:
+	UPROPERTY(SaveGame)
+	TArray<FQuestProgressData> QuestProgressItems;
+
+	// 퀘스트 ID -> 인덱스 매핑 캐시
+	UPROPERTY(Transient)
+	mutable TMap<FGameplayTag, int32> QuestIndexMap;
+
+	UPROPERTY(Transient)
+	mutable bool bCacheDirtyFlag = true;
+
+public:
+	// **** FFastArraySerializer 인터페이스 재정의 ****
+
+#pragma region Interface: FastArraySerializer
+
+    void PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize);
+    void PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize);
+	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
+
+#pragma endregion
+
+
+	// **** 서버 전용 ****
+
+#pragma region Server-Side Operations
+public:
+	// 진행도를 업데이트 하는 함수 (서버 전용)
+	bool UpdateProgressData(FQuestProgressData& InData);
+	bool UpdateProgressData(const FGameplayTag& QuestID, EQuestProgress ProgressType);
+	bool UpdateProgressData(const FGameplayTag& QuestID, const FGameplayTag& ObjID, int32 NewValue);
+	bool UpdateProgressData(const FGameplayTag& QuestID, const FGameplayTag& ObjID, EQuestProgress ProgressType, int32 NewValue);
+
+	// 초기화 및 마이그레이션 통합 함수
+	void InitializeFromSaveData(const TSet<FGameplayTag>& ValidQuestTags);
+private:
+    // 서버 전용 함수입니다. 권위 있는 쪽에서만 호출되어야 합니다.
+    void AddItem(const FQuestProgressData& NewItem);
+
+    // 서버 전용 함수입니다. 권위 있는 쪽에서만 호출되어야 합니다.
+    bool RemoveItem(const FGameplayTag& InQuestID);
+#pragma endregion
+
+
+	// **** 공용 API 함수 ****
+
+#pragma region Public API
+	// 게터
+	FORCEINLINE const FQuestProgressData* Find(const FGameplayTag& QuestID) const { return Internal_Find(QuestID); }
+	FORCEINLINE const TArray<FQuestProgressData>& GetItems() const { return QuestProgressItems; }
+
+	// 공용 API
+	FORCEINLINE int32 Num() const { return QuestProgressItems.Num();}
+	FORCEINLINE bool IsEmpty() const { return QuestProgressItems.Num() == 0; }
+
+	void Empty();
+
+	// 범위 기반 for 지원
+	auto begin() { return QuestProgressItems.begin(); }
+	auto end() { return QuestProgressItems.end(); }
+
+	auto begin() const { return QuestProgressItems.begin(); }
+	auto end() const { return QuestProgressItems.end(); }
+#pragma endregion
+
+
+private:
+
+#pragma region Internal Implementation
+	/**
+	 * @brief QuestID에 해당되는 FQuestProgressData의 값을 질의하고 받습니다
+	 *
+	 * @note 내부적으로 선형 검색과 맵 검색을 혼합하여 최적의 성능을 도모합니다.
+	 *
+	 * @param InQuestID 찾고자 하는 퀘스트의 GameplayTag ID
+	 * @return FQuestProgressData* 해당 퀘스트의 진행 데이터 포인터 (없으면 nullptr)
+	 */
+	const FQuestProgressData* Internal_Find(const FGameplayTag& InQuestID) const;
+
+	// Effective C++ 패턴을 적용한 const_cast 패턴
+	// 외부 공용 함수에 const를 적용해 더 안전하고 생산성 있는 구현이 가능
+	FQuestProgressData* Internal_Find(const FGameplayTag& InQuestID);
+
+	// 캐시 재구축 함수
+	void RebuildCache() const;
+#pragma endregion
+};
+
+// FFastArraySerializer 특수화
+template<>
+struct TStructOpsTypeTraits<FQuestFastArray> : public TStructOpsTypeTraitsBase2<FQuestFastArray>
+{
+	enum
+	{
+		WithNetDeltaSerializer = true,
+	};
+};
+
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class QUESTSYSTEM_API UQuestComponent : public UActorComponent
 {
@@ -48,10 +158,10 @@ protected:
 #pragma region Data and Config
 protected:
     // [Replicated] 퀘스트 기록 (서버->클라 동기화 핵심)
-    UPROPERTY(Replicated, SaveGame)
-    FQuestFastArray PlayerQuestHistory;
+    UPROPERTY(Replicated, SaveGame, ReplicatedUsing = "OnRep_PlayerQuestHistory")
+    FQuestFastArray QuestProgressList;
 
-    // [Transient] 현재 활성화된 퀘스트 객체 인스턴스
+    // [Transient] 현재 활성화된 퀘스트 객체 인스턴스, 서버 전용
     UPROPERTY(Transient)
     TArray<TObjectPtr<UQuestObject>> ActiveQuests;
 
@@ -62,6 +172,9 @@ protected:
     // [Cache] 메타데이터 캐시
     UPROPERTY(Transient)
     TMap<FGameplayTag, FQuestTableRow> QuestMetadataCache;
+
+    UFUNCTION()
+    virtual void OnRep_PlayerQuestHistory(const FQuestFastArray& OldQuestHistory);
 #pragma endregion
 
 
@@ -71,7 +184,7 @@ protected:
 #pragma region Public Queries
 public:
     /** * @brief UI 초기화용. 가벼운 요약 정보 목록을 반환합니다. (동기)
-     * PlayerQuestHistory + QuestMetadataCache 조합
+     * QuestProgressList + QuestMetadataCache 조합
      */
     UFUNCTION(BlueprintCallable, Category = "Quest|UI")
     TArray<FQuestLogEntry> GetQuestListSummary() const;
@@ -137,22 +250,9 @@ protected:
 	void Internal_AbandonQuest(const FGameplayTag& QuestID);
 
 	// --- Validation ---
-	bool CanAcceptQuest(const FGameplayTag& QuestID) const;
-	bool CanClaimQuestReward(const FGameplayTag& QuestID) const;
-	bool CanAbandonQuest(const FGameplayTag& QuestID) const;
-
-	virtual bool CanAccpetQuest_Native(const FGameplayTag& QuestID) const;
-	virtual bool CanClaimQuestReward_Native(const FGameplayTag& QuestID) const;
-	virtual bool CanAbandonQuest_Native(const FGameplayTag& QuestID) const;
-
-	// --- Virtual Implementations ---
-	virtual void OnPreAcceptQuest(const FGameplayTag& QuestID);
-	virtual void OnPreClaimQuestReward(const FGameplayTag& QuestID);
-	virtual void OnPreAbandonQuest(const FGameplayTag& QuestID);
-
-	virtual void OnPostAcceptQuest(const FGameplayTag& QuestID);
-	virtual void OnPostClaimQuestReward(const FGameplayTag& QuestID);
-	virtual void OnPostAbandonQuest(const FGameplayTag& QuestID);
+	bool ValidateAcceptQuest(const FGameplayTag& QuestID) const;
+	bool ValidateClaimQuestReward(const FGameplayTag& QuestID) const;
+	bool ValidateAbandonQuest(const FGameplayTag& QuestID) const;
 
 	// --- Core Logic ---
 	void AcceptQuest(const FGameplayTag& QuestID);
