@@ -74,6 +74,7 @@ bool UQuestObject::CheckQuestCompletion()
 	return true;
 }
 
+#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
 
 void UQuestObject::ForceCompleteQuest()
 {
@@ -92,7 +93,6 @@ void UQuestObject::ForceCompleteQuest()
 
 }
 
-#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
 
 void UQuestObject::ForceCompleteQuestObj(const FGameplayTag& ObjectiveID)
 {
