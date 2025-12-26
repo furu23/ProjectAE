@@ -35,7 +35,11 @@ void AAEPlayerController::BeginPlay()
 		AEGameHUDWidget = AEHUD->GameHUDWidget;
 		if (!AEGameHUDWidget)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Not Set AEGameHUDWidget !!"));
+			UE_LOG(LogTemp, Error, TEXT("Not Set AEGameHUDWidget !!"));
+		}
+		else
+		{
+			InventoryUIManager->SetGameHUDWidget(AEGameHUDWidget);
 		}
 	}
 }

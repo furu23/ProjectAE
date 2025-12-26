@@ -21,7 +21,7 @@ void UAEGameHUDWidget::InitializePlayerInventory(class UInventoryComponent* Inve
 	if (PlayerInventoryWidget && InventoryComponent)
 	{
 		PlayerInventoryWidget->InitializeInventory(InventoryComponent);
-		// 플레이어 인벤토리 컴포넌트 캐싱 ?
+		UE_LOG(LogTemp, Warning, TEXT("InitializePlayerInventory Complete"));
 	}
 }
 
