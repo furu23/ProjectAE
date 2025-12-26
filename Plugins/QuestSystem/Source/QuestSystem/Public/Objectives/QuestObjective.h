@@ -9,12 +9,11 @@
 #include "QuestObjective.generated.h"
 
 class UQuestObjectiveConfig;
-class UQuestManagerSubSystem;
 class UQuestObjective;
+class UQuestObject;
 class UQuestTask;
 
-DECLARE_DELEGATE_OneParam(FOnObjectiveCompletedSignature, UQuestObjective* /* CompletedObjective */);
-DECLARE_DELEGATE_OneParam(FOnRequestWorldTasksSignature, const TArray<TObjectPtr<UQuestTask>>& /* TasksToExecute */);
+DECLARE_DELEGATE_OneParam(FOnObjectiveUpdatedSignature, const FQuestExecutionContext& /*ActionContext*/);
 
 /**
  * @brief 런타임, In-Raid 레벨에서 실제 게임플레이 퀘스트 진행 완료에 관련된 클래스입니다.
@@ -24,33 +23,27 @@ DECLARE_DELEGATE_OneParam(FOnRequestWorldTasksSignature, const TArray<TObjectPtr
  * @note 목표 값을 저장해야 하는 목표라면, 로드 시 구체적 클래스에서 반드시 CachedQuestSys에 쿼리해 진행도를 동기화해야 합니다.
  * @note 구체 클래스에서 Activate 함수에서 bHasFiredCompletion을 체크하여 리턴할 것을 권장합니다.
  */
-UCLASS(Abstract)
+UCLASS(Blueprintable)
 class QUESTSYSTEM_API UQuestObjective : public UObject
 {
 	GENERATED_BODY()
 public:
-	// **** 목표 완료 시 방송용 델리게이트 ****
-
-	// 목표 완료 시 델리게이트
-	FOnObjectiveCompletedSignature OnObjectiveCompleteDelegate;
-
-	// 태스크 버블링 용 델리게이트
-	FOnRequestWorldTasksSignature OnRequestTaskSignatureDelegate;
+	FOnObjectiveUpdatedSignature OnObjectiveUpdatedDelegate;
 
 
 	// **** 외부 호출 함수 (퀘스트 모듈 내부에서만 사용할 것을 권장합니다.)****
 
 	// 초기화 함수
-	virtual void Initialize(const UQuestObjectiveConfig* Config, UQuestManagerSubSystem* QuestSys, FGameplayTag ObjectQuestID);
+	void Initialize(const UQuestObjectiveConfig* Config, UQuestManagerSubSystem* QuestSys, FGameplayTag ObjectQuestID);
 
 	// QuestObject 에서 호출할 GMS 구독 함수
-	virtual void Activate(UObject* WorldContext);
+	void Activate(UObject* WorldContext);
 	
 	// QuestObject 에서 호출할 비활성화 함수
-	virtual void DeActivate() PURE_VIRTUAL(UQuestObjective::DeActivate)
+	void DeActivate() PURE_VIRTUAL(UQuestObjective::DeActivate)
 
 	// 완료 여부를 반환
-	virtual bool IsComplete() const PURE_VIRTUAL(UQuestObjective::IsComplete, return false;)
+	bool IsComplete() const PURE_VIRTUAL(UQuestObjective::IsComplete, return false;)
 
 
 	// **** 게터 함수 ****

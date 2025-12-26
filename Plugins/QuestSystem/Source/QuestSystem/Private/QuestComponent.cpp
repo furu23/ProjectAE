@@ -1,9 +1,10 @@
 ﻿#include "QuestComponent.h"
 #include "QuestSystem.h"
 #include "QuestTypes.h"
-#include "QuestObject.h"
+#include "Object/QuestObject.h"
 #include "Data/QuestObjectConfig.h"
 #include "Objectives/QuestObjectiveConfig.h"
+#include "QuestMessageHelpers.h"
 #include "Action/QuestAction.h"
 
 #include "GameplayTagContainer.h"
@@ -480,6 +481,11 @@ void UQuestComponent::RequestAcceptQuest(const FGameplayTag& QuestID)
 	if (GetOwnerRole() < ROLE_Authority)
 	{
 		Server_AcceptQuest(QuestID);
+
+		LoadQuestObjectData(QuestID, FStreamableDelegate::CreateWeakLambda(this, [this, QuestID]()
+			{
+			}
+		));
 	}
 	else
 	{
@@ -505,12 +511,18 @@ bool UQuestComponent::Server_AcceptQuest_Validate(const FGameplayTag& QuestID)
 
 void UQuestComponent::Internal_AcceptQuest(const FGameplayTag& QuestID)
 {
-	if (!ValidateAcceptQuest(QuestID)) return;
+	if (!ValidateAcceptQuest(QuestID))
+	{
+		UE_LOG(LogQuestSystem, Warning, TEXT("AcceptQuest Failed: Invalid ID or Metadata missing for [%s]"), *QuestID.ToString());
+		Client_AcceptQuest_Rejected(QuestID);
+		return;
+	}
 
 	// 이미 활성화된 퀘스트인지 검사
 	if (HasActiveQuest(QuestID))
 	{
 		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] RequestAcceptQuest: QuestID [%s] is already active"), *QuestID.GetTagName().ToString());
+		Client_AcceptQuest_Rejected(QuestID);
 		return;
 	}
 
@@ -542,17 +554,8 @@ void UQuestComponent::Internal_AcceptQuest(const FGameplayTag& QuestID)
 
 bool UQuestComponent::ValidateAcceptQuest(const FGameplayTag& QuestID) const
 {
-	if (!QuestID.IsValid())
-	{
-		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] RequestAcceptQuest: Invalid QuestID"));
-		return false;
-	}
-
-	if (!QuestMetadataCache.Contains(QuestID))
-	{
-		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] RequestAcceptQuest: QuestID [%s] not found in Metadata Cache"), *QuestID.GetTagName().ToString());
-		return false;
-	}
+	if (!QuestID.IsValid()) return false;
+	if (!QuestMetadataCache.Contains(QuestID)) return false;
 
 	return true;
 }
@@ -563,12 +566,51 @@ void UQuestComponent::AcceptQuest(const FGameplayTag& QuestID)
 
 	// 퀘스트를 수락하고 진행 상태로 변경합니다.
 	QuestProgressList.UpdateProgressData(QuestID, EQuestProgress::InProgress);
-	LoadAndActivateQuest(QuestID);
+	
+	LoadQuestObjectData(QuestID, FStreamableDelegate::CreateWeakLambda(this, [this, QuestID]()
+		{
+			UAssetManager& AssetMgr = UAssetManager::Get();
+			FPrimaryAssetId AssetID(FName("QuestData"), QuestID.GetTagName());
+
+			if (UQuestObjectConfig* QuestData = Cast<UQuestObjectConfig>(AssetMgr.GetPrimaryAssetObject(AssetID)))
+			{
+				UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] Quest [%s] Accepted! Actions Executed."), *QuestID.ToString());
+
+				TArray<TObjectPtr<UQuestAction>> OutActions;
+				FQuestContext Context = UQuestHelpers::MakeQuestContext(this, this->GetOwner(), nullptr, FGameplayTagContainer::EmptyContainer, FGameplayTag::EmptyTag, 1);
+				ExecuteQuestActions(QuestData->QuestAcceptAction, QuestID, Context, ENetworkActionType::ServerOnly);
+			}
+			StartActivateQuest(QuestID);
+		}
+	));
 }
 
 void UQuestComponent::Client_AcceptQuest_Implementation(const FGameplayTag& QuestID)
 {
-	// TODO: 알림 브로드캐스트 or QuestAction 실행
+	LoadQuestObjectData(QuestID, FStreamableDelegate::CreateWeakLambda(this, [this, QuestID]()
+		{
+			UAssetManager& AssetMgr = UAssetManager::Get();
+			FPrimaryAssetId AssetID(FName("QuestData"), QuestID.GetTagName());
+
+			if (UQuestObjectConfig* QuestData = Cast<UQuestObjectConfig>(AssetMgr.GetPrimaryAssetObject(AssetID)))
+			{
+				UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] Quest [%s] Accepted! Actions Executed."), *QuestID.ToString());
+
+				TArray<TObjectPtr<UQuestAction>> OutActions;
+				FQuestExecutionContext Context();
+				ExecuteQuestActions(QuestData->QuestAcceptAction, QuestID, Context, ENetworkActionType::ClientOnly);
+			}
+		}
+	));
+}
+
+void UQuestComponent::Client_AcceptQuest_Rejected_Implementation(const FGameplayTag& QuestID)
+{
+	if (LoadHandles.Contains(QuestID))
+	{
+		LoadHandles.Remove(QuestID);
+		UE_LOG(LogQuestSystem, Warning, TEXT("[QuestSys] Quest [%s] Rejected by Server. Cleanup handles."), *QuestID.ToString());
+	}
 }
 #pragma endregion
 
@@ -702,21 +744,16 @@ void UQuestComponent::Client_AbandonQuest_Implementation(const FGameplayTag& Que
 void UQuestComponent::GiveReward(const FGameplayTag& QuestID)
 {
 	const UQuestObject* CurrentQuest = FindActiveQuest(QuestID);
-	if (!CurrentQuest)
+
+	if (!ensureMsgf(CurrentQuest, TEXT("GiveReward: Active Quest missing for [%s]"), *QuestID.ToString()))
 	{
-		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] GiveReward: Cannot find Active QuestObject for [%s]"), *QuestID.ToString());
 		return;
 	}
 
-	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] Giving Rewards for Quest [%s]..."), *QuestID.ToString());
-
-	// 퀘스트 액션 실행
-	if (const UQuestObjectConfig* CurrentConfig = CurrentQuest->GetQuestDefinition())
+	const UQuestObjectConfig* CurrentConfig = CurrentQuest->GetQuestDefinition();
+	for (UQuestAction* Action : CurrentConfig->QuestClaimRewardAction)
 	{
-		for (UQuestAction* Quests : CurrentConfig->QuestClaimRewardAction)
-		{
-			Quests->ExecuteAction(this, QuestID);
-		}
+		if (Action) Action->ExecuteAction(this, QuestID);
 	}
 }
 
@@ -891,52 +928,63 @@ void UQuestComponent::LoadQuestMetadataTable()
 	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] LoadQuestMetadataTable: Loaded [%d] Quest Metadata entries."), QuestMetadataCache.Num());
 }
 
-void UQuestComponent::LoadAndActivateQuest(const FGameplayTag& QuestID)
+void UQuestComponent::LoadQuestObjectData(const FGameplayTag& QuestID, FStreamableDelegate OnLoadComplete)
 {
-	UAssetManager& AssetManager = UAssetManager::Get();
+	PendingLoadCallbacks.FindOrAdd(QuestID).Add(OnLoadComplete);
 
+	if (LoadHandles.Contains(QuestID))
+	{
+		TSharedPtr<FStreamableHandle> Handle = LoadHandles[QuestID];
+		if (Handle.IsValid() && Handle->IsActive())
+		{
+			return;
+		}
+	}
+
+	// 유효성 체크
+	UAssetManager& AssetManager = UAssetManager::Get();
 	FPrimaryAssetId AssetID(FName("QuestData"), QuestID.GetTagName());
 	FSoftObjectPath AssetPath = AssetManager.GetPrimaryAssetPath(AssetID);
 	if (!AssetPath.IsValid())
 	{
-		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] StartQuestDataLoad: Invalid AssetID for [%s]. Check AssetManager settings."), *QuestID.ToString());
+		UE_LOG(LogQuestSystem, Error, TEXT("Invalid AssetID for [%s]"), *QuestID.ToString());
+
+		PendingLoadCallbacks.Remove(QuestID);
 		return;
 	}
 
-	FStreamableDelegate OnLoadCompleteDelegate = FStreamableDelegate::CreateWeakLambda(this, [this, QuestID]()
+	FStreamableDelegate WrapperDelegate = FStreamableDelegate::CreateWeakLambda(this,
+		[this, QuestID]()
 		{
-			this->OnQuestDataLoaded(QuestID);
+			LoadHandles.Remove(QuestID);
+			if (TArray<FStreamableDelegate>* FoundCallbacks = PendingLoadCallbacks.Find(QuestID))
+			{
+				for (const FStreamableDelegate& Callback : *FoundCallbacks)
+				{
+					Callback.ExecuteIfBound();
+				}
+				PendingLoadCallbacks.Remove(QuestID);
+			}
+			UE_LOG(LogQuestSystem, Verbose, TEXT("Async load finished for [%s]."), *QuestID.ToString());
 		});
 
-	TSharedPtr<FStreamableHandle> LoadHandle = AssetManager.LoadPrimaryAsset(AssetID, TArray<FName>(), OnLoadCompleteDelegate);
-
-	if (LoadHandle.IsValid())
+	TSharedPtr<FStreamableHandle> NewHandle = AssetManager.LoadPrimaryAsset(AssetID, TArray<FName>(), WrapperDelegate);
+	if (NewHandle.IsValid())
 	{
-		LoadHandles.Add(QuestID, LoadHandle);
+		LoadHandles.Add(QuestID, NewHandle);
 	}
-}
-
-void UQuestComponent::OnQuestDataLoaded(const FGameplayTag& QuestID)
-{
-	UE_LOG(LogQuestSystem, Verbose, TEXT("All QuestData assets are now loaded. Caching..."));
-
-	if (LoadHandles.Contains(QuestID))
-	{
-		LoadHandles.Remove(QuestID);
-	}
-
-	StartActivateQuest(QuestID);
 }
 
 void UQuestComponent::StartActivateQuest(const FGameplayTag& QuestID)
 {
-	if (!QuestID.IsValid())
+	if (GetOwnerRole() != ROLE_Authority)
 	{
-		UE_LOG(LogQuestSystem, Warning, TEXT("[QuestSys] LoadAndActivateQuest: QuestID is invalid."));
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for StartActivateQuest. Need Authority."));
 		return;
 	}
 
-	// TODO: IsContainActivateQuest 로 변경
+	if (!ensure(QuestID.IsValid())) return;
+
 	if (HasActiveQuest(QuestID))
 	{
 		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] Cannot activate quest [%s], Quest is already Activated."), *QuestID.ToString());
@@ -950,17 +998,20 @@ void UQuestComponent::StartActivateQuest(const FGameplayTag& QuestID)
 	UQuestObjectConfig* QuestData = Cast<UQuestObjectConfig>(AssetManager.GetPrimaryAssetObject(AssetID));
 
 	// 새로운 UQuestObject를 생성하고 초기화
-	if (!QuestData->QuestObjectClass)
+	if (!ensureMsgf(QuestData && QuestData->QuestObjectClass, TEXT("Invalid DataAsset for %s"), *QuestID.ToString()))
 	{
-		UE_LOG(LogQuestSystem, Error, TEXT("QuestObjectClass is NULL in DataAsset [%s]!"), *QuestData->GetName());
 		return;
 	}
 	UQuestObject* NewQuestObject = NewObject<UQuestObject>(this, QuestData->QuestObjectClass);
 
-	NewQuestObject->Initialize(QuestData, this);
+	if (!NewQuestObject->Initialize(QuestData, this))
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] QuestObject is Failed to Initialized!"), *QuestID.ToString());
+		return;
+	}
 
-	NewQuestObject->OnQuestObjectChangedDelegate.BindUObject(this, &UQuestComponent::NotifyQuestUpdate);
-	NewQuestObject->OnRequestWorldTasksDelegate.BindUObject(this, &UQuestComponent::OnQuestRequestingWorldTasks);
+	NewQuestObject->OnQuestProgressChangedDelegate.BindUObject(this, &UQuestComponent::OnQuestProgressUpdated);
+	NewQuestObject->OnQuestCompletionMetDelegate.BindUObject(this, &UQuestComponent::OnQuestObjectCompelete);
 
 	NewQuestObject->Activate();
 
@@ -970,6 +1021,12 @@ void UQuestComponent::StartActivateQuest(const FGameplayTag& QuestID)
 
 void UQuestComponent::DeactivateAndDestroyQuest(const FGameplayTag& QuestID)
 {
+	if (GetOwnerRole() != ROLE_Authority)
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for StartActivateQuest. Need Authority."));
+		return;
+	}
+
 	const int32 Index = ActiveQuests.IndexOfByPredicate([&](const UQuestObject* Quest)
 		{
 			return Quest && Quest->GetQuestID() == QuestID;
@@ -993,6 +1050,124 @@ void UQuestComponent::DeactivateAndDestroyQuest(const FGameplayTag& QuestID)
 	{
 		UE_LOG(LogQuestSystem, Warning, TEXT("[QuestSys] Failed to find quest [%s] to deactivate."), *QuestID.ToString());
 	}
+}
+
+void UQuestComponent::ExecuteQuestActions(TArray<TObjectPtr<UQuestAction>>& Actions, const FGameplayTag& QuestID, const FQuestExecutionContext& QuestContext, ENetworkActionType NetPolicy)
+{
+	for (const TObjectPtr<UQuestAction>& TemplateAction : Actions)
+	{
+		if (!TemplateAction) continue;
+
+		// 네트워크 정책에 따른 실행 여부 판단
+		if ((NetPolicy & TemplateAction->NetworkActionType) != ENetworkActionType::None) return;
+
+		
+		switch (TemplateAction->InstancingPolicy)
+		{
+		case EActionInstancingPolicy::NonInstanced:		// stateless
+			TemplateAction->ExecuteAction(this, QuestID, QuestContext);
+			break;
+
+		case EActionInstancingPolicy::InstancedPerExecution:	// always instancing
+			UQuestAction* NewInstance = DuplicateObject<UQuestAction>(TemplateAction, this);
+			if (NewInstance)
+			{
+				ActiveQuestActions.Add(NewInstance);
+				NewInstance->ExecuteAction(this, QuestID, QuestContext);
+				NewInstance->OnQuestActionEndedDelegate.AddUObject(this, &UQuestComponent::OnQuestActionEnded);
+			}
+			break;
+
+		case  EActionInstancingPolicy::InstancedPerObject:	// Instancing Only Once
+			UQuestAction* FoundAction = nullptr;
+			for (UQuestAction* ActiveInst : ActiveQuestActions)
+			{
+				if (ActiveInst && (ActiveInst->GetArchetype() == TemplateAction))
+				{
+					FoundAction = ActiveInst;
+					break;
+				}
+			}
+			if (FoundAction)
+			{
+				FoundAction->ExecuteAction(this, QuestID, QuestContext);
+			}
+			else
+			{
+				UQuestAction* NewInstance = DuplicateObject<UQuestAction>(TemplateAction, this);
+				if (NewInstance)
+				{
+					NewInstance->ExecuteAction(this, QuestID, QuestContext);
+					ActiveQuestActions.Add(NewInstance);
+				}
+			}
+
+		default:
+			break;
+		}
+	}
+}
+
+void UQuestComponent::OnQuestActionEnded(UQuestAction* EndedAction)
+{
+	ActiveQuestActions.RemoveSingle(EndedAction);
+}
+
+void UQuestComponent::OnQuestObjectCompelete(UQuestObject* CompleteQuest)
+{
+	if (GetOwnerRole() != ROLE_Authority)
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for OnQuestObjectCompelete. Need Authority."));
+		return;
+	}
+
+	if (!ensureMsgf(CompleteQuest && CompleteQuest->GetQuestID().IsValid(), TEXT("QuestObject Internal Error")))
+	{
+		return;
+	}
+
+	const FGameplayTag QuestID = CompleteQuest->GetQuestID();
+	LoadQuestObjectData(QuestID, FStreamableDelegate::CreateWeakLambda(this, [this, QuestID]()
+		{
+			if (!ensureMsgf(QuestProgressList.Find(QuestID), TEXT("Critical: Active quest [%s] lost progress data!"), *QuestID.ToString()))
+			{
+				return;
+			}
+
+			QuestProgressList.UpdateProgressData(QuestID, EQuestProgress::Completed_PendingTurnIn);
+
+			UAssetManager& AssetMgr = UAssetManager::Get();
+			FPrimaryAssetId AssetID(FName("QuestData"), QuestID.GetTagName());
+
+			if (UQuestObjectConfig* QuestData = Cast<UQuestObjectConfig>(AssetMgr.GetPrimaryAssetObject(AssetID)))
+			{
+				FQuestContext Context = UQuestHelpers::MakeQuestContext(this, this->GetOwner(), nullptr, FGameplayTagContainer::EmptyContainer, FGameplayTag::EmptyTag, 1);
+				ExecuteQuestActions(QuestData->QuestCompoletionAction, QuestID, Context, ENetworkActionType::ServerOnly);
+
+				if (QuestData->bAutoClaimReward)
+				{
+					this->Internal_ClaimQuestReward(QuestID);
+				}
+			}
+		}
+	));
+}
+
+void UQuestComponent::OnQuestProgressUpdated(UQuestObject* UpdatedQuest, const FGameplayTag& ObjID, int32 NewValue)
+{
+	if (GetOwnerRole() != ROLE_Authority)
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] InValid Access for OnQuestProgressUpdated. Need Authority."));
+		return;
+	}
+
+	if (!ensureMsgf(UpdatedQuest && UpdatedQuest->GetQuestID().IsValid(), TEXT("QuestObject Internal Error")))
+	{
+		return;
+	}
+
+	const FGameplayTag& QuestID = UpdatedQuest->GetQuestID();
+	QuestProgressList.UpdateProgressData(QuestID, ObjID, NewValue);
 }
 
 void UQuestComponent::RestoreActiveQuest()

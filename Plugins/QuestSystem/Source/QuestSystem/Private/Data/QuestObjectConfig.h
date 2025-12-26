@@ -5,27 +5,13 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
+#include "Object/QuestObject.h"
 #include "QuestObjectConfig.generated.h"
 
 
 class UQuestObjectiveConfig;
 class UQuestAction;
 class UQuestObject;
-
-
-USTRUCT(BlueprintType)
-struct FQuestEventActionWrapper
-{
-    GENERATED_BODY()
-
-    // 이 태그와 일치하는 이벤트가 왔을 때만 실행
-    UPROPERTY(EditDefaultsOnly)
-    FGameplayTag TriggerTag;
-
-    // 실행할 액션
-    UPROPERTY(EditDefaultsOnly, Instanced)
-    TObjectPtr<UQuestAction> Action;
-};
 
 
 /**
@@ -45,12 +31,16 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ID", meta = (ToolTip = "각 퀘스트의 고유한 ID입니다."))
 	FGameplayTag QuestID;
 
-
+	
 	// **** 퀘스트 정책 설정들 ****
 
 	// 포기 가능 여부
     UPROPERTY(EditDefaultsOnly, Category = "Policy")
     bool bCanAbandon = true;
+
+	// 실패 가능 여부
+	UPROPERTY(EditDefaultsOnly, Category = "Policy" )
+	bool bQuestCanFail = true;
 
     // 완료 즉시 보상 자동 수령
     UPROPERTY(EditDefaultsOnly, Category = "Policy")
@@ -59,10 +49,6 @@ public:
 	// 반복 가능 여부
 	UPROPERTY(EditDefaultsOnly, Category = "Policy")
 	bool bIsRepeatable = false;
-
-	// 목표 계층 구조 사용 여부
-	UPROPERTY(EditDefaultsOnly, Category = "Policy")
-	bool bUseObjectiveHierarchy = false;
 
 
 	// **** 퀘스트 진행 중 실행되는 액션 객체들 ****
@@ -73,23 +59,20 @@ public:
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Action", meta = (ToolTip = "퀘스트 보상 수령 시 실행되는 액션 객체입니다."))
 	TArray<TObjectPtr<UQuestAction>> QuestClaimRewardAction;
 
-	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Action", meta = (ToolTip = "퀘스트 목표 활성화 시 실행되는 액션 객체입니다."))
-	TArray<TObjectPtr<UQuestAction>> QuestObjectiveActivationAction;
+	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Action", meta = (ToolTip = "퀘스트 포기 시 실행되는 액션 객체입니다."))
+	TArray<TObjectPtr<UQuestAction>> QuestAbandonAction;
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Action", meta = (ToolTip = "퀘스트 목표 완료 시 실행되는 액션 객체입니다."))
 	TArray<TObjectPtr<UQuestAction>> QuestObjectiveCompletionAction;
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Action", meta = (ToolTip = "퀘스트 완료 시 실행되는 액션 객체입니다."))
-	TArray<TObjectPtr<UQuestAction>> QuestCompletionAction;
+	TArray<TObjectPtr<UQuestAction>> QuestCompoletionAction;
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Action", meta = (ToolTip = "퀘스트 실패 시 실행되는 액션 객체입니다."))
 	TArray<TObjectPtr<UQuestAction>> QuestFailedAction;
 
-	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Action", meta = (ToolTip = "퀘스트 포기 시 실행되는 액션 객체입니다."))
-	TArray<TObjectPtr<UQuestAction>> QuestAbandonAction;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Action", meta = (ToolTip = "퀘스트 커스텀 이벤트 발생 시 실행되는 액션 객체입니다."))
-	TArray<FQuestEventActionWrapper> QuestGameplayEventAction;
+// 	UPROPERTY(EditDefaultsOnly, Category = "Action", meta = (ToolTip = "퀘스트 커스텀 이벤트 발생 시 실행되는 액션 객체입니다."))
+// 	TArray<FQuestEventActionWrapper> QuestGameplayEventAction;
 
 
 	// **** 퀘스트 목표 설정들 ****

@@ -14,7 +14,7 @@ struct FQuestMessage_Generic;
  * GMS를 통해 퀘스트 시스템에 메시지를 '방송'하는 정적 헬퍼 클래스입니다.
  */
 UCLASS()
-class QUESTSYSTEM_API UQuestMessageHelpers : public UBlueprintFunctionLibrary
+class QUESTSYSTEM_API UQuestHelpers : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 

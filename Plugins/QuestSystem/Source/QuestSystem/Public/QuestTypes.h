@@ -33,6 +33,28 @@ enum class EQuestType : uint8
 	Event		UMETA(ToolTip = "이벤트 퀘스트입니다.")
 };
 
+// 네트워크 액션 실행 정책
+// 액션이 서버에서 실행될지, 클라이언트에서 실행될지, 혹은 둘 다에서 실행될지를 정의합니다.
+UENUM(BlueprintType, meta = (Bitflags))
+enum class ENetworkActionType : uint8
+{
+	None = 0						UMETA(Hidden),
+	ServerOnly = 1 << 0				UMETA(DisplayName = "Server Only", ToolTip = "서버에서만 액션이 실행됩니다."),
+	ClientOnly = 1 << 1				UMETA(DisplayName = "Client Only", ToolTip = "클라이언트에서만 액션이 실행됩니다."),
+	Both = ServerOnly | ClientOnly	UMETA(DisplayName = "Server And Client", ToolTip = "서버와 클라이언트 모두에서 액션이 실행됩니다.")
+};
+ENUM_CLASS_FLAGS(ENetworkActionType);
+
+
+// 액션 인스턴싱 정책
+UENUM(BlueprintType)
+enum class EActionInstancingPolicy : uint8
+{
+	InstancedPerObject		UMETA(ToolTip = "각 퀘스트 오브젝트 인스턴스마다 별도의 액션 인스턴스를 생성합니다."),
+	InstancedPerExecution	UMETA(ToolTip = "각 액션 실행마다 별도의 액션 인스턴스를 생성합니다."),
+	NonInstanced			UMETA(ToolTip = "액션을 인스턴스화하지 않고 공유 인스턴스를 사용합니다.")
+};
+
 
 USTRUCT(BlueprintType)
 struct FQuestTableRow : public FTableRowBase
@@ -111,6 +133,10 @@ private:
 	// 진행도의 실제 진행상황
 	UPROPERTY(SaveGame)
 	TArray<FQuestObjectiveData> Objectives;
+
+	// 진행도의 단계
+	UPROPERTY(SaveGame)
+	uint8 Phase;
 	
 	// 현재 진행도의 단계
 	UPROPERTY(SaveGame)
@@ -251,34 +277,68 @@ public:
 	bool operator==(const FGameplayTag& Tag) const { return QuestID == Tag; }
 };
 
+UENUM(BlueprintType)
+enum class EQuestChangeType : uint8
+{
+	None,
+	Accepted,       // 퀘스트 수락됨
+	ObjectiveUpdate,// 목표 진행도 변경됨
+	PhaseChanged,   // 단계(Phase) 변경됨
+	Completed,      // 퀘스트 완료됨
+	Failed,         // 퀘스트 실패함
+	Restored        // (옵션) 단순히 로드됨
+};
 
 USTRUCT(BlueprintType)
-struct FQuestContext
+struct FQuestExecutionContext
 {
     GENERATED_BODY()
 
 public:
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
-    TObjectPtr<AActor> Instigator = nullptr;
+	// 현재 로딩중일 때
+	UPROPERTY(BlueprintReadWrite, Category = "Execution")
+    bool bIsRestoring = false;
 
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
-    TObjectPtr<UObject> TargetObject = nullptr;
+	// 넷정책이 혼합일 때
+    UPROPERTY(BlueprintReadWrite, Category = "Execution")
+    bool bIsPrediction = false;
 
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
-    FGameplayTagContainer TargetTags;
 
-    // [옵션] 사건의 수치 (데미지 양, 획득 개수 등)
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
-    int32 Amount = 1;
+	// 이 컨텍스트가 촉발된 원인
+    UPROPERTY(BlueprintReadWrite, Category = "Reason")
+    EQuestChangeType ChangeType = EQuestChangeType::None;
 
-    // [옵션] 추가 정보 (무엇으로 죽였나? 장소는 어디인가?)
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
-    FGameplayTagContainer ContextTags;
+	// 페이즈 값 등
+    UPROPERTY(BlueprintReadWrite, Category = "Reason")
+    int32 PreviousValue = 0;
 
-    // 생성자 (편의용)
-    FQuestContext() {}
-    FQuestContext(AActor* InInstigator, UObject* InTarget) 
-        : Instigator(InInstigator), TargetObject(InTarget) {}
+    UPROPERTY(BlueprintReadWrite, Category = "Reason")
+    int32 NewValue = 0;
+
+
+    UPROPERTY(BlueprintReadWrite, Category = "Actor")
+    TWeakObjectPtr<AActor> QuestOwner = nullptr;
+
+	// Optional
+    UPROPERTY(BlueprintReadWrite, Category = "Actor")
+    TWeakObjectPtr<AActor> SourceActor = nullptr;
+
+
+	// 관련된 ObjID
+	UPROPERTY(BlueprintReadWrite, Category = "Data")
+    FGameplayTag RelatedObjectiveID;
+
+
+	FQuestExecutionContext() {}
+
+	// 로딩용 헬퍼
+	static FQuestExecutionContext MakeRestore(AActor* Owner)
+	{
+		FQuestExecutionContext Context;
+		Context.bIsRestoring = true;
+		Context.QuestOwner = Owner;
+		return Context;
+	}
 };
 
 
@@ -335,13 +395,14 @@ public:
  * @note 네트워크 직렬화가 가능하도록 설계되었습니다.
  */
 USTRUCT(BlueprintType)
-struct FQuestActionContext
+struct FQuestMessagePayload
 {
     GENERATED_BODY()
 
 public:
-    FQuestActionContext()
-        : Instigator(nullptr), TargetActor(nullptr), Amount(0), Location(FVector::ZeroVector), PolicyFlags(0) {}
+	FQuestMessagePayload()
+		: Instigator(nullptr), TargetActor(nullptr), SourceObject(nullptr), Amount(1), Location(FVector::ZeroVector) {
+	}
 
     UPROPERTY(BlueprintReadWrite, Category = "Context")
     TWeakObjectPtr<AActor> Instigator; 
@@ -352,47 +413,24 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Context")
 	TWeakObjectPtr<UObject> SourceObject;
 
+
 	UPROPERTY(BlueprintReadWrite, Category = "Context")
     FGameplayTagContainer TargetTag;
 
-    UPROPERTY(BlueprintReadWrite, Category = "Context")
-    FGameplayTag EventTag;
 
     UPROPERTY(BlueprintReadWrite, Category = "Context")
     int32 Amount;
+
 
     UPROPERTY(BlueprintReadWrite, Category = "Context")
     FVector_NetQuantize10 Location; 
 
     UPROPERTY(BlueprintReadWrite, Category = "Context")
-    uint8 PolicyFlags;
-
-	AActor* GetInstigator() const { return Instigator.Get(); }
-	AActor* GetTargetActor() const { return TargetActor.Get(); }
-    
-    bool HasPolicy(uint8 FlagToCheck) const { return (PolicyFlags & FlagToCheck) != 0; }
-    void AddPolicy(uint8 FlagToAdd) { PolicyFlags |= FlagToAdd; }
-	void RemovePolicy(uint8 FlagToRemove) { PolicyFlags &= ~FlagToRemove; }
-
-	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess);
-};
-
-/**
- * 템플릿 특수화, 언리얼 엔진에게 이 구조체가 커스텀 NetSerialize를 사용한다고 알림
- */
-template<>
-struct TStructOpsTypeTraits<FQuestActionContext> : public TStructOpsTypeTraitsBase2<FQuestActionContext>
-{
-	enum
-	{
-		WithNetSerializer = true,
-		WithCopy = true
-	};
+    FGameplayTagContainer ContextTags;
 };
 
 /**
  * @brief 퀘스트 시스템 알림 전용 메시지 구조체
- * UI는 이 메시지를 받아서 토스트(Toast) 등을 띄우기만 하면 됩니다.
  */
 USTRUCT(BlueprintType)
 struct FQuestNotificationMessage

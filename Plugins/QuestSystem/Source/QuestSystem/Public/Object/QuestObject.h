@@ -8,83 +8,111 @@
 #include "QuestObject.generated.h"
 
 class UQuestObjectConfig;
-class UQuestManagerSubSystem;
 class UQuestObjective;
 class UQuestTask;
+class UQuestComponent;
 
-DECLARE_DELEGATE_OneParam(FOnQuestObjectChangedSignature, const FGameplayTag&);
-DECLARE_DELEGATE_OneParam(FOnRequestWorldTasksSignature, const TArray<TObjectPtr<UQuestTask>>&);
+DECLARE_DELEGATE_ThreeParams(FOnQuestProgressChangedSignature, UQuestObject*, const FGameplayTag& /*ObjID*/, int32 /*NewValue*/);
+DECLARE_DELEGATE_OneParam(FOnQuestCompletionMetSignature, UQuestObject*);
+
 
 /**
  * @brief 퀘스트 진행에 대한 런타임 객체입니다. InProgresss 상태의 객체들만 이 객체를 가지며, 실제 퀘스트 목표를 관리하는 역할을 맡습니다.
  */
-UCLASS()
+UCLASS(BlueprintType, Blueprintable)
 class QUESTSYSTEM_API UQuestObject : public UObject
 {
 	GENERATED_BODY()
 
 public:
-	// **** 델리게이트 ****
-	
-	// 퀘스트 상태 변경을 알리기 위한 델리게이트
-	FOnQuestObjectChangedSignature OnQuestObjectChangedDelegate;
-
-	FOnRequestWorldTasksSignature OnRequestWorldTasksDelegate;
+	// FFastQuestArray를 갱신하기 위한 버블업 델리게이트
+	FOnQuestProgressChangedSignature OnQuestProgressChangedDelegate;
+	// 퀘스트 완료 시 델리게이트
+	FOnQuestCompletionMetSignature OnQuestCompletionMetDelegate;
 
 
-	// **** 유틸리티 함수 ****
+#pragma region Getter & Helpers
+public:
+	UFUNCTION(BlueprintPure, Category = "Quest")
+	FORCEINLINE const FGameplayTag& GetQuestID() const { return Definition ? Definition->QuestID : FGameplayTag::EmptyTag; }
+
+	UFUNCTION(BlueprintPure, Category = "Quest")
+	FORCEINLINE const UQuestObjectConfig* GetQuestDefinition() const { return Definition; }
+
+	UFUNCTION(BlueprintPure, Category = "Quest")
+	FORCEINLINE UQuestComponent* GetOwnerComponent() const { return CachedQuestComp.Get(); }
+
+	/** 현재 퀘스트의 완료 조건을 만족했는지 확인 (외부 조회용) */
+	UFUNCTION(BlueprintPure, Category = "Quest")
+	bool CheckQuestCompletion() const;
 
 	FORCEINLINE const FGameplayTag& GetQuestID() const { return Definition ? Definition->QuestID : FGameplayTag::EmptyTag; }
 	FORCEINLINE const UQuestObjectConfig* GetQuestDefinition() const { return Definition; }
+#pragma endregion
 
-
-	// **** 상위 객체 호출 함수 ****
-
+#pragma region Public Interface
+public:
 	// 퀘스트 런타임 객체를 초기화합니다.
-	virtual void Initialize(UQuestObjectConfig* DefRef, UQuestManagerSubSystem* Manager);
-
+	bool Initialize(const UQuestObjectConfig* DefRef, UQuestComponent* OwnerComp);
 	// Objective 배열을 순회하며 활성화 시킵니다. 델리게이트에 OnObjectCompleted 함수를 바인드합니다.
-	virtual void Activate(UObject* WorldContext);
-
+	void Activate();
 	// 모든 배열을 비활성화시킵니다.
-	virtual void DeActivate();
+	void DeActivate();
+#pragma endregion
 
-	// 퀘스트가 완료되었는지 확인합니다.
-	virtual bool CheckQuestCompletion() const;
+#pragma region Quest Object Internal Flow
+protected:
+	void OnObjectiveUpdated(const FQuestExecutionContext& ActionContext);
 
+	virtual bool Native_Initalize(const UQuestObjectConfig* DefRef, UQuestComponent* OwnerComp);
+	virtual void Native_Activate();
+	virtual void Native_DeActivated();
+	virtual bool Native_OnObjectiveUpdated(const UQuestObjective* Objective);
+
+	virtual bool Native_CheckQuestCompletion(bool bAllObjectivesComplete) const;
+
+	// BP Hooks, 내부 로직, Native 함수 뒤에서 실행됩니다. DeActivate의 경우에는 가장 먼저 실행됩니다.
+	UFUNCTION(BlueprintImplementableEvent, Category = "Quest|Object", meta = (DisplayName = "OnInitialize"))
+	bool K2_Initialize(const UQuestObjectConfig* DefRef, UQuestComponent* OwnerComp);
+	UFUNCTION(BlueprintImplementableEvent, Category = "Quest|Object", meta = (DisplayName = "OnActivate"))
+	void K2_Activate();
+	UFUNCTION(BlueprintImplementableEvent, Category = "Quest|Object", meta = (DisplayName = "OnDeActivate"))
+	void K2_DeActivate();
+	UFUNCTION(BlueprintImplementableEvent, Category = "Quest|Object", meta = (DisplayName = "OnObjectiveUpdated"))
+	void K2_OnObjectUpdated(const UQuestObjective* Objective);
+#pragma endregion
+
+#pragma region Data & State
+protected:
+	// 이 퀘스트 런타임 객체의 설계도가 되는 UDA_QuestBase 객체에 대한 참조입니다.
+	UPROPERTY()
+	TObjectPtr<const UQuestObjectConfig> Definition;
+
+	// 퀘스트의 하위 목표 객체 배열입니다.
+	UPROPERTY(VisibleAnywhere, Category = "Quest")
+	TArray<TObjectPtr<UQuestObjective>> Objectives;
+
+	// 실패 목표입니다.
+	UPROPERTY(VisibleAnywhere, Category = "Quest")
+	TArray<TObjectPtr<UQuestObjective>> FailObjectives;
+
+	// 퀘스트 컴포넌트에 대한 캐싱입니다. 유효성 검사 필요.
+	UPROPERTY()
+	TWeakObjectPtr<UQuestComponent> CachedQuestComp;
+
+private:
+	bool bIsActive = false;
+#pragma endregion
+
+#pragma region DEBUG ONLY
+/*
 #if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
-
+public:
 	// 디버그 전용 퀘스트 완료 함수입니다.
 	void ForceCompleteQuest();
 
 	// 디버그 전용 퀘스트 목표 완료 함수입니다.
 	void ForceCompleteQuestObj(const FGameplayTag& ObjectiveID);
-
-#endif
-
-protected:
-	// **** 초기화될 기본 프로퍼티 ****
-
-	// 이 퀘스트 런타임 객체의 설계도가 되는 UDA_QuestBase 객체에 대한 참조입니다.
-	UPROPERTY()
-	TObjectPtr<UQuestObjectConfig> Definition;
-
-	// 퀘스트의 하위 목표 객체 배열입니다.
-	UPROPERTY(VisibleInstanceOnly, Category = "Quest")
-	TArray<TObjectPtr<UQuestObjective>> Objectives;
-
-	// 퀘스트 서브시스템에 대한 캐싱입니다. 유효성 검사 필요.
-	UPROPERTY()
-	TObjectPtr<UQuestManagerSubSystem> CachedQuestSys;
-
-
-	// **** 주요 기능 함수들 ****
-
-	// 하위 객체에서 퀘스트 완료 시 호출됩니다. 델리게이트를 통해 호출됩니다.
-	virtual void OnObjectiveCompleted(UQuestObjective* Objective);
-
-
-	// **** 델리게이트 바인딩 함수 ****
-
-	void OnObjectiveRequestingTasks(const TArray<TObjectPtr<UQuestTask>>& TasksToExecute);
+#endif*/
+#pragma endregion
 };

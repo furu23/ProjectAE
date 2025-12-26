@@ -1,84 +1,156 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "QuestObject.h"
-#include "QuestManagerSubSystem.h"
-#include "Data/QuestData.h"
+#include "Object/QuestObject.h"
+#include "Data/QuestObjectConfig.h"
 #include "Objectives/QuestObjectiveConfig.h"
 #include "Objectives/QuestObjective.h"
 #include "QuestSystem.h"
+#include "QuestComponent.h"
 
-void UQuestObject::Initialize(UQuestObjectConfig* DefRef, UQuestManagerSubSystem* Manager)
+#pragma region Object Flow : Initialize
+bool UQuestObject::Initialize(const UQuestObjectConfig* DefRef, UQuestComponent* OwnerComp)
 {
+	if (!DefRef) return false;
+	if (!OwnerComp) return false;
+	if (!DefRef->QuestID.IsValid()) return false;
+
 	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] Object Initialize"), *this->GetFName().ToString());
 	// 값 초기화
 	Definition = DefRef;
-	CachedQuestSys = Manager;
+	CachedQuestComp = OwnerComp;
 
 	// QuestObjective 배열 초기화
 	for (const UQuestObjectiveConfig* Config : DefRef->ObjectConfigs)
 	{
 		if (!Config) continue;
 
-		TSubclassOf<UQuestObjective> ObjectiveClass = Config->GetQuestObjectiveClass();
+		TSubclassOf<UQuestObjective> ObjectiveClass = Config->ObjectiveRuntimeClass;
 		if (!ObjectiveClass)
 		{
 			UE_LOG(LogQuestSystem, Warning, TEXT("Quest [%s] has an invalid ObjectiveConfig or Class!"), *Definition->GetName());
 			continue;
 		}
 
-		// UClass 값을 통해 ObjectiveClass를 만들고, 
+		// UClass 값을 통해 ObjectiveClass를 만들고, 초기화
 		UQuestObjective* Objective = NewObject<UQuestObjective>(this, ObjectiveClass);
-		Objective->Initialize(Config, CachedQuestSys, Definition->QuestID);
+		Objective->Initialize(Config, CachedQuestComp.Get(), Definition->QuestID);
+
+		Objective->OnObjectiveUpdatedDelegate.BindUObject(this, &UQuestObject::OnObjectiveUpdated);
+
 		Objectives.Add(Objective);
 		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object initialized end"), *this->GetFName().ToString());
 	}
+
+	return Native_Initalize(DefRef, OwnerComp) && K2_Initialize(DefRef, OwnerComp);
 }
 
-void UQuestObject::Activate(UObject* WorldContext)
+bool UQuestObject::Native_Initalize(const UQuestObjectConfig* DefRef, UQuestComponent* OwnerComp)
 {
+	return true;
+}
+#pragma endregion
+
+#pragma region Object Flow : Activate
+void UQuestObject::Activate()
+{
+	if (bIsActive) return;
+	if (!CachedQuestComp.IsValid()) return;
+
 	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object activating is started"), *this->GetFName().ToString());
-	const FQuestProgressData* QuestData = CachedQuestSys->QueryProgressDataForQuestID(Definition->QuestID);
+	bIsActive = true;
 
 	for (UQuestObjective* Objective : Objectives)
 	{
-		Objective->OnObjectiveCompleteDelegate.BindUObject(this, &UQuestObject::OnObjectiveCompleted);
-		Objective->OnRequestTaskSignatureDelegate.BindUObject(this, &UQuestObject::OnObjectiveRequestingTasks);
 		Objective->Activate(this);
+
 		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object activated end"), *this->GetFName().ToString());
 	}
-
-	OnQuestObjectChangedDelegate.ExecuteIfBound(Definition->QuestID);
+	
+	Native_Activate();
+	K2_Activate();
 }
 
+void UQuestObject::Native_Activate()
+{
+
+}
+#pragma endregion
+
+#pragma region Object Flow : DeActivate
 void UQuestObject::DeActivate()
 {
+	Native_DeActivated();
+	K2_DeActivate();
+
 	for (UQuestObjective* Objective : Objectives)
 	{
 		Objective->OnObjectiveCompleteDelegate.Unbind();
-		Objective->OnRequestTaskSignatureDelegate.Unbind();
 		Objective->DeActivate();
 
-		Objective->MarkAsGarbage();
 		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object deactivating is called successfully"), *this->GetFName().ToString());
 	}
 	Objectives.Empty();
+
+	// 완료 시
+	OnQuestCompletionMetDelegate.ExecuteIfBound(this);
+}
+
+void UQuestObject::Native_DeActivated()
+{
+
+}
+#pragma endregion
+
+#pragma region Object Flow : Callback And CompletionCheck
+void UQuestObject::OnObjectiveUpdated(const FQuestExecutionContext& ActionContext)
+{
+	if (Objective && OnQuestProgressChangedDelegate.IsBound())
+	{
+		OnQuestProgressChangedDelegate.Execute(this, Objective->GetQuestObjectiveID(), Objective->GetCurrentValue());
+	}
+
+	if (CheckQuestCompletion())
+	{
+		if (OnQuestCompletionMetDelegate.IsBound())
+		{
+			OnQuestCompletionMetDelegate.Execute(this);
+		}
+	}
+}
+
+bool UQuestObject::Native_OnObjectiveUpdated(const UQuestObjective* Objective)
+{
+	return true;
 }
 
 bool UQuestObject::CheckQuestCompletion() const
 {
+	bool bAllObjectivesComplete = true;
 	for (UQuestObjective* Objective : Objectives)
 	{
-		if (!Objective->IsComplete()) return false;
+		if (!Objective->IsComplete())
+		{
+			bAllObjectivesComplete = false;
+			break;
+		}
 	}
-	return true;
+	return Native_CheckQuestCompletion(bAllObjectivesComplete);
 }
 
+bool UQuestObject::Native_CheckQuestCompletion(bool bAllObjectivesComplete) const
+{
+	return bAllObjectivesComplete;
+}
+#pragma endregion
 
+
+/*
+#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
 void UQuestObject::ForceCompleteQuest()
 {
 	// ProgressData를 받아옵니다.
-	FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestID(Definition->QuestID);
+	FQuestProgressData* ProgressData = CachedQuestComp.Get()->QueryProgressDataForQuestID(Definition->QuestID);
 	if (!ProgressData)
 	{
 		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] : [%s] object failed getting FQuestProgressData"), *this->GetFName().ToString());
@@ -89,10 +161,8 @@ void UQuestObject::ForceCompleteQuest()
 	DeActivate();
 
 	OnQuestObjectChangedDelegate.Execute(Definition->QuestID);
-
 }
 
-#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
 
 void UQuestObject::ForceCompleteQuestObj(const FGameplayTag& ObjectiveID)
 {
@@ -110,59 +180,4 @@ void UQuestObject::ForceCompleteQuestObj(const FGameplayTag& ObjectiveID)
 		}
 	}
 }
-
-#endif
-
-void UQuestObject::OnObjectiveCompleted(UQuestObjective* Objective)
-{
-	int32 CompletedCount = 0;
-	const int32 TotalCount = Objectives.Num();
-
-	for (const UQuestObjective* Obj : Objectives)
-	{
-		// IsComplete()는 Manager의 ProgressData를 조회하므로 최신 상태를 반영합니다.
-		if (Obj && Obj->IsComplete())
-		{
-			CompletedCount++;
-		}
-	}
-
-	FQuestNotificationMessage NotiMsg;
-	NotiMsg.QuestID = Definition->QuestID;
-
-	// 포맷: "{퀘스트이름} 목표 완료 ({현재}/{전체})"
-	// 예시: "마을의 평화 목표 완료 (2/3)"
-	NotiMsg.NotificationText = FText::Format(
-		NSLOCTEXT("Quest", "ObjectiveCountNotification", "{0} 목표 완료 ({1}/{2})"),
-		Definition->QuestName,
-		CompletedCount,
-		TotalCount
-	);
-
-	UGameplayMessageSubsystem& GMS = UGameplayMessageSubsystem::Get(this);
-	GMS.BroadcastMessage(FGameplayTag::RequestGameplayTag(TEXT("Quest.Event.UI.Notification")), NotiMsg);
-
-	UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] Notification Broadcast: %s (%d/%d)"), *Definition->QuestName.ToString(), CompletedCount, TotalCount);
-
-	if (CheckQuestCompletion())
-	{
-		// ProgressData를 받아옵니다.
-		FQuestProgressData* ProgressData = CachedQuestSys->QueryProgressDataForQuestID(Definition->QuestID);
-		if (!ProgressData)
-		{
-			UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] : [%s] object failed getting FQuestProgressData"), *this->GetFName().ToString());
-			return;
-		}
-
-		ProgressData->ProgressType = EQuestProgress::Completed_PendingTurnIn;
-		DeActivate();
-		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object get [%s] objective completion"), *this->GetFName().ToString(), *Objective->GetFName().ToString());
-	}
-	OnQuestObjectChangedDelegate.Execute(Definition->QuestID);
-}
-
-
-void UQuestObject::OnObjectiveRequestingTasks(const TArray<TObjectPtr<UQuestTask>>& TasksToExecute)
-{
-	OnRequestWorldTasksDelegate.ExecuteIfBound(TasksToExecute);
-}
+#endif*/

@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "Engine/DataTable.h"
 #include "QuestTypes.h"
+#include "Engine/StreamableManager.h"
 #include "QuestComponent.generated.h"
 
 // 전방 선언
@@ -38,15 +39,14 @@ private:
 	UPROPERTY(Transient)
 	mutable bool bCacheDirtyFlag = true;
 
-public:
+
 	// **** FFastArraySerializer 인터페이스 재정의 ****
 
 #pragma region Interface: FastArraySerializer
-
+public:
     void PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize);
     void PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize);
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
-
 #pragma endregion
 
 
@@ -74,6 +74,7 @@ private:
 	// **** 공용 API 함수 ****
 
 #pragma region Public API
+public:
 	// 게터
 	FORCEINLINE const FQuestProgressData* Find(const FGameplayTag& QuestID) const { return Internal_Find(QuestID); }
 	FORCEINLINE const TArray<FQuestProgressData>& GetItems() const { return QuestProgressItems; }
@@ -93,9 +94,8 @@ private:
 #pragma endregion
 
 
-private:
-
 #pragma region Internal Implementation
+private:
 	/**
 	 * @brief QuestID에 해당되는 FQuestProgressData의 값을 질의하고 받습니다
 	 *
@@ -157,21 +157,25 @@ protected:
     // =================================================================
 #pragma region Data and Config
 protected:
-    // [Replicated] 퀘스트 기록 (서버->클라 동기화 핵심)
+    // 퀘스트 기록 (서버->클라 동기화 핵심)
     UPROPERTY(Replicated, SaveGame, ReplicatedUsing = "OnRep_PlayerQuestHistory")
     FQuestFastArray QuestProgressList;
 
-    // [Transient] 현재 활성화된 퀘스트 객체 인스턴스, 서버 전용
+    // 현재 활성화된 퀘스트 객체 인스턴스, 서버 전용
     UPROPERTY(Transient)
     TArray<TObjectPtr<UQuestObject>> ActiveQuests;
 
-    // [Config] 퀘스트 데이터 테이블
+    UPROPERTY(Transient)
+	TArray<TObjectPtr<UQuestAction>> ActiveQuestActions;
+
+    // 퀘스트 데이터 테이블
     UPROPERTY(EditDefaultsOnly, Category = "Quest|Config")
     TObjectPtr<UDataTable> QuestMetadataTable;
 
-    // [Cache] 메타데이터 캐시
+    // 메타데이터 캐시
     UPROPERTY(Transient)
     TMap<FGameplayTag, FQuestTableRow> QuestMetadataCache;
+
 
     UFUNCTION()
     virtual void OnRep_PlayerQuestHistory(const FQuestFastArray& OldQuestHistory);
@@ -268,17 +272,34 @@ protected:
     UFUNCTION(Client, Reliable)
 	virtual void Client_AbandonQuest(const FGameplayTag& QuestID);
 
+    UFUNCTION(Client, Reliable)
+	virtual void Client_AcceptQuest_Rejected(const FGameplayTag& QuestID);
+	UFUNCTION(Client, Reliable)
+	virtual void Client_ClaimQuestReward_Rejected(const FGameplayTag& QuestID);
+    UFUNCTION(Client, Reliable)
+	virtual void Client_AbandonQuest_Rejected(const FGameplayTag& QuestID);
+
 
 	// --- Helpers ---
 	// 보상 지급 처리
 	void GiveReward(const FGameplayTag& QuestID);
 	// 후행 퀘스트 상태 전이 확인
     void TryUnlockNextQuests(const FGameplayTag& QuestID);
+    // 정책에 따른 퀘스트 액션 실행
+    void ExecuteQuestActions(TArray<TObjectPtr<UQuestAction>>& Actions, const FGameplayTag& QuestID, const FQuestExecutionContext& QuestContext, ENetworkActionType NetPolicy);
+
+    // --- Callback ---
+    // 퀘스트 액션 완료 시 콜백
+    void OnQuestActionEnded(UQuestAction* EndedAction);
+	// 퀘스트 완료 시 콜백
+    void OnQuestObjectCompelete(UQuestObject* CompleteQuest);
+    // 목표 변경 시 콜백
+    void OnQuestProgressUpdated(UQuestObject* UpdatedQuest, const FGameplayTag& ObjID, int32 NewValue);
 #pragma endregion
 
 
     // =================================================================
-	// 5. System Logic Flow (저장 및 초기화, 비동기 로드)
+	// System Logic Flow (저장 및 초기화, 비동기 로드)
     // =================================================================
 #pragma region System Logic (Save & Async Load)
 public:
@@ -296,10 +317,9 @@ protected:
     // 메타데이터 테이블 로드
     void LoadQuestMetadataTable();
 
-    // 비동기 에셋 로드
-    void LoadAndActivateQuest(const FGameplayTag& QuestID);
-    void OnQuestDataLoaded(const FGameplayTag& QuestID);
-    
+	// 퀘스트 오브젝트 데이터 비동기 로드
+    void LoadQuestObjectData(const FGameplayTag& QuestID, FStreamableDelegate OnLoadComplete);
+
 	// 활성화된 퀘스트 복원
 	void RestoreActiveQuest();
 
@@ -313,6 +333,7 @@ protected:
 
 private:
     TMap<FGameplayTag, TSharedPtr<FStreamableHandle>> LoadHandles;
+    TMap<FGameplayTag, TArray<FStreamableDelegate>> PendingLoadCallbacks;
 #pragma endregion
 
 

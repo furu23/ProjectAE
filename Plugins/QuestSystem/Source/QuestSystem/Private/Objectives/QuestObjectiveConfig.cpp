@@ -2,13 +2,3 @@
 
 
 #include "Objectives/QuestObjectiveConfig.h"
-
-TSubclassOf<UQuestObjective> UQuestObjectiveConfig::GetQuestObjectiveClass() const
-{
-	return ObjectiveClass;
-}
-
-FText UQuestObjectiveConfig::GetFormattedObjectiveText(const FQuestProgressData& ProgressData) const
-{
-	return FText::FromString(TEXT("Invalid Objective"));
-}

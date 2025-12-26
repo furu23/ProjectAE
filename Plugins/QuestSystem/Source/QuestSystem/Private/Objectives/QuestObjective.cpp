@@ -3,7 +3,6 @@
 
 #include "Objectives/QuestObjective.h"
 #include "Objectives/QuestObjectiveConfig.h"
-#include "QuestManagerSubSystem.h"
 #include "QuestSystem.h"
 
 void UQuestObjective::Initialize(const UQuestObjectiveConfig* Config, UQuestManagerSubSystem* QuestSys, FGameplayTag ObjectQuestID)
