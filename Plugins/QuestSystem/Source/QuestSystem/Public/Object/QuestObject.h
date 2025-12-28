@@ -12,9 +12,8 @@ class UQuestObjective;
 class UQuestTask;
 class UQuestComponent;
 
-DECLARE_DELEGATE_ThreeParams(FOnQuestProgressChangedSignature, UQuestObject*, const FGameplayTag& /*ObjID*/, int32 /*NewValue*/);
-DECLARE_DELEGATE_OneParam(FOnQuestCompletionMetSignature, UQuestObject*);
 
+DECLARE_DELEGATE_OneParam(FOnObjectUpdatedSignature, const FQuestExecutionContext& /*ActionContext*/);
 
 /**
  * @brief 퀘스트 진행에 대한 런타임 객체입니다. InProgresss 상태의 객체들만 이 객체를 가지며, 실제 퀘스트 목표를 관리하는 역할을 맡습니다.
@@ -26,9 +25,7 @@ class QUESTSYSTEM_API UQuestObject : public UObject
 
 public:
 	// FFastQuestArray를 갱신하기 위한 버블업 델리게이트
-	FOnQuestProgressChangedSignature OnQuestProgressChangedDelegate;
-	// 퀘스트 완료 시 델리게이트
-	FOnQuestCompletionMetSignature OnQuestCompletionMetDelegate;
+	FOnObjectUpdatedSignature OnObjectUpdatedDelegate;
 
 
 #pragma region Getter & Helpers

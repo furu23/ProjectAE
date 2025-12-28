@@ -85,7 +85,7 @@ void UQuestObject::DeActivate()
 
 	for (UQuestObjective* Objective : Objectives)
 	{
-		Objective->OnObjectiveCompleteDelegate.Unbind();
+		Objective->OnObjectiveUpdatedDelegate.Unbind();
 		Objective->DeActivate();
 
 		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] : [%s] object deactivating is called successfully"), *this->GetFName().ToString());
@@ -105,7 +105,7 @@ void UQuestObject::Native_DeActivated()
 #pragma region Object Flow : Callback And CompletionCheck
 void UQuestObject::OnObjectiveUpdated(const FQuestExecutionContext& ActionContext)
 {
-	if (Objective && OnQuestProgressChangedDelegate.IsBound())
+	if (OnQuestProgressChangedDelegate.IsBound())
 	{
 		OnQuestProgressChangedDelegate.Execute(this, Objective->GetQuestObjectiveID(), Objective->GetCurrentValue());
 	}

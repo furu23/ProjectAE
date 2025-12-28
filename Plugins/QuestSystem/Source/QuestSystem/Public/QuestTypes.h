@@ -4,12 +4,8 @@
 #include "GameplayTagContainer.h"
 #include "Net/Serialization/FastArraySerializer.h"
 #include "QuestSystem.h"
+#include "Engine/StreamableManager.h"
 #include "QuestTypes.generated.h"
-
-// 현재 퀘스트 데이터 구조의 버전입니다.
-// 구조체가 변경될 때마다 이 숫자를 1씩 증가시키고, Migration 로직을 추가해야 합니다.
-static constexpr int32 QUEST_DATA_CURRENT_VERSION = 1;
-
 
 UENUM(BlueprintType)
 enum class EQuestProgress : uint8
@@ -55,7 +51,29 @@ enum class EActionInstancingPolicy : uint8
 	NonInstanced			UMETA(ToolTip = "액션을 인스턴스화하지 않고 공유 인스턴스를 사용합니다.")
 };
 
+// 퀘스트 액션 결과 통보용
+UENUM(BlueprintType)
+enum class EQuestActionResult : uint8
+{
+	Success,
+	Fail,
+	Canceled
+};
 
+// 퀘스트 액션의 Context 내부에서, 이 액션이 촉발된 이유를 확인
+UENUM(BlueprintType)
+enum class EQuestChangeType : uint8
+{
+	None,
+	Accepted,       // 퀘스트 수락됨
+	ObjectiveUpdate,// 목표 진행도 변경됨
+	PhaseChanged,   // 단계 변경됨
+	Completed,      // 퀘스트 완료됨
+	Failed,         // 퀘스트 실패함
+	Restored        // 첫 로드 시
+};
+
+// 퀘스트 관련 콜드 데이터 DT의 자료 구조입니다.
 USTRUCT(BlueprintType)
 struct FQuestTableRow : public FTableRowBase
 {
@@ -89,7 +107,6 @@ public:
 #endif
 };
 
-
 USTRUCT(BlueprintType)
 struct FQuestObjectiveData
 {
@@ -111,7 +128,12 @@ public:
     bool operator==(const FGameplayTag& Tag) const { return ObjectiveID == Tag; }
 };
 
+// 현재 퀘스트 데이터 구조의 버전입니다.
+// 구조체가 변경될 때마다 이 숫자를 1씩 증가시키고, Migration 로직을 추가해야 합니다.
+static constexpr int32 QUEST_DATA_CURRENT_VERSION = 1;
 
+
+// FFastQuestArray의 Item입니다. Objectives의 복제는 델타 레플리케이션이 아닌 개별로 이루어집니다.
 USTRUCT(BlueprintType)
 struct FQuestProgressData : public FFastArraySerializerItem
 {
@@ -141,8 +163,6 @@ private:
 	// 현재 진행도의 단계
 	UPROPERTY(SaveGame)
 	EQuestProgress ProgressType = EQuestProgress::None;
-
-
 
 
 	// **** 버전 관리용 프로퍼티 ****
@@ -277,18 +297,6 @@ public:
 	bool operator==(const FGameplayTag& Tag) const { return QuestID == Tag; }
 };
 
-UENUM(BlueprintType)
-enum class EQuestChangeType : uint8
-{
-	None,
-	Accepted,       // 퀘스트 수락됨
-	ObjectiveUpdate,// 목표 진행도 변경됨
-	PhaseChanged,   // 단계(Phase) 변경됨
-	Completed,      // 퀘스트 완료됨
-	Failed,         // 퀘스트 실패함
-	Restored        // (옵션) 단순히 로드됨
-};
-
 USTRUCT(BlueprintType)
 struct FQuestExecutionContext
 {
@@ -338,6 +346,16 @@ public:
 		Context.bIsRestoring = true;
 		Context.QuestOwner = Owner;
 		return Context;
+	}
+
+	bool IsValid() const
+	{
+		if (!QuestOwner.IsValid())
+		{
+			return false;
+		}
+
+		return true;
 	}
 };
 
@@ -392,7 +410,6 @@ public:
 
 /**
  * @brief 퀘스트 액션 실행 시 전달되는 컨텍스트 정보 구조체
- * @note 네트워크 직렬화가 가능하도록 설계되었습니다.
  */
 USTRUCT(BlueprintType)
 struct FQuestMessagePayload
@@ -443,4 +460,40 @@ struct FQuestNotificationMessage
 	// 화면에 출력될 최종 텍스트 (예: "쥐 잡기 목표 완료 (1/3)")
 	UPROPERTY(BlueprintReadOnly, Category = "Quest|Notification")
 	FText NotificationText;
+};
+
+// 에셋 프리로드를 위한, BP 친화적 구조체 래퍼
+USTRUCT(BlueprintType)
+struct FQuestPreloadHandle
+{
+	GENERATED_BODY()
+
+	// 퀘스트 컴포넌트만 이 구조체의 값을 바꿔줄 수 있음
+	friend class UQuestComponent;
+
+public:
+	// 유효성 체크
+	bool IsValid() const
+	{
+		return NativeHandle.IsValid() && NativeHandle->IsActive();
+	}
+	
+	// 로딩 완료 여부
+	bool IsLoaded() const
+	{
+		return NativeHandle.IsValid() && NativeHandle->HasLoadCompleted();
+	}
+
+	// 명시적 해제
+	void Reset()
+	{
+		if (NativeHandle.IsValid())
+		{
+			NativeHandle->CancelHandle();
+			NativeHandle.Reset();
+		}
+	}
+
+private:
+	TSharedPtr<FStreamableHandle> NativeHandle;
 };

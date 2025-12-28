@@ -1,10 +1,8 @@
 ﻿#include "QuestComponent.h"
 #include "QuestSystem.h"
 #include "QuestTypes.h"
-#include "Object/QuestObject.h"
 #include "Data/QuestObjectConfig.h"
-#include "Objectives/QuestObjectiveConfig.h"
-#include "QuestMessageHelpers.h"
+#include "Object/QuestObject.h"
 #include "Action/QuestAction.h"
 
 #include "GameplayTagContainer.h"
@@ -326,7 +324,7 @@ void FQuestFastArray::RebuildCache() const
 // ================================================================
 UQuestComponent::UQuestComponent()
 {
-
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 // ----------------------------------------------------------------
@@ -350,15 +348,6 @@ void UQuestComponent::BeginPlay()
 #if !UE_BUILD_SHIPPING
 	IConsoleManager& ConsoleMgr = IConsoleManager::Get();
 
-	// 1. 퀘스트 리셋 (인자 없음)
-	ConsoleCommands.Add(ConsoleMgr.RegisterConsoleCommand(
-		TEXT("Quest.Reset"),
-		TEXT("Resets all quest progress (New Game Setup). Usage: Quest.Reset"),
-		FConsoleCommandDelegate::CreateUObject(this, &UQuestComponent::Cheat_SetupNewGameQuests),
-		ECVF_Cheat
-	));
-
-	// 2. 퀘스트 강제 완료 (인자 1개)
 	ConsoleCommands.Add(ConsoleMgr.RegisterConsoleCommand(
 		TEXT("Quest.ForceComplete"),
 		TEXT("Force completes a quest. Usage: Quest.ForceComplete <QuestID>"),
@@ -366,7 +355,6 @@ void UQuestComponent::BeginPlay()
 		ECVF_Cheat
 	));
 
-	// 3. 목표 강제 완료 (인자 2개)
 	ConsoleCommands.Add(ConsoleMgr.RegisterConsoleCommand(
 		TEXT("Quest.ForceCompleteObj"),
 		TEXT("Force completes a specific objective. Usage: Quest.ForceCompleteObj <QuestID> <ObjID>"),
@@ -481,11 +469,7 @@ void UQuestComponent::RequestAcceptQuest(const FGameplayTag& QuestID)
 	if (GetOwnerRole() < ROLE_Authority)
 	{
 		Server_AcceptQuest(QuestID);
-
-		LoadQuestObjectData(QuestID, FStreamableDelegate::CreateWeakLambda(this, [this, QuestID]()
-			{
-			}
-		));
+		LoadQuestObjectData(QuestID, FStreamableDelegate::CreateWeakLambda(this, [this, QuestID](){}));
 	}
 	else
 	{
@@ -876,6 +860,27 @@ void UQuestComponent::LoadSaveData(const TArray<uint8>& InData)
 	}
 }
 
+FQuestPreloadHandle UQuestComponent::RequestPreloadQuestData(const FGameplayTag& QuestID)
+{
+	FQuestPreloadHandle OutHandle;
+
+	if (!QuestID.IsValid()) return OutHandle;
+
+	UAssetManager& AssetManager = UAssetManager::Get();
+	FPrimaryAssetId AssetID(FName("QuestData"), QuestID.GetTagName());
+
+	TSharedPtr<FStreamableHandle> NativeHandle = AssetManager.LoadPrimaryAsset(AssetID, TArray<FName>(), FStreamableDelegate());
+
+	if (NativeHandle.IsValid())
+	{
+		OutHandle.NativeHandle = NativeHandle;
+
+		UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] Preload: Handle Struct created for [%s]."), *QuestID.ToString());
+	}
+
+	return OutHandle;
+}
+
 void UQuestComponent::PrepareQuestData()
 {
 	// 메타데이터가 로드되지 않은 경우 로드
@@ -932,46 +937,63 @@ void UQuestComponent::LoadQuestObjectData(const FGameplayTag& QuestID, FStreamab
 {
 	PendingLoadCallbacks.FindOrAdd(QuestID).Add(OnLoadComplete);
 
-	if (LoadHandles.Contains(QuestID))
+	// 액티브 상태인 핸들을 확인
+	if (TSharedPtr<FStreamableHandle>* HandlePtr = LoadHandles.Find(QuestID))
 	{
-		TSharedPtr<FStreamableHandle> Handle = LoadHandles[QuestID];
-		if (Handle.IsValid() && Handle->IsActive())
+		TSharedPtr<FStreamableHandle> ExistingHandle = *HandlePtr;
+		if (ExistingHandle.IsValid())
 		{
+			// 로드가 끝났다면 실행, 이외엔 대기
+			if (ExistingHandle->HasLoadCompleted())
+			{
+				ProcessPendingCallbacks(QuestID);
+			}
 			return;
 		}
 	}
 
-	// 유효성 체크
 	UAssetManager& AssetManager = UAssetManager::Get();
 	FPrimaryAssetId AssetID(FName("QuestData"), QuestID.GetTagName());
-	FSoftObjectPath AssetPath = AssetManager.GetPrimaryAssetPath(AssetID);
-	if (!AssetPath.IsValid())
-	{
-		UE_LOG(LogQuestSystem, Error, TEXT("Invalid AssetID for [%s]"), *QuestID.ToString());
 
+	// 유효성 검사
+	if (!AssetManager.GetPrimaryAssetPath(AssetID).IsValid())
+	{
+		UE_LOG(LogQuestSystem, Error, TEXT("[QuestSys] LoadAsset: Invalid AssetID for [%s]"), *QuestID.ToString());
+
+		// 데이터 유효성이 보장되지 않은 상태에서 실행하면 치명적 에러, 퀘스트가 동작하지 않도록 삭제하는 정책
 		PendingLoadCallbacks.Remove(QuestID);
 		return;
 	}
 
-	FStreamableDelegate WrapperDelegate = FStreamableDelegate::CreateWeakLambda(this,
-		[this, QuestID]()
+	auto WrapperDelegate = [this, QuestID]()
 		{
+			// 로드 완료 시 핸들 정리
 			LoadHandles.Remove(QuestID);
-			if (TArray<FStreamableDelegate>* FoundCallbacks = PendingLoadCallbacks.Find(QuestID))
-			{
-				for (const FStreamableDelegate& Callback : *FoundCallbacks)
-				{
-					Callback.ExecuteIfBound();
-				}
-				PendingLoadCallbacks.Remove(QuestID);
-			}
-			UE_LOG(LogQuestSystem, Verbose, TEXT("Async load finished for [%s]."), *QuestID.ToString());
-		});
 
-	TSharedPtr<FStreamableHandle> NewHandle = AssetManager.LoadPrimaryAsset(AssetID, TArray<FName>(), WrapperDelegate);
-	if (NewHandle.IsValid())
+			// 콜백 실행
+			ProcessPendingCallbacks(QuestID);
+			UE_LOG(LogQuestSystem, Verbose, TEXT("[QuestSys] LoadAsset: Async load finished for [%s]."), *QuestID.ToString());
+		};
+
+	// 에셋 로드 요청
+	TSharedPtr<FStreamableHandle> NewHandle = AssetManager.LoadPrimaryAsset(AssetID, TArray<FName>(), FStreamableDelegate::CreateWeakLambda(this, WrapperDelegate));
+	if (NewHandle.IsValid() && !NewHandle->HasLoadCompleted())	// 이미 로드되어 있을 경우를 제외
 	{
 		LoadHandles.Add(QuestID, NewHandle);
+	}
+}
+
+void UQuestComponent::ProcessPendingCallbacks(const FGameplayTag& QuestID)
+{
+	if (TArray<FStreamableDelegate>* FoundCallbacks = PendingLoadCallbacks.Find(QuestID))
+	{
+		TArray<FStreamableDelegate> CallbacksForFire = *FoundCallbacks;
+		PendingLoadCallbacks.Remove(QuestID);
+
+		for (const FStreamableDelegate& Callback : CallbacksForFire)
+		{
+			Callback.ExecuteIfBound();
+		}
 	}
 }
 
@@ -1059,10 +1081,10 @@ void UQuestComponent::ExecuteQuestActions(TArray<TObjectPtr<UQuestAction>>& Acti
 		if (!TemplateAction) continue;
 
 		// 네트워크 정책에 따른 실행 여부 판단
-		if ((NetPolicy & TemplateAction->NetworkActionType) != ENetworkActionType::None) return;
+		if ((NetPolicy & TemplateAction->GetNetworkActionType()) != ENetworkActionType::None) return;
 
 		
-		switch (TemplateAction->InstancingPolicy)
+		switch (TemplateAction->GetInstancingPolicy())
 		{
 		case EActionInstancingPolicy::NonInstanced:		// stateless
 			TemplateAction->ExecuteAction(this, QuestID, QuestContext);
@@ -1141,7 +1163,7 @@ void UQuestComponent::OnQuestObjectCompelete(UQuestObject* CompleteQuest)
 
 			if (UQuestObjectConfig* QuestData = Cast<UQuestObjectConfig>(AssetMgr.GetPrimaryAssetObject(AssetID)))
 			{
-				FQuestContext Context = UQuestHelpers::MakeQuestContext(this, this->GetOwner(), nullptr, FGameplayTagContainer::EmptyContainer, FGameplayTag::EmptyTag, 1);
+				FQuestExecutionContext Context = UQuestHelpers::MakeQuestContext(this, this->GetOwner(), nullptr, FGameplayTagContainer::EmptyContainer, FGameplayTag::EmptyTag, 1);
 				ExecuteQuestActions(QuestData->QuestCompoletionAction, QuestID, Context, ENetworkActionType::ServerOnly);
 
 				if (QuestData->bAutoClaimReward)

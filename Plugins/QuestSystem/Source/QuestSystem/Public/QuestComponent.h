@@ -309,6 +309,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Quest|Save")
     void LoadSaveData(const TArray<uint8>& InData);
 
+    // 퀘스트 Object 데이터를 미리 로드합니다. 이 구조체를 가지고 있는 동안 로드가 유지됩니다.
+    UFUNCTION(BlueprintCallable, Category = "Quest|AsyncLoad")
+	FQuestPreloadHandle RequestPreloadQuestData(const FGameplayTag& QuestID);
+
 protected:
 	// --- Initialization ---
     // 저장 데이터로부터 퀘스트 데이터 준비
@@ -319,6 +323,9 @@ protected:
 
 	// 퀘스트 오브젝트 데이터 비동기 로드
     void LoadQuestObjectData(const FGameplayTag& QuestID, FStreamableDelegate OnLoadComplete);
+
+    // 로드 콜백 처리 함수
+    void ProcessPendingCallbacks(const FGameplayTag& QuestID);
 
 	// 활성화된 퀘스트 복원
 	void RestoreActiveQuest();

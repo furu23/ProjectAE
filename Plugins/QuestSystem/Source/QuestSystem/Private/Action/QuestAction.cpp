@@ -1,7 +1,13 @@
-#include "Action/QuestAction.h"
+﻿#include "Action/QuestAction.h"
 
-void UQuestAction::ExecuteAction(UObject* WorldContext, const FGameplayTag& QuestID, const FQuestContext& QuestContext)
+void UQuestAction::ExecuteAction(UObject* WorldContext, const FGameplayTag& QuestID, const FQuestExecutionContext& QuestContext)
 {
+	if (!CanExecuteAction(WorldContext, QuestID, QuestContext))
+	{
+		OnQuestActionEndedDelegate.Broadcast(this, EQuestActionResult::Fail);
+		return;
+	}
+
 	CachedWorldContext = WorldContext;
 	OwningQuestID = QuestID;
 	SavedContext = QuestContext;
@@ -15,9 +21,30 @@ void UQuestAction::ExecuteAction(UObject* WorldContext, const FGameplayTag& Ques
 	}
 }
 
-void UQuestAction::Native_ExecuteAction(UObject* WorldContext, const FGameplayTag& QuestID, const FQuestContext& QuestContext)
+void UQuestAction::Native_ExecuteAction(UObject* WorldContext, const FGameplayTag& QuestID, const FQuestExecutionContext& QuestContext)
 {
 	
+}
+
+bool UQuestAction::CanExecuteAction(UObject* WorldContext, const FGameplayTag& QuestID, const FQuestExecutionContext& QuestContext)
+{
+	if (!QuestID.IsValid() || !QuestContext.IsValid())
+	{
+		return false;
+	}
+
+	// 초기화 시점 확인
+	if (QuestContext.bIsRestoring && !bExecuteOnInitialLoad)
+	{
+		return false;
+	}
+
+	return Native_CanExecuteAction(WorldContext, QuestID, QuestContext) && K2_CanExecuteAction(WorldContext, QuestID, QuestContext);
+}
+
+bool UQuestAction::Native_CanExecuteAction(UObject* WorldContext, const FGameplayTag& QuestID, const FQuestExecutionContext& QuestContext)
+{
+	return true;
 }
 
 void UQuestAction::EndAction()
@@ -32,4 +59,14 @@ void UQuestAction::EndAction()
 void UQuestAction::Native_EndAction()
 {
 
+}
+
+class UWorld* UQuestAction::GetWorld() const
+{
+	if (CachedWorldContext.IsValid())
+	{
+		return CachedWorldContext.Get()->GetWorld();
+	}
+
+	Super::GetWorld();
 }

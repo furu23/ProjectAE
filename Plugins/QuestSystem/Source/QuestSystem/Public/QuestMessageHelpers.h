@@ -19,6 +19,19 @@ class QUESTSYSTEM_API UQuestHelpers : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
+	/** 핸들이 유효한지 검사합니다. */
+	UFUNCTION(BlueprintPure, Category = "Quest|Load", meta = (DisplayName = "Is Valid (Quest Handle)"))
+	static bool IsHandleValid(const FQuestPreloadHandle& Handle);
+
+	/** 핸들의 로딩이 완료되었는지 검사합니다. */
+	UFUNCTION(BlueprintPure, Category = "Quest|Load", meta = (DisplayName = "Is Loaded (Quest Handle)"))
+	static bool IsHandleLoaded(const FQuestPreloadHandle& Handle);
+
+	/** 핸들을 명시적으로 해제합니다. */
+	UFUNCTION(BlueprintCallable, Category = "Quest|Load", meta = (DisplayName = "Reset (Quest Handle)"))
+	static void ResetHandle(UPARAM(ref) FQuestPreloadHandle& Handle);
+
+
 	/**
 	 * @brief AI가 죽었을 때 이벤트를 GMS로 방송합니다.
 	 * @param WorldContextObject 이벤트를 방송하는 액터 (this)

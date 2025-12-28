@@ -7,6 +7,21 @@
 #include "Action/QuestAction.h"
 
 
+bool UQuestHelpers::IsHandleValid(const FQuestPreloadHandle& Handle)
+{
+	return Handle.IsValid();
+}
+
+bool UQuestHelpers::IsHandleLoaded(const FQuestPreloadHandle& Handle)
+{
+	return Handle.IsLoaded();
+}
+
+void UQuestHelpers::ResetHandle(FQuestPreloadHandle& Handle)
+{
+	Handle.Reset();
+}
+
 void UQuestHelpers::BroadcastInteractEvent(UObject* WorldContextObject, AActor* InstigatorActor, AActor* TargetActor, FGameplayTagContainer TargetTags)
 {
 	if (!TargetActor) return;

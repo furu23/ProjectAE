@@ -28,6 +28,7 @@ class QUESTSYSTEM_API UQuestObjective : public UObject
 {
 	GENERATED_BODY()
 public:
+	// 목표 업데이트를 알리는 델리게이트
 	FOnObjectiveUpdatedSignature OnObjectiveUpdatedDelegate;
 
 
