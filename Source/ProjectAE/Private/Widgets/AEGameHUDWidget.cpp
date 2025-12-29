@@ -21,7 +21,7 @@ void UAEGameHUDWidget::InitializePlayerInventory(class UInventoryComponent* Inve
 	if (PlayerInventoryWidget && InventoryComponent)
 	{
 		PlayerInventoryWidget->InitializeInventory(InventoryComponent);
-		// 플레이어 인벤토리 컴포넌트 캐싱 ?
+		UE_LOG(LogTemp, Warning, TEXT("InitializePlayerInventory Complete"));
 	}
 }
 
@@ -31,6 +31,8 @@ void UAEGameHUDWidget::ShowPlayerInventory()
 	
 	PlayerInventoryWidget->SetVisibility(ESlateVisibility::Visible);
 	PlayerInventoryWidget->RefreshInventory();
+	
+	OnWidgetOpened.Broadcast();
 }
 
 void UAEGameHUDWidget::HidePlayerInventory()
@@ -38,6 +40,8 @@ void UAEGameHUDWidget::HidePlayerInventory()
 	if (!PlayerInventoryWidget) return;
 	
 	PlayerInventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
+	
+	OnWidgetClosed.Broadcast();
 }
 
 void UAEGameHUDWidget::ShowChestInventory(class UInventoryComponent* ChestInventoryComponent)

@@ -20,10 +20,10 @@ public:
 	 * FDataTableRowHandle 은 단순히 데이터 테이블 이름과 로우 이름 정보들만 저장하고 있음
 	 * 하드 레퍼런스를 방지하고 메모리 최적화 
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "InventorySlot")
+	UPROPERTY(SaveGame, EditAnywhere, BlueprintReadOnly, Category = "InventorySlot")
 	FDataTableRowHandle ItemDataHandle;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "InventorySlot")
+	UPROPERTY(SaveGame, EditAnywhere, BlueprintReadOnly, Category = "InventorySlot")
 	int32 Amount = 0;
 
 	FORCEINLINE bool IsEmpty() const { return Amount <= 0 || ItemDataHandle.IsNull(); }

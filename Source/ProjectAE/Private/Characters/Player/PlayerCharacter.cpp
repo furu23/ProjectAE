@@ -13,7 +13,12 @@
 #include "Inventory/InventoryComponent.h"
 #include "GameplayTagContainer.h"
 #include "Characters/Player/AEWeaponComponent.h"
-#include "../ProjectAE.h"
+#include "Components/CapsuleComponent.h"
+#include "AbilitySystem/HealthComponent.h"
+#include "Characters/Player/OcclusionFadeComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Widgets/StatBarWidget.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
 APlayerCharacter::APlayerCharacter()
@@ -26,12 +31,20 @@ APlayerCharacter::APlayerCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 
+	StaminaWidgetComponent = CreateDefaultSubobject<UWidgetComponent>("StaminaWidgetComponent");
+	StaminaWidgetComponent->SetupAttachment(RootComponent);
+
 	WeaponComponent = CreateDefaultSubobject<UAEWeaponComponent>("WeaponComponent");
 
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>("HealthComponent");
+
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>("InteractionComponent");
+
 	
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("InventoryComponent");
 	InventoryComponent->bIsPlayerInventory = true;
+	
+	OcclusionFadeComponent = CreateDefaultSubobject<UOcclusionFadeComponent>("OcclusionFadeComponent");
 
 	SpringArm->TargetArmLength = 1000.f;
 	SpringArm->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
@@ -50,8 +63,6 @@ APlayerCharacter::APlayerCharacter()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	// GetCharacterMovement()->bOrientRotationToMovement = false;
-
 	// InteractionComponent의 포커스 변경 시 호출될 콜백 함수 등록
 	InteractionComponent->OnFocusChanged.AddDynamic(this, &APlayerCharacter::OnFocusChanged);
 
@@ -61,6 +72,9 @@ APlayerCharacter::APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	HealthComponent->OnDeathDelegate.AddDynamic(this, &APlayerCharacter::OnDeath);
+	HealthComponent->OnDamageDelegate.AddDynamic(this, &APlayerCharacter::OnDamaged);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -107,22 +121,35 @@ void APlayerCharacter::PossessedBy(AController* NewController)
 	{
 		AEPlayerController = PC;
 	}
+
 	
 	// 어빌리티 초기화
-	UAbilitySystemComponent* ASC = CachedASC.Get();
 	for (const TSubclassOf<UGameplayAbility>& AbilityForGrant : DefaultAbilities)
 	{
 		FGameplayAbilitySpec Spec(AbilityForGrant, 1, -1, this);
-		ASC->GiveAbility(Spec);
+		CachedASC->GiveAbility(Spec);
 	}
 
-	// 기본 무기 장착 및 무기의 어빌리티 부여
-	WeaponComponent->EquipWeapon(DefaultWeapon);
+	if (CachedASC)
+	{
+		// 헬스컴포넌트 초기화 시도
+		HealthComponent->TryInitAbilitySystem(CachedASC);
 
-	// TODO: 변경 시 전파받아 상태 부여
-	#if UE_BUILD_DEVELOPMENT
-	ASC->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag("State.Area.InRaid"));
-	#endif
+		// 기본 무기 장착 및 무기의 어빌리티 부여
+		WeaponComponent->EquipWeapon(DefaultWeapon);
+
+		if (StaminaWidgetComponent)
+		{
+			StaminaWidgetComponent->InitWidget();
+
+			// 스테미나 위젯 바인드
+			UStatBarWidgetBase* StaminaWidget = Cast<UStatBarWidgetBase>(StaminaWidgetComponent->GetUserWidgetObject());
+			if (StaminaWidget)
+			{
+				StaminaWidget->BindToASC(CachedASC);
+			}
+		}
+	}
 }
 
 void APlayerCharacter::OnFocusChanged(AActor* NewFocusedActor)
@@ -161,6 +188,77 @@ void APlayerCharacter::RotateToCursor()
 	}
 }
 
+void APlayerCharacter::OnDeath_Implementation(AActor* Causer, AActor* Victim)
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (PC)
+	{
+		// 입력 차단 (움직임, 공격 등 금지)
+		DisableInput(PC);
+	}
+
+	if (UCharacterMovementComponent* CharMove = GetCharacterMovement())
+	{
+		// 이동을 완전히 비활성화
+		CharMove->StopMovementImmediately();
+		CharMove->DisableMovement();
+	}
+
+	if (USkeletalMeshComponent* SkelMesh = GetMesh())
+	{
+		// 메쉬를 루트(캡슐)로부터 분리하여 월드에 독립시킵니다.
+		SkelMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	}
+
+	// 2) 캡슐 충돌 비활성화 (ragdoll과 충돌 방지)
+	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+	{
+		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Capsule->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	}
+
+	// 3) 메쉬를 ragdoll로 전환하여 자연스럽게 쓰러지게 함
+	USkeletalMeshComponent* SkelMesh = GetMesh();
+	if (SkelMesh)
+	{
+		// 충돌 프로필을 ragdoll로 설정(프로젝트에 프로필이 없으면 QueryAndPhysics 사용)
+		SkelMesh->SetCollisionProfileName(TEXT("Ragdoll"));
+
+		// 물리 시뮬레이션 시작
+		SkelMesh->SetAllBodiesSimulatePhysics(true);
+		SkelMesh->SetSimulatePhysics(true);
+		SkelMesh->WakeAllRigidBodies();
+		SkelMesh->bBlendPhysics = true; // 애니와 물리 블렌드 허용(자연스러운 전환)
+
+		// 현재 물리 속도가 너무 크면 클램프하여 날아가는 현상 방지
+		const float MaxLinearSpeed = 600.0f; // 필요 시 튜닝
+		FVector CurrentLinear = SkelMesh->GetPhysicsLinearVelocity(NAME_None);
+		if (CurrentLinear.Size() > MaxLinearSpeed)
+		{
+			SkelMesh->SetAllPhysicsLinearVelocity(CurrentLinear.GetClampedToMaxSize(MaxLinearSpeed));
+		}
+
+		// 각속도 제거하여 불필요한 회전 최소화
+		SkelMesh->SetAllPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+
+		// 감쇄 설정으로 빠르게 안정화
+		SkelMesh->SetLinearDamping(4.0f);
+		SkelMesh->SetAngularDamping(4.0f);
+
+		// 약한 임펄스를 주면 더 자연스럽게 넘어짐 (Causer가 있으면 그 반대 방향으로 가볍게)
+		if (Causer)
+		{
+			FVector ImpulseDir = (SkelMesh->GetComponentLocation() - Causer->GetActorLocation()).GetSafeNormal();
+			const float ImpulseStrength = 250.0f; // 필요 시 튜닝
+			SkelMesh->AddImpulse(ImpulseDir * ImpulseStrength, NAME_None, true);
+		}
+	}
+}
+
+void APlayerCharacter::OnDamaged_Implementation(AActor* Causer, AActor* Victim)
+{
+}
+
 void APlayerCharacter::InputAbilityTagPressed(const class UInputAction* Action)
 {
 	UAEAbilitySystemComponent* ASC = Cast<UAEAbilitySystemComponent>(CachedASC.Get());
@@ -186,7 +284,6 @@ void APlayerCharacter::InputAbilityTagReleased(const class UInputAction* Action)
 	const FGameplayTag* FoundTag = AbilityInputConfig->AbilityInputActions.Find(Action);
 	if (FoundTag && FoundTag->IsValid())
 	{
-		UE_LOG(LogAbilitySys, Log, TEXT("InputTagReleased Succssesfully called"));
 		ASC->AbilityInputTagReleased(*FoundTag);
 	}
 }

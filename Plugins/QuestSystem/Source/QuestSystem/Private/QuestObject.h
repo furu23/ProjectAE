@@ -3,17 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "QuestTypes.h"
 #include "Delegates/DelegateCombinations.h"
 #include "QuestObject.generated.h"
 
-DECLARE_DELEGATE_OneParam(FOnQuestObjectChanged, const FGameplayTag&);
-// DECLARE_DELEGATE_OneParam(FOnRequestWorldTasksSignatureDelegate, const TArray<TObjectPtr<UQuestWorldTask>>&);
-
 class UDA_QuestBase;
 class UQuestManagerSubSystem;
 class UQuestObjective;
+class UQuestTask;
+
+DECLARE_DELEGATE_OneParam(FOnQuestObjectChangedSignature, const FGameplayTag&);
+DECLARE_DELEGATE_OneParam(FOnRequestWorldTasksSignature, const TArray<TObjectPtr<UQuestTask>>&);
 
 /**
  * @brief 퀘스트 진행에 대한 런타임 객체입니다. InProgresss 상태의 객체들만 이 객체를 가지며, 실제 퀘스트 목표를 관리하는 역할을 맡습니다.
@@ -27,9 +27,10 @@ public:
 	// **** 델리게이트 ****
 	
 	// 퀘스트 상태 변경을 알리기 위한 델리게이트
-	FOnQuestObjectChanged OnQuestObjectChangedDelegate;
+	FOnQuestObjectChangedSignature OnQuestObjectChangedDelegate;
 
-	// FOnRequestWorldTasksSignature OnRequestWorldTasksDelegate;
+	FOnRequestWorldTasksSignature OnRequestWorldTasksDelegate;
+
 
 	// **** 상위 객체 호출 함수 ****
 
@@ -42,16 +43,32 @@ public:
 	// 모든 배열을 비활성화시킵니다.
 	virtual void DeActivate();
 
+	// 퀘스트가 완료되었는지 확인합니다.
+	virtual bool CheckQuestCompletion();
+
+#if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
+	// 디버그 전용 퀘스트 완료 함수입니다.
+	void ForceCompleteQuest();
+
+	// 디버그 전용 퀘스트 목표 완료 함수입니다.
+	void ForceCompleteQuestObj(const FGameplayTag& ObjectiveID);
+
+#endif
+
 protected:
 	// **** 초기화될 기본 프로퍼티 ****
 
 	// 이 퀘스트 런타임 객체의 설계도가 되는 UDA_QuestBase 객체에 대한 참조입니다.
+	UPROPERTY()
 	TObjectPtr<UDA_QuestBase> Definition;
 
 	// 퀘스트의 하위 목표 객체 배열입니다.
+	UPROPERTY(VisibleInstanceOnly, Category = "Quest")
 	TArray<TObjectPtr<UQuestObjective>> Objectives;
 
 	// 퀘스트 서브시스템에 대한 캐싱입니다. 유효성 검사 필요.
+	UPROPERTY()
 	TObjectPtr<UQuestManagerSubSystem> CachedQuestSys;
 
 
@@ -60,11 +77,8 @@ protected:
 	// 하위 객체에서 퀘스트 완료 시 호출됩니다. 델리게이트를 통해 호출됩니다.
 	virtual void OnObjectiveCompleted(UQuestObjective* Objective);
 
-	// 퀘스트가 완료되었는지 확인합니다.
-	virtual bool CheckQuestCompletion();
-
 
 	// **** 델리게이트 바인딩 함수 ****
 
-	// void OnObjectiveRequestingTasks(const TArray<TObjectPtr<UQuestWorldTask>> TasksToExecute)
+	void OnObjectiveRequestingTasks(const TArray<TObjectPtr<UQuestTask>>& TasksToExecute);
 };

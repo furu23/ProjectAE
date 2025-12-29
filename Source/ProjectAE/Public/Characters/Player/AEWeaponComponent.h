@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,8 +7,10 @@
 #include "GameplayAbilitySpecHandle.h"
 #include "AEWeaponComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAmmoAmountChangedSignature, int32, NewValue, int32, OldValue);
+
 /**
-* @brief ¹«±â °ü·Ã »çÇ×À» ³Ö¾îµĞ Å¬·¡½ºÀÔ´Ï´Ù.
+* @brief ë¬´ê¸° ê´€ë ¨ ì‚¬í•­ì„ ë„£ì–´ë‘” í´ë˜ìŠ¤ì…ë‹ˆë‹¤.
 */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTAE_API UAEWeaponComponent : public UActorComponent
@@ -16,20 +18,35 @@ class PROJECTAE_API UAEWeaponComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
-    // ÇöÀç ¹«±â°¡ ÇÏ³ªÀÌ¹Ç·Î ±âº» ¹«±â¸¦ ÁÖÀÔ¹ŞÀ½
-    UPROPERTY(/* , Replicated */)
-    UAEWeaponDefinition* CurrentWeaponDef = nullptr;
-
-    UPROPERTY(BlueprintReadWrite/* Replicated */)
-    int32 CurrentAmmo;
-
-    // ÇöÀç ºÎ¿©µÈ GAÀÇ ÇÚµé (±³Ã¼ ½Ã Á¦°Å¿ë)
-    TArray<FGameplayAbilitySpecHandle> CurrentWeaponAbilityHandles;
-
-    // ¹«±â ±³Ã¼ ÇÔ¼ö, Àü·« ÆĞÅÏÀ» ±¸ÇöÇÕ´Ï´Ù.
+    // ë¬´ê¸° êµì²´ í•¨ìˆ˜, ì „ëµ íŒ¨í„´ì„ êµ¬í˜„í•©ë‹ˆë‹¤.
     UFUNCTION(BlueprintCallable)
     void EquipWeapon(UAEWeaponDefinition* NewWeaponDef);
 
+    // íƒ„ì•½ì„ Maxë¡œ ë³€ê²½, ë‚´ë¶€ì—ì„œ ë¸ë¦¬ê²Œì´íŠ¸ í˜¸ì¶œ
     UFUNCTION(BlueprintCallable)
-    int32 GetMaxAmmo();
+    void ReloadWeapon();
+
+    // íƒ„ì•½ì„ Amount ë§Œí¼ ì†Œëª¨, ë‚´ë¶€ì—ì„œ ë¸ë¦¬ê²Œì´íŠ¸ í˜¸ì¶œ
+    UFUNCTION(BlueprintCallable)
+    bool UseAmmo(int32 AmmoUseAmount);
+
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    int32 GetMaxAmmo() const;
+
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    FORCEINLINE int32 GetCurrentAmmo() const { return CurrentAmmo; }
+
+    UPROPERTY(BlueprintAssignable)
+    FOnAmmoAmountChangedSignature OnAmmoUseDelegate;
+
+protected:
+    // í˜„ì¬ ë¬´ê¸°ê°€ í•˜ë‚˜ì´ë¯€ë¡œ ê¸°ë³¸ ë¬´ê¸°ë¥¼ ì£¼ì…ë°›ìŒ
+    UPROPERTY(/* , Replicated */)
+    UAEWeaponDefinition* CurrentWeaponDef = nullptr;
+
+private:
+    int32 CurrentAmmo;
+
+    // í˜„ì¬ ë¶€ì—¬ëœ GAì˜ í•¸ë“¤ (êµì²´ ì‹œ ì œê±°ìš©)
+    TArray<FGameplayAbilitySpecHandle> CurrentWeaponAbilityHandles;
 };

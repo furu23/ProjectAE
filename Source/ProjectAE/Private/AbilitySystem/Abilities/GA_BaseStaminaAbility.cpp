@@ -8,7 +8,6 @@
 
 bool UGA_BaseStaminaAbility::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, OUT FGameplayTagContainer* OptionalRelevantTags) const
 {
-	UE_LOG(LogTemp, Log, TEXT("CanActivate Called in %s"), *this->GetName());
 	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
 	{
 		return false;
@@ -24,13 +23,12 @@ bool UGA_BaseStaminaAbility::CanActivateAbility(const FGameplayAbilitySpecHandle
 	const float CurrentStamina = AS->GetStamina();
 	if (StaminaChunkCostGE)
 	{
-		UE_LOG(LogTemp, Log, TEXT("%f, %f"), StaminaChunkCost, CurrentStamina);
 		return StaminaChunkCost + CurrentStamina >= 0;
 	}
 
 	if (StaminaDrainCostGE)
 	{
-		return StaminaDrainPerSecond <= CurrentStamina;
+		return MinimalCostForActivate <= CurrentStamina;
 	}
 	return false;
 }

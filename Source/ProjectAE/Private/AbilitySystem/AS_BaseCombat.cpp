@@ -49,9 +49,31 @@ void UAS_BaseCombat::PostGameplayEffectExecute(const struct FGameplayEffectModCa
 {
 	if (Data.EvaluatedData.Attribute == GetBioAttribute())
 	{
-		if (GetBio() <= 0)
+		float CurrentBio = GetBio();
+
+		UAbilitySystemComponent* TargetASC = GetOwningAbilitySystemComponent();
+		if (!TargetASC || !BioStarvationClass) return;
+
+		if (CurrentBio <= 0.0f)
 		{
-			// 초당 데미지 GE 등, Bio 소진 페널티 GE 부여
+			if (!StarvationDebuffHandle.IsValid())
+			{
+				FGameplayEffectContextHandle ContextHandle = TargetASC->MakeEffectContext();
+				ContextHandle.AddSourceObject(this);
+
+				FGameplayEffectSpecHandle Spec = TargetASC->MakeOutgoingSpec(BioStarvationClass, 1, ContextHandle);
+
+				StarvationDebuffHandle = TargetASC->ApplyGameplayEffectSpecToTarget(*Spec.Data, TargetASC);
+			}
+		}
+		else // Bio가 0보다 큼 (회복됨)
+		{
+			// 디버프가 켜져 있다면 끄기
+			if (StarvationDebuffHandle.IsValid())
+			{
+				TargetASC->RemoveActiveGameplayEffect(StarvationDebuffHandle);
+				StarvationDebuffHandle.Invalidate(); // 핸들 초기화
+			}
 		}
 	}
 	else if (Data.EvaluatedData.Attribute == GetStaminaAttribute())

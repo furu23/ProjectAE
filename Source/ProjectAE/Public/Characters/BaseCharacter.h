@@ -4,9 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GameplayTagContainer.h"
 #include "BaseCharacter.generated.h"
 
 class UAbilitySystemComponent;
+class UHitFeedback;
+class UAEAudioComponent;
+class UWidgetComponent;
+class UGameplayEffect;
 
 UCLASS()
 class PROJECTAE_API ABaseCharacter : public ACharacter
@@ -30,8 +35,15 @@ public:
 
 	virtual void PossessedBy(AController* NewController) override;
 
+
+
+	// 태그 반환용 게터 함수
+	FORCEINLINE const FGameplayTagContainer& GetCharacterTag() const { return CharacterTag; }
+
+	// ASC를 반환하는 헬퍼 함수
 	UFUNCTION(BlueprintCallable, Category = "Ability")
 	UAbilitySystemComponent* GetASC() const;
+
 
 
 	// **** Develop Test&Debug Only ****
@@ -67,17 +79,36 @@ public:
 	// *********************************
 
 protected:
-
 	// *** 어빌리티 시스템 관련 기능 ***
-	// 추후, 하위 클래스 작성 시 옮기거나 확장할 수 있습니다.
 
 	// 어빌리티 시스템 초기화
 	void InitAbiltySystem();
 
 	// 클라이언트에서 플레이어 상태가 복제될 때 호출되는 함수 (어빌리티 시스템 초기화에 사용)
-	void OnRep_PlayerState() override;
+	// void OnRep_PlayerState() override;
 
 	// 어빌리티 시스템 컴포넌트 캐시
 	UPROPERTY(Transient)
 	TObjectPtr<UAbilitySystemComponent> CachedASC;
+
+
+	// **** VFX / SFX 관련 ****
+
+	// 풋스텝 VFX DA
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|FX")
+	TObjectPtr<UHitFeedback> FootstepMap;
+
+
+	// **** 기타 컴포넌트 ****
+
+	// 체력바용 위젯 컴포넌트
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|UI")
+	TObjectPtr<UWidgetComponent> StatBarComp;
+
+
+	// **** 기타 ****
+
+	// 캐릭터의 태그 목록 (예: Gunner, Enemy 등...)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Character", meta = (AllowPrivateAccess = "true", ToolTip = "캐릭터의 태그 목록입니다. GMS 발송 시 사용."))
+	FGameplayTagContainer CharacterTag;
 };

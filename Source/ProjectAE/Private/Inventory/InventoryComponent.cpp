@@ -3,8 +3,11 @@
 
 #include "Inventory/InventoryComponent.h"
 
+#include "Engine/GameInstance.h"
+#include "Core/SaveGameSubsystem.h"
 #include "Inventory/Data/ItemData.h"
 #include "Inventory/Data/InventorySlot.h"
+#include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
 
 // Sets default values for this component's properties
@@ -25,8 +28,103 @@ void UInventoryComponent::BeginPlay()
 	// ...
 	if (!bIsPlayerInventory) return;
 	
-	// TODO: 게임 인스턴스에서 인벤토리 데이터 받아오기
-	// OnInventoryUpdated.Broadcast();
+	// SaveGameSubsystem 에서 캐시된 데이터가 있다면 로드
+	if (UWorld* World = GetWorld())
+	{
+		if (UGameInstance* GI = World->GetGameInstance())
+		{
+			if (USaveGameSubsystem* SaveSys = GI->GetSubsystem<USaveGameSubsystem>())
+			{
+				TArray<uint8> CachedData;
+				if (SaveSys->GetInventoryFromCache(CachedData))
+				{
+					LoadSaveData(CachedData);
+				}
+			}
+		}
+	}
+}
+
+void UInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if (!bIsPlayerInventory) return;
+
+	// 현재 상태를 Subsystem 캐시에 백업
+	if (UWorld* World = GetWorld())
+	{
+		if (UGameInstance* GI = World->GetGameInstance())
+		{
+			if (USaveGameSubsystem* SaveSys = GI->GetSubsystem<USaveGameSubsystem>())
+			{
+				TArray<uint8> Data;
+				GetSaveData(Data);
+				SaveSys->SaveInventoryToCache(Data);
+			}
+		}
+	}
+}
+
+void UInventoryComponent::GetSaveData(TArray<uint8>& OutData)
+{
+	FMemoryWriter MemoryWriter(OutData, true);
+	FObjectAndNameAsStringProxyArchive Ar(MemoryWriter, true);
+	
+	Ar.ArIsSaveGame = true;
+
+	// Manual serialization to ensure FDataTableRowHandle properties are saved
+	int32 NumSlots = InventorySlots.Num();
+	Ar << NumSlots;
+
+	for (FInventorySlot& Slot : InventorySlots)
+	{
+		FString RowNameString = Slot.ItemDataHandle.RowName.ToString();
+		Ar << RowNameString;
+
+		FString AmountString = FString::FromInt(Slot.Amount);
+		Ar << AmountString;
+		
+		TObjectPtr<const UDataTable> DT = Slot.ItemDataHandle.DataTable;
+		Ar << DT;
+	}
+}
+
+void UInventoryComponent::LoadSaveData(const TArray<uint8>& InData)
+{
+	if (InData.Num() == 0) return;
+
+	FMemoryReader MemReader(InData, true);
+	FObjectAndNameAsStringProxyArchive Ar(MemReader, true);
+
+	Ar.ArIsSaveGame = true;
+
+	// Manual deserialization
+	int32 NumSlots = 0;
+	Ar << NumSlots;
+
+	InventorySlots.Empty(NumSlots);
+
+	for (int32 i = 0; i < NumSlots; ++i)
+	{
+		FInventorySlot NewSlot;
+		
+		FString RowNameString;
+		Ar << RowNameString;
+		NewSlot.ItemDataHandle.RowName = FName(*RowNameString);
+
+		FString AmountString;
+		Ar << AmountString;
+		NewSlot.Amount = FCString::Atoi(*AmountString);
+
+		UDataTable* DT = nullptr;
+		Ar << DT;
+		NewSlot.ItemDataHandle.DataTable = DT;
+
+		InventorySlots.Add(NewSlot);
+	}
+
+	OnInventoryUpdated.Broadcast();
 }
 
 bool UInventoryComponent::AddItem(FName ItemID, int32 Amount, int32& OutRemainingAmount)

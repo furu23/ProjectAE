@@ -1,0 +1,31 @@
+﻿#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/SaveGame.h"
+#include "GameplayTagContainer.h"
+#include "AEConfigSaveGame.generated.h"
+
+/**
+ * @brief 세이브게임 클래스입니다. 데이터 컨테이너 스타일의 저장 객체를 목표로 합니다.
+ * @note UPROPERTY의 SaveGame 지정자를 이용해 직렬화 한 데이터를 받는 것을 전제로 합니다.
+ * 
+ * 만약 SaveGame 지정자를 사용하지 않았다면 추가적인 객체를 이 클래스 위에 선언해,
+ * 그 객체의 형식으로 저장하고 불러와주세요.
+ * 추가적인 헬퍼 함수를 만드는 것도 좋습니다.
+ */
+UCLASS()
+class PROJECTAE_API UAEConfigSaveGame : public USaveGame
+{
+	GENERATED_BODY()
+
+public:
+	// 소리 설정
+	UPROPERTY(VisibleAnywhere, Category = "Settings")
+    TArray<float> VolumeSettings;
+
+    UAEConfigSaveGame()
+    {
+        // 기본값 초기화
+        VolumeSettings.Init(1.0f, 4);
+    }
+};

@@ -46,10 +46,13 @@ public:
 	float TraceInterval = 0.2f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
+	float InteractionRange = 300.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
 	float TraceDistance = 10000.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
-	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
+	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_GameTraceChannel4;	// ECC_Interact
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interact")
 	AActor* CurrentFocus = nullptr;

@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Interaction/InteractionComponent.h"
@@ -9,6 +9,7 @@
 #include "GameplayAbilitySpecHandle.h"
 #include "GameplayAbilitySpec.h"
 #include "AbilitySystemComponent.h"
+#include "ProjectAE/ProjectAE.h"
 
 
 // Sets default values for this component's properties
@@ -75,9 +76,9 @@ void UInteractionComponent::UpdateTracing()
 			IInteractable::Execute_OnFocusChanged(CurrentFocus, OwnerRef, true);
 			OnFocusChanged.Broadcast(CurrentFocus);
 
-			// **** [Ãß°¡] Ability Grant °ü·Ã ****
+			// **** [ì¶”ê°€] Ability Grant ê´€ë ¨ ****
 
-			UE_LOG(LogTemp, Log, TEXT("---Pull and Grant Ability on Actor---"));
+			UE_LOG(LogAbilitySys, Verbose, TEXT("---Pull and Grant Ability on Actor---"));
 
 			ABaseCharacter* CastedCharacter = GetOwner<ABaseCharacter>();
 			if (CastedCharacter)
@@ -94,15 +95,15 @@ void UInteractionComponent::UpdateTracing()
 						GrantedAbilityHandle = OwnerASC->GiveAbility(Spec);
 						if (GrantedAbilityHandle.IsValid())
 						{
-							UE_LOG(LogTemp, Log, TEXT("OnBeginFocus: GiveAbility SUCCESS. Handle: %s"), *GrantedAbilityHandle.ToString());
+							UE_LOG(LogAbilitySys, Verbose, TEXT("OnBeginFocus: GiveAbility SUCCESS. Handle: %s"), *GrantedAbilityHandle.ToString());
 						}
 						else
 						{
-							// ÀÌ ·Î±×°¡ ¶á´Ù¸é ASC ³»ºÎ¿¡¼­ ºÎ¿©°¡ ½ÇÆÐÇÑ °Í
-							UE_LOG(LogTemp, Error, TEXT("OnBeginFocus: GiveAbility FAILED. Returned Invalid Handle."));
+							// ì´ ë¡œê·¸ê°€ ëœ¬ë‹¤ë©´ ASC ë‚´ë¶€ì—ì„œ ë¶€ì—¬ê°€ ì‹¤íŒ¨í•œ ê²ƒ
+							UE_LOG(LogAbilitySys, Error, TEXT("OnBeginFocus: GiveAbility FAILED. Returned Invalid Handle."));
 						}
-						UE_LOG(LogTemp, Log, TEXT("Granted On ABaseCharacter"));
-						UE_LOG(LogTemp, Log, TEXT("-------------------------"));
+						UE_LOG(LogAbilitySys, Verbose, TEXT("Granted On ABaseCharacter"));
+						UE_LOG(LogAbilitySys, Verbose, TEXT("-------------------------"));
 					}
 				}
 			}
@@ -140,6 +141,9 @@ AActor* UInteractionComponent::PerformTrace(const FVector& TraceStart, const FVe
 
 	if (AActor* HitActor = Hit.GetActor())
 	{
+		float DistanceToTarget = FVector::Dist(OwnerRef->GetActorLocation(), Hit.ImpactPoint);
+		if (DistanceToTarget > InteractionRange) return nullptr;
+		
 		if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
 		{
 			if (IInteractable::Execute_CanFocus(HitActor))
@@ -163,9 +167,6 @@ bool UInteractionComponent::GetTracePoint(FVector& OutStart, FVector& OutEnd)
 	FVector WorldDirection;
 
 	if (!PC->DeprojectMousePositionToWorld(WorldLocation, WorldDirection)) return false;
-
-	// FVector PlayerLocation = OwnerRef->GetActorLocation();
-	// if ((PlayerLocation - WorldLocation).Size() > 1000.f) return false;
 
 	OutStart = WorldLocation;
 	OutEnd = OutStart + (WorldDirection * TraceDistance);

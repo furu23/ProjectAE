@@ -43,6 +43,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Cost|Stamina", meta = (ToolTip = "지속성 스테미나 Cost GE를 배치합니다."))
 	TSubclassOf<UGameplayEffect> StaminaDrainCostGE;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Cost|Stamina", meta = (ToolTip = "지속성 스테미나 어빌리티의 활성화 가능 최소 스테미나 값입니다."))
+	float MinimalCostForActivate = 10.f;
+
 	// 지속성 GE 핸들 (GA_Sprint용)
 	FActiveGameplayEffectHandle DrainEffectHandle;
 

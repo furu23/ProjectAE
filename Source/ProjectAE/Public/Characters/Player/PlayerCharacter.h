@@ -35,12 +35,23 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interact")
 	void OnFocusChanged(AActor* NewFocusedActor);
 
+	FORCEINLINE class UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+
+	FORCEINLINE class UAEWeaponComponent* GetWeaponComponent() const { return WeaponComponent; }
+
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void Move(const FVector2D& MoveVector);
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void RotateToCursor();
+
+	// 캐릭터가 죽었을 때 호출될 함수
+	UFUNCTION(BlueprintNativeEvent, Category = "Character|Event", meta = (ToolTip = "사망 시에 GMS 이전 시전에 호출됩니다."))
+	void OnDeath(AActor* Causer, AActor* Victim);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Character|Event", meta = (ToolTip = "데미지를 받았을 때 호출됩니다. 사망 시점에서는 호출되지 않습니다."))
+	void OnDamaged(AActor* Causer, AActor* Victim);
 	
 private:
 	FRotator TargetRotation;
@@ -60,9 +71,18 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<class UInventoryComponent> InventoryComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
+	TObjectPtr<class UOcclusionFadeComponent> OcclusionFadeComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
+	TObjectPtr<class UHealthComponent> HealthComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<class UAEWeaponComponent> WeaponComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
+	TObjectPtr<class UWidgetComponent> StaminaWidgetComponent;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class AAEPlayerController> AEPlayerController;
@@ -90,4 +110,6 @@ protected:
 	// 기본 무기
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category ="Ability")
 	TObjectPtr<UAEWeaponDefinition> DefaultWeapon;
+
+
 };

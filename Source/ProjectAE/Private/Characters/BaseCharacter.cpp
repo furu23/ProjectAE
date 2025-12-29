@@ -2,12 +2,13 @@
 
 
 #include "Characters/BaseCharacter.h"
-#include "AbilitySystem/Data/AbilityInputConfig.h"
-#include "Characters/AEPlayerState.h"
 #include "AbilitySystem/AEAbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
-#include "EnhancedInputComponent.h"
-#include "Core/AEGloabalHelper.h"
+#include "Core/AEGlobalHelper.h"
+#include "Components/WidgetComponent.h"
+#include "Widgets/StatBarWidget.h"
+#include "AbilitySystem/AS_BaseCombat.h"
+#include "AbilitySystemComponent.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -15,13 +16,20 @@ ABaseCharacter::ABaseCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// 스텟 바 생성 및 부착
+	StatBarComp = CreateDefaultSubobject<UWidgetComponent>("StatBarComp");
+	StatBarComp->SetupAttachment(RootComponent);
+
+	// 기타 초기 설정
+	StatBarComp->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
+	StatBarComp->SetWidgetSpace(EWidgetSpace::Screen);
+	StatBarComp->SetDrawAtDesiredSize(true);
 }
 
 // Called when the game starts or when spawned
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
@@ -44,9 +52,6 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 
 	// 어빌리티 시스템 초기화
 	InitAbiltySystem();
-
-	
-	// TODO: 어빌리티 부여 등 추가 초기화 작업
 }
 
 UAbilitySystemComponent* ABaseCharacter::GetASC() const
@@ -95,17 +100,30 @@ void ABaseCharacter::RemoveLooseTagForDevelop(FGameplayTag Tag, const UObject* U
 
 void ABaseCharacter::InitAbiltySystem()
 {
-	UAbilitySystemComponent* FoundASC = UAEGloabalHelper::GetAbilitySystemComponent(this);
+	UAbilitySystemComponent* FoundASC = UAEGlobalHelper::GetAbilitySystemComponent(this);
 	if (ensure(FoundASC))
 	{
 		CachedASC = FoundASC;
 		CachedASC->InitAbilityActorInfo(FoundASC->GetOwner(), this);
 	}
+
+	if (CachedASC && StatBarComp)
+	{
+		StatBarComp->InitWidget();
+
+		ULinearStatBarWidget* HealthStatBar = Cast<ULinearStatBarWidget>(StatBarComp->GetUserWidgetObject());
+
+		if (HealthStatBar)
+		{
+			HealthStatBar->BindToASC(CachedASC);
+		}
+	}
 }
 
+/*
 void ABaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
 	InitAbiltySystem();
-}
+}*/

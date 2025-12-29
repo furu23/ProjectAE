@@ -21,9 +21,11 @@ struct FQuestProgressData
 	GENERATED_BODY()
 	
 	// 현재 진행도의 단계
-	EQuestProgress ProgressType;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, SaveGame, Category = "Quest")
+	EQuestProgress ProgressType = EQuestProgress::None;
 
 	// 진행도의 실제 진행상황
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, SaveGame, Category = "Quest")
 	TMap<FGameplayTag, int32> ObjectProgress; 
 };
 
@@ -53,15 +55,9 @@ struct FQuestLogEntry
     UPROPERTY(BlueprintReadOnly, Category = "Quest")
     EQuestProgress CurrentState = EQuestProgress::None;
 
-    // 5. 가공된 목표 텍스트
     // Manager가 ObjectiveConfig와 ProgressData를 조합해 만들어줍니다.
     UPROPERTY(BlueprintReadOnly, Category = "Quest")
     TArray<FText> FormattedObjectives;
-    
-    // 6. 보상 정보 (UDA_QuestBase에서 가져옴)
-    // UI가 보상 아이콘 등을 표시할 수 있게 합니다.
-    //UPROPERTY(BlueprintReadOnly, Category = "Quest")
-    //EQuestReward RewardData;
 };
 
 /**
@@ -107,4 +103,21 @@ struct FQuestMessage_Generic
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Quest|Message")
 	FText text;
+};
+
+/**
+ * @brief 퀘스트 시스템 알림 전용 메시지 구조체
+ * UI는 이 메시지를 받아서 토스트(Toast) 등을 띄우기만 하면 됩니다.
+ */
+USTRUCT(BlueprintType)
+struct FQuestNotificationMessage
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Quest|Notification")
+	FGameplayTag QuestID;
+
+	// 화면에 출력될 최종 텍스트 (예: "쥐 잡기 목표 완료 (1/3)")
+	UPROPERTY(BlueprintReadOnly, Category = "Quest|Notification")
+	FText NotificationText;
 };

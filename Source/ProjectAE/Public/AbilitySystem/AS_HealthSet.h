@@ -50,9 +50,6 @@ public:
     // GE가 속성 변경을 완료한 직후에 호출됩니다
     virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData &Data) override;
 
-    // Replication 설정을 위한 필수 함수입니다.
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
     // 전투 관련 속성입니다.
 
     UPROPERTY(BlueprintReadOnly, Category = "Attributes"/*, ReplicatedUsing = "OnRep_Health"*/)

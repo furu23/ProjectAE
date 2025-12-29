@@ -5,7 +5,8 @@
 #include "Net/UnrealNetwork.h"
 #include "GameplayEffectExtension.h"
 
-#define MINIMUM_HEALTH 10.f
+#define MINIMUM_MAXHEALTH 10.f
+
 
 UAS_HealthSet::UAS_HealthSet()
 {
@@ -15,6 +16,8 @@ UAS_HealthSet::UAS_HealthSet()
 
 void UAS_HealthSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
+    Super::PreAttributeChange(Attribute, NewValue);
+
 	if (Attribute == UAS_HealthSet::GetHealthAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
@@ -22,42 +25,36 @@ void UAS_HealthSet::PreAttributeChange(const FGameplayAttribute& Attribute, floa
 	else if (Attribute == UAS_HealthSet::GetMaxHealthAttribute())
 	{
 		// 최소 최대 체력 값을 10으로 제한합니다.
-		NewValue = FMath::Clamp(NewValue, MINIMUM_HEALTH, GetMaxHealth());
+        NewValue = FMath::Max(NewValue, MINIMUM_MAXHEALTH);
 	}
 }
 
 void UAS_HealthSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
 {
-	if (Attribute == UAS_HealthSet::GetMaxHealthAttribute())
-	{
-		if (GetHealth() > NewValue)
-		{
-			UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
-			if (ASC)
-			{
-				ASC->SetNumericAttributeBase(GetHealthAttribute(), NewValue);
-			}
-		}
-	}
+    Super::PostAttributeChange(Attribute, OldValue, NewValue);
+
+//     if (Attribute == GetHealthAttribute())
+//     {
+//         float CurrentHealth = GetHealth();
+//         float CurrentBaseHealth = GetHealthAttribute().GetNumericValue(this);
+//         float CurrentModifiers = CurrentHealth - CurrentBaseHealth;
+// 
+//         if (CurrentHealth > NewValue)
+//         {
+//             UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+//             if (ASC)
+//             {
+// 
+//                 float NewBaseHealth = NewValue - CurrentModifiers;
+// 
+//                 ASC->SetNumericAttributeBase(GetHealthAttribute(), NewBaseHealth);
+//             }
+//         }
+//     }
 }
 
 void UAS_HealthSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
-	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
-	{
-		if (GetHealth() <= 0)
-		{
-			// 캐릭터 죽음 관련 로직 실행
-		}
-	}
-}
-
-void UAS_HealthSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME_CONDITION_NOTIFY(UAS_HealthSet, Health, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UAS_HealthSet, MaxHealth, COND_None, REPNOTIFY_Always);
 }
 
 // void UAS_HealthSet::OnRep_Health(const FGameplayAttributeData& OldHealth)

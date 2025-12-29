@@ -37,6 +37,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<class UInventoryUIManager> InventoryUIManager;
 
+	// development-only
+
 	UFUNCTION(Exec)
 	void Cheat_AcceptQuest(const FString& QuestIDName);
+
+	UFUNCTION(Exec)
+	void Cheat_CompleteQuest(const FString& QuestIDName);
+
+	UFUNCTION(Exec)
+	void Cheat_SaveQuestSys();
+
+	UFUNCTION(Exec)
+	void Cheat_LoadQuestSys();
+
 };
