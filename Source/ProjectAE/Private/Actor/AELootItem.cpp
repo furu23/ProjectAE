@@ -6,6 +6,7 @@
 #include "Characters/Player/PlayerCharacter.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AS_BaseCombat.h"
+#include "Core/AEGameplayTags.h"
 
 AAELootItem::AAELootItem()
 {
@@ -47,16 +48,15 @@ void AAELootItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 				if (!bFoundAttribute) return;
 				
 				FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
-				EffectContext.AddSourceObject(this);
+				EffectContext.AddOrigin(GetActorLocation());
+				EffectContext.AddSourceObject(StaticClass());
 				
 				const FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(BioHealEffectClass, 1.0f, EffectContext);
 				if (SpecHandle.IsValid())
 				{
-					
-					SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.BioHealAmount")), FMath::Min(CurrentBioMaxValue - CurrentBioValue, HealAmount));
+					SpecHandle.Data->SetSetByCallerMagnitude(AbilityTags::Data_Ability_BioHealAmount, FMath::Min(CurrentBioMaxValue - CurrentBioValue, HealAmount));
+					ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
 				}
-
-				ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data, ASC);
 
 				this->Destroy();
 			}

@@ -2,6 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "NativeGameplayTags.h"
+
+namespace AbilityTags
+{
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Ability_BioHealAmount);
+}
 
 /*
 * 게임플레이 태그를 중앙에서 관리하는 싱글톤 구조체입니다.

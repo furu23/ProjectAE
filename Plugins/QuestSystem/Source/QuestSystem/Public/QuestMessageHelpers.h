@@ -6,7 +6,15 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GameplayTagContainer.h"
 #include "QuestTypes.h"
+#include "NativeGameplayTags.h"
 #include "QuestMessageHelpers.generated.h"
+
+namespace QuestTags
+{
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_Event_Kill);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_Event_Interact);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_Event_Location);
+}
 
 struct FQuestMessage_Generic;
 
