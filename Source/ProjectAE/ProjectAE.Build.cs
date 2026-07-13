@@ -20,10 +20,15 @@ public class ProjectAE : ModuleRules
 			"GameplayMessageRuntime", 
 			"QuestSystem", 
 			"Niagara",
-			"PhysicsCore"
+			"PhysicsCore",
+			"SlateCore"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] {
+			"Foliage",
+			"Landscape",
+			"RenderCore"
+		});
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
