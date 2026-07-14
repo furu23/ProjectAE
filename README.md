@@ -2,7 +2,7 @@
 
 > Unreal Engine 5로 제작한 3인 팀 TPS 익스트랙션 슈터입니다. 이 저장소에서는 제가 담당한 GAS 기반 전투, 인벤토리·저장, 퀘스트, 게임 페이즈 등 C++ 코어 시스템을 중심으로 확인할 수 있습니다.
 
-[![ProjectAE gameplay video](https://img.youtube.com/vi/xRlHbQEcFOc/maxresdefault.jpg)](https://youtu.be/xRlHbQEcFOc)
+[![ProjectAE gameplay video](https://img.youtube.com/vi/d3_c4lfsmD4/maxresdefault.jpg)](https://youtu.be/d3_c4lfsmD4)
 
 > [!WARNING]
 > **이 저장소는 포트폴리오와 코드 리뷰를 위한 소스 아카이브입니다.** 제작에 사용한 상용 에셋과 이에 의존하는 일부 Content, Blueprint, Map 데이터는 배포하지 않습니다. 따라서 이 저장소만으로 전체 게임을 빌드하거나 실행할 수 없습니다. 완성된 플레이 결과는 위 영상에서, 구현 내용은 아래 코드 탐색 경로에서 확인해 주세요.
@@ -201,8 +201,8 @@ ProjectAE/
 - [Quest System 연동 문서](QuestSysInfo.md)
 - [Grass Map Investigation](docs/grass-map-investigation.md)
 - [기존 README 보관본](docs/legacy/README_legacy.md)
-- [Gameplay Video](https://youtu.be/xRlHbQEcFOc)
-- [Notion Portfolio](https://app.notion.com/p/39cf36bcd9d981cd8fb1fc3ae4812360)
+- [Gameplay Video](https://youtu.be/d3_c4lfsmD4)
+- [Notion Portfolio]([https://app.notion.com/p/39cf36bcd9d981cd8fb1fc3ae4812360](https://app.notion.com/p/v2-39cf36bcd9d981e7851bd5249616d795?source=copy_link))
 
 ## TeamAE
 
