@@ -202,7 +202,7 @@ ProjectAE/
 - [Grass Map Investigation](docs/grass-map-investigation.md)
 - [기존 README 보관본](docs/legacy/README_legacy.md)
 - [Gameplay Video](https://youtu.be/d3_c4lfsmD4)
-- [Notion Portfolio]([https://app.notion.com/p/39cf36bcd9d981cd8fb1fc3ae4812360](https://app.notion.com/p/v2-39cf36bcd9d981e7851bd5249616d795?source=copy_link))
+- [Notion Portfolio](https://app.notion.com/p/v2-39cf36bcd9d981e7851bd5249616d795?source=copy_link)
 
 ## TeamAE
 
